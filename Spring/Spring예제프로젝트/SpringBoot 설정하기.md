@@ -1,17 +1,18 @@
-# Spring5를 윈도우에서 설정하기 
+# Spring Boot를 윈도우에서 설정하기 
 ## 구성파일
 * IDE - Eclipse IDE for jave EE Developers
-* Java - AdoptOpenJDK\jdk-14.0.2.12-hotspot\
+* Java - OpenJDK\jdk-11.0.8.10\
+  * https://github.com/ojdkbuild/ojdkbuild
 * Tomcat - 8.5
 * Maven - 3.6.3
-  
+
 ## 설치하기 
 ### 이클립스 인코딩 설정
 이클립스의 [window] -> [Perferences] 에서 "encoding" 검색후 모든 내용을 "UTF-8"
 
-### JAVA 설치하기
-* adoptopenjdk : https://adoptopenjdk.net/?variant=openjdk14&jvmVariant=hotspot
-* oracle jdk : https://www.oracle.com/java/technologies/javase-jdk14-downloads.html
+### JAVA jdk 설치하기
+* https://github.com/ojdkbuild/ojdkbuild
+
 
 ### 톰캣 설치 하기
 다운로드 사이트 :  https://tomcat.apache.org/download-80.cgi
@@ -40,31 +41,20 @@ maven 설치한 경로 user setting에 추가
 
 ### STS(Spring Tool Suite) 설치
 Spring 프레임 워크를 사용하기 위한 툴
-이클립스의 [Help] - [Eclipse MarketPlace] 에서 "STS"를 검색해서 설치
-![Eclipse_PlugIn](./img/eclipse_plugin_STS.png)
+이클립스의 [Help] - [Eclipse MarketPlace] 에서 "STS4"를 검색해서 설치
 
 ### 스프링 프로젝트 생성하기 
 [New] - [Other] - Spring 검색 - 프로젝트 이름 추가 및 생성
-![Eclipse_Create](./img/eclipse_create_spring1.png)
+![Eclipse_Create](./img/eclipse_create_springboot2.png)
+<br>라이브러리 설정하기<br>
+![Eclipse_Create2](./img/eclipse_create_springboot3.png)
 
-### 프로젝트에 Jstl 라이브러리 셋팅 필요
-사이트 https://tomcat.apache.org/download-taglibs.cgi 에서 jar파일 다운로드 
-![Eclipse_Create](./img/eclipse_create_spring3.png)
-"webapp/WEB-INF/lib" 폴더에 저장 
-![Eclipse_Create](./img/eclipse_create_spring4.png)
-
-### 프로젝트 설정 변경 
-프로젝트 우클릭 - [Properties] - [Project Facets]
-Java 버전 변경
-Dynamic Web Module 버전 3.1로 변경 
-![Eclipse_Create](./img/eclipse_create_spring2.png)
-
-### JSP 파일 컴파일 위치 지정
-WEB-INF 폴더에 jspwork 폴더 생성 
-Servers에서 만든 서버의 content.xml 수정<br>
-Context 태그에 workDir 속성 추가<br>
-![Eclipse_Create](./img/eclipse_create_spring5.png)
-![Eclipse_Create](./img/eclipse_create_spring6.png)
-
-## 참조 사이트
-https://usang0810.tistory.com/26
+### factory method 'datasource' 에러 발생시 
+src/resources/application.properties에 데이터 추가 필요 
+* spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+* spring.datasource.url=jdbc:mysql://localhost:3306/rolb
+* spring.datasource.username=root
+* spring.datasource.password=root123
+* spring.datasource.initialize=true
+* spring.jpa.hibernate.ddl-auto=update
+* spring.jpa.show-sql=true

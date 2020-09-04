@@ -49,8 +49,11 @@ public class Sub1 extends Super{
 }
 ```
 
-
-
+## REST(Representational State Transfer) 이란?
+### 월드 와이어 웹 같은 분산 하이퍼미디어 시스템을 위한 소프트웨어 아키텍쳐의 한 형식
+### REST 아키텍쳐에 적용되는 6가지 조건
+#### 클라이언트/서버 구조 : 일관적인 인터페이스로 분리 되어야 한다.
+#### 무상태(stateless) : 각 요청 간 클라이언트의 context가 서버에 저장되어서는 안된다. 
   
 
 
