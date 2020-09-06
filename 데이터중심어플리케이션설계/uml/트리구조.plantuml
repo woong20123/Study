@@ -1,0 +1,21 @@
+@startmindmap
+title 이력서를 트리 구조
+* 사용자1
+** id
+** name
+** summary
+** position
+*** job
+**** jobtitle
+**** organiztion
+*** job
+**** jobtitle
+**** organiztion
+** education
+*** education1
+**** school_name
+**** date
+*** education2
+**** school_name
+**** date
+@endmindmap
