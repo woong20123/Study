@@ -40,5 +40,15 @@ public class Example {
 
 ### @RestController
 웹서버로 들어오는 요청을 처리합니다.
+예제에서 Example 클래스는 @RestController로 지정되었습니다, 
+
 ### @RequestMapping
 라우팅 정보를 제공합니다. 
+예제에서 home 메서드는 / 경로에 맵핑됩니다. 
+
+### @SpringBootApplication 
+하나 이상의 @Bean 메서드를 선언하고 자동구성 및 구성 요소 스캔을 트리거합니다. 
+@Configuration, @EnableAutoConfiguration, @ComponentScan을 동시에 선언한 것과 같습니다.
+
+### @JsonIgnoreProperties
+
