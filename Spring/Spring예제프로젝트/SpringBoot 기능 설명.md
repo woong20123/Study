@@ -52,3 +52,14 @@ public class Example {
 
 ### @JsonIgnoreProperties
 
+### application.properties이란?
+  * application.properties은 애플리케이션이 구동될 때 자동으로 로딩하는 파일입니다. 
+  * key-value 형식으로 애플리케이션에서 참조해서 사용할 수 있습니다.
+```java
+// application.properties파일 정의 
+my.name = woong
+
+// application.java source에서 환경 변수를 참조 할 수 있습니다.
+@Value("${my.name}")
+String name;
+```

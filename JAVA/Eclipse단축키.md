@@ -34,3 +34,6 @@ https://seohs.tistory.com/488
 ### Ctrl + Space
 입력중에 완성 기능 호출
 ### F2
+
+## 코드 템플릿 
+Windows > Preferences > Java > Code Style > Code Templates

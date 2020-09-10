@@ -15,6 +15,7 @@
 
 
 ### 톰캣 설치 하기
+내장 톰캣을 사용할 수 있습니다. 
 다운로드 사이트 :  https://tomcat.apache.org/download-80.cgi
 ![Tomcat_istall1](./img/Tomcat_install1.png)
 <br>다운 받아서 설치합니다.
@@ -48,6 +49,8 @@ Spring 프레임 워크를 사용하기 위한 툴
 ![Eclipse_Create](./img/eclipse_create_springboot2.png)
 <br>라이브러리 설정하기<br>
 ![Eclipse_Create2](./img/eclipse_create_springboot3.png)
+
+
 
 ### factory method 'datasource' 에러 발생시 
 src/resources/application.properties에 데이터 추가 필요 

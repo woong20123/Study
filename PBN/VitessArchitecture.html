@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <title>번역 사이트 : https://vitess.io/docs/overview/architecture/</title>
+        <style>
+</style>
+        
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/markdown.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/highlight.css">
+<style>
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe WPC', 'Segoe UI', system-ui, 'Ubuntu', 'Droid Sans', sans-serif;
+                font-size: 14px;
+                line-height: 1.6;
+            }
+        </style>
+        <style>
+.task-list-item { list-style-type: none; } .task-list-item-checkbox { margin-left: -20px; vertical-align: middle; }
+</style>
+        
+        
+        
+    </head>
+    <body class="vscode-light">
+        <h3 id="번역-사이트--httpsvitessiodocsoverviewarchitecture">번역 사이트 : <a href="https://vitess.io/docs/overview/architecture/">https://vitess.io/docs/overview/architecture/</a></h3>
+<h1 id="본문">본문</h1>
+<h2 id="구조">구조</h2>
+<h3 id="vitess-플랫폼은-일관된-메타-데이터-저장소를-지원하는-command-line-유틸리티-웹-기반-유틸리티-여러개의-프로세스들로-구성되어-있습니다">Vitess 플랫폼은 일관된 메타 데이터 저장소를 지원하는 command-line 유틸리티, 웹-기반 유틸리티, 여러개의 프로세스들로 구성되어 있습니다.</h3>
+<h3 id="애플리케이션의-상태에-따라서-다양한-프로세스-flow을-통해서-full-vitess를-구현을-할-수-있습니다">애플리케이션의 상태에 따라서 다양한 프로세스 flow을 통해서 full Vitess를 구현을 할 수 있습니다.</h3>
+<h3 id="예를-들면-처음부터-서비스를-구축한다면-vitess의-첫-단계는-데이터-베이스의-topology를-정의하는-것입니다">예를 들면 처음부터 서비스를 구축한다면 Vitess의 첫 단계는 데이터 베이스의 topology를 정의하는 것입니다.</h3>
+<ul>
+<li>topology란?
+<ul>
+<li>단어의 의미는 분류, 위상 배치</li>
+<li>네트워크에서는 구성하는 노드들의 연결 상태의 구성방식을 의미함</li>
+</ul>
+</li>
+</ul>
+<h3 id="그러나-기존의-데이터-베이스를-확장한다면-connection-proxy를-배포하는-것부터-시작하는-것이-좋습니다">그러나 기존의 데이터 베이스를 확장한다면 connection proxy를 배포하는 것부터 시작하는 것이 좋습니다.</h3>
+<h3 id="vitess-도구-및-서버는-완전히-구성된-데이터베이스를-시작하거나-작게-시작해서-확장될수-있도록-설계-되었습니다">Vitess 도구 및 서버는 완전히 구성된 데이터베이스를 시작하거나 작게 시작해서 확장될수 있도록 설계 되었습니다.</h3>
+<h3 id="소규모의-구현의-경우-connection-풀링과-쿼리-재작성과-같은-vttablet기능을-통해서-기존-장비에서-더-많은-성능을-얻을-수-있습니다">소규모의 구현의 경우 connection 풀링과 쿼리 재작성과 같은 vttablet기능을 통해서 기존 장비에서 더 많은 성능을 얻을 수 있습니다</h3>
+<h3 id="vitess의-자동-도구는-대규모-구현을-위한-추가적인-이점을-제공합니다">Vitess의 자동 도구는 대규모 구현을 위한 추가적인 이점을 제공합니다.</h3>
+<h3 id="아래의-다이어그램은-vitess의-구성-요소를-보여줍니다">아래의 다이어그램은 Vitess의 구성 요소를 보여줍니다.</h3>
+<h3 id="vitess설계예제"><img src="file:///c:\Users\woong20123\Documents\GitHub\Study\PBN\img\VitessAchitectureEx.png" alt="vitess설계예제"></h3>
+
+    </body>
+    </html>
