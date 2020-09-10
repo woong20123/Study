@@ -1,4 +1,5 @@
 ## Kundera Document 사이트 
+### https://github.com/Impetus/Kundera/wiki/Getting-Started-in-5-minutes
 
 ## 설정파일 
 ### dependency 추가하기
