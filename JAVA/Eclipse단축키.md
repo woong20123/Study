@@ -37,3 +37,10 @@ https://seohs.tistory.com/488
 
 ## 코드 템플릿 
 Windows > Preferences > Java > Code Style > Code Templates
+
+
+## 이클립스 get/set 자동생성
+* 사용 방법
+  * Shift + alt + s 누르거나 우클릭 소스
+  * Generate Getter and Setter 실행 
+* 참조: https://gopae02.tistory.com/65
