@@ -1,0 +1,43 @@
+
+' uncomment the line below if you're using computer with a retina display
+' skinparam dpi 300
+!define Table(name,desc) class name as "desc" << (T,#FFAAAA) >>
+!define DataStruct(name,desc) class name as "desc" << (D,#CCCCCC) >>
+' we use bold for primary key
+' green color for unique
+' and underscore for not_null
+!define primary_key(x) <b>x</b>
+!define unique(x) <color:green>x</color>
+!define not_null(x) <u>x</u>
+' other tags available:
+' <i></i>
+' <back:COLOR></color>, where color is a color name or html color code
+' (#FFAACC)
+' see: http://plantuml.com/classes.html#More
+hide methods
+hide stereotypes
+
+' entities
+DataStruct(Magazine, "Magazine\n(DataSet struct)"){
+not_null(ID) INT
+not_null(name) String
+not_null(frequency) Int
+not_null(date) DATE
+not_null(publisher) String
+}
+
+Table(MagazineName, "MagazineName\n(Q1)"){
+not_null(ID) INT <b><color:red>pk</color></b>
+not_null(name) String
+not_null(frequency) Int
+}
+
+Table(MagazinePublisher, "MagazinePublisher\n(Q2)"){
+not_null(publisher) String <b><color:red>pk</color></b>
+not_null(ID) INT <b><color:red>ck</color></b>
+not_null(name) String
+not_null(frequency) Int
+}
+' relationships
+Magazine --> MagazineName : Q1 쿼리에 최적화된\n테이블을 생성합니다.
+Magazine --> MagazinePublisher : Q2 쿼리에 최적화된\n테이블을 생성합니다.
