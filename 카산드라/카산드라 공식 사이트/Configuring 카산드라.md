@@ -62,5 +62,12 @@
 #### 힙 사이즈와 같은 JVM-level 셋팅은 cassandra-env.sh안에서 셋팅 할 수 있습니다. 
 #### JVM_OPTS 환경변수에 추가 JVM 명령 줄 인수를 추가 할 수 있습니다.
 #### 카산드라가 시작되면 이러한 인수들은 JVM에 전달됩니다.  
+## Logging
+#### 기본 Logger는 LogBack이며 기본적으로 다음과 같이 기록됩니다. 
+#### (LogBack이란 자바용 로깅 프레임워크 spring boot에서 기본으로 사용)
+* INFO level은 system.log에 기록
+* DEBUG ldevel은 debug.log에 기록
+#### foreground로 수행 될 때 INFO level은 Console에 기록됩니다. 
+#### logback.xml을 편집하거나 notetool의 setlogginglevel 명령을 실행해서 속성을 변경할 수 있습니다. 
 
   
