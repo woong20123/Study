@@ -8,9 +8,9 @@ src/resources/application.properties에 데이터 추가 필요
 * 예제 코드
 ```java
 spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
-spring.datasource.url=jdbc:mysql://localhost:3306/rolb
-spring.datasource.username=root
-spring.datasource.password=root123
+spring.datasource.url=jdbc:mysql://localhost:3306/demo
+spring.datasource.username=demouser
+spring.datasource.password=Demouser!23
 spring.datasource.initialize=true
 spring.jpa.hibernate.ddl-auto=update
 spring.jpa.show-sql=true
