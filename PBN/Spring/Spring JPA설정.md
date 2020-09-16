@@ -83,3 +83,4 @@ public interface CustomerRepository extends CrudRepository<Customer, Long>
 ### 참조 사이트 
 * https://spring.io/guides/gs/accessing-data-jpa/#scratch
   
+
