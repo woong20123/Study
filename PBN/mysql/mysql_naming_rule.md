@@ -1,0 +1,2 @@
+## 참조
+https://launchbylunch.com/posts/2014/Feb/16/sql-naming-conventions/

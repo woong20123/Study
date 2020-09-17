@@ -61,3 +61,6 @@ public interface productRepository extends CrudRepository<product, byte[]>
 ## DataSource 설정
 ### keyspace1 설정
 ### keyspace2 설정
+
+### 참조
+* https://mudchobo.github.io/posts/spring-boot-jpa-multiple-database
