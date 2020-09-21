@@ -157,7 +157,19 @@ SELECT MIN(key_part2),MAX(key_part2)
 * 버퍼도 디스크에 직렬화 되므로 충돌이나 정전이 발생해도 내부 노드의 메시지가 손실되지 않습니다. 
 * 체크 포인트 이후 및 충돌이전에 쓰기 발생한 경우 복구는 로그를 통해서 재 수행됩니다. 
 
+## InnoDB FULL TEXT인덱스
+* FULLTEXT 인덱스는 텍스트 기반 열에 생성되어 해당 열에 포함된 데이터에 대한 쿼리 및 DML 작업의 속도를 높이고 불용어로 정의된 모든 단어를 생략합니다. 
+* FULLTEXT 인덱스는 CREATE TABLE문의 일부로 정의되거나 ALTER TABLE또는 CREATE INDEX를 사용해서 기존 테이블에 추가됩니다.
+* 전체 텍스트 검색은 MATCH AGAINST 구문을 사용해서 수행됩니다. 
+### InnoDB Full-Text 인덱스 디자인
+* InnoDB FULLTEXT 인덱스에는 역 인덱스 디자인이 있습니다. 
+* 역 인덱스는 단어 목록을 저장하고 각 단어에 대해 해당 단어가 나타내는 문서 목록을 저장합니다. 
+* 근접 검색을 지원하기 위해 각 단어에 대한 위치 정보도 바이트 오프셋으로 저장됩니다. 
+### InnoDB Full-Text 인덱스 테이블
+* 
+
 
 ## 번역주소 
 * https://dev.mysql.com/doc/refman/8.0/en/mysql-indexes.html
 * https://www.percona.com/doc/percona-tokudb/ft-index.html
+* https://dev.mysql.com/doc/refman/8.0/en/innodb-fulltext-index.html
