@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Spring Boot를 윈도우에서 설정하기</title>
+        <style>
+</style>
+        
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/markdown.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/highlight.css">
+<style>
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe WPC', 'Segoe UI', system-ui, 'Ubuntu', 'Droid Sans', sans-serif;
+                font-size: 14px;
+                line-height: 1.6;
+            }
+        </style>
+        <style>
+.task-list-item { list-style-type: none; } .task-list-item-checkbox { margin-left: -20px; vertical-align: middle; }
+</style>
+        
+        
+        
+    </head>
+    <body class="vscode-light">
+        <h1 id="spring-boot를-윈도우에서-설정하기">Spring Boot를 윈도우에서 설정하기</h1>
+<h2 id="구성파일">구성파일</h2>
+<ul>
+<li>IDE - Eclipse IDE for jave EE Developers</li>
+<li>Java - OpenJDK\jdk-11.0.8.10\
+<ul>
+<li><a href="https://github.com/ojdkbuild/ojdkbuild">https://github.com/ojdkbuild/ojdkbuild</a></li>
+</ul>
+</li>
+<li>Tomcat - 8.5</li>
+<li>Maven - 3.6.3</li>
+</ul>
+<h2 id="설치하기">설치하기</h2>
+<h3 id="이클립스-인코딩-설정">이클립스 인코딩 설정</h3>
+<p>이클립스의 [window] -&gt; [Perferences] 에서 &quot;encoding&quot; 검색후 모든 내용을 &quot;UTF-8&quot;</p>
+<h3 id="java-jdk-설치하기">JAVA jdk 설치하기</h3>
+<ul>
+<li><a href="https://github.com/ojdkbuild/ojdkbuild">https://github.com/ojdkbuild/ojdkbuild</a></li>
+</ul>
+<h3 id="톰캣-설치-하기">톰캣 설치 하기</h3>
+<p>내장 톰캣을 사용할 수 있습니다.
+다운로드 사이트 :  <a href="https://tomcat.apache.org/download-80.cgi">https://tomcat.apache.org/download-80.cgi</a>
+<img src="file:///c:\Users\woong20123\Documents\GitHub\Study\PBN\Spring\img\Tomcat_install1.png" alt="Tomcat_istall1">
+<br>다운 받아서 설치합니다.</p>
+<h3 id="이클립스에-톰캣-환경-설정">이클립스에 톰캣 환경 설정</h3>
+<p>이클립스의 [window] -&gt; [Perferences] 에서 &quot;server&quot; 검색합니다.<br>
+설치한 톰캣 설정을 추가합니다.
+<img src="file:///c:\Users\woong20123\Documents\GitHub\Study\PBN\Spring\img\Tomcat_install2.png" alt="Tomcat_install"></p>
+<h3 id="이클립스-git-ignore-설정">이클립스 git ignore 설정</h3>
+<h3 id="maven-설치">Maven 설치</h3>
+<ol>
+<li>다운로드 사이트 : <a href="http://maven.apache.org/">http://maven.apache.org/</a>
+<img src="file:///c:\Users\woong20123\Documents\GitHub\Study\PBN\Spring\img\maven_install1.png" alt="Maven_install1"></li>
+<li>다운 로드한 zip파일 압축해제</li>
+<li>해제한 폴더에 <strong>&quot;repository&quot;</strong> 폴더 생성</li>
+<li>\conf\settings.xml 의 <LocalRepository> 셋팅
+<img src="file:///c:\Users\woong20123\Documents\GitHub\Study\PBN\Spring\img\maven_install2.png" alt="Maven_install1"></li>
+</ol>
+<h3 id="이클립스와-maven-연동">이클립스와 Maven 연동</h3>
+<p>이클립스의 [window] -&gt; [Perferences] 에서 &quot;maven&quot; 검색합니다.<br>
+<img src="file:///c:\Users\woong20123\Documents\GitHub\Study\PBN\Spring\img\maven_install3.png" alt="Maven_install1">
+maven 설치한 경로 user setting에 추가</p>
+<h3 id="stsspring-tool-suite-설치">STS(Spring Tool Suite) 설치</h3>
+<p>Spring 프레임 워크를 사용하기 위한 툴
+이클립스의 [Help] - [Eclipse MarketPlace] 에서 &quot;STS4&quot;를 검색해서 설치</p>
+<h3 id="스프링-프로젝트-생성하기">스프링 프로젝트 생성하기</h3>
+<p>[New] - [Other] - Spring 검색 - 프로젝트 이름 추가 및 생성
+<img src="file:///c:\Users\woong20123\Documents\GitHub\Study\PBN\Spring\img\eclipse_create_springboot2.png" alt="Eclipse_Create">
+<br>라이브러리 설정하기<br>
+<img src="file:///c:\Users\woong20123\Documents\GitHub\Study\PBN\Spring\img\eclipse_create_springboot3.png" alt="Eclipse_Create2"></p>
+<h3 id="factory-method-datasource-에러-발생시">factory method 'datasource' 에러 발생시</h3>
+<p>src/resources/application.properties에 데이터 추가 필요</p>
+<ul>
+<li>spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver</li>
+<li>spring.datasource.url=jdbc:mysql://localhost:3306/rolb</li>
+<li>spring.datasource.username=root</li>
+<li>spring.datasource.password=root123</li>
+<li>spring.datasource.initialize=true</li>
+<li>spring.jpa.hibernate.ddl-auto=update</li>
+<li>spring.jpa.show-sql=true</li>
+</ul>
+
+    </body>
+    </html>
