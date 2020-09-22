@@ -166,10 +166,90 @@ SELECT MIN(key_part2),MAX(key_part2)
 * 역 인덱스는 단어 목록을 저장하고 각 단어에 대해 해당 단어가 나타내는 문서 목록을 저장합니다. 
 * 근접 검색을 지원하기 위해 각 단어에 대한 위치 정보도 바이트 오프셋으로 저장됩니다. 
 ### InnoDB Full-Text 인덱스 테이블
-* 
 
+## composite index 
+* MYSQL은 복합 인덱스를 생성할 수 있습니다. 
+* 인덱스는 최대 16개의 열로 구성 될 수 있습니다. 
+* 특정 데이터 유형의 경우 열의 접두사를 인덱싱 할 수 있습니다.
+* MYSQL은 첫열, 처음 두열 처음 세열 등등 인덱스안에 모든 컬럼을 테스트하는 쿼리를 위해서 다중 인덱스를 사용 할 수 있습니다. 
+* 인덱스 정의에서 올바른 순서로 열을 지정하면 단일 복합 인덱스가 동일한 테이블에서 여러 종류의 쿼리 속도를 높일 수 있습니다. 
+* 다중 열 인덱스는 인덱스 된 열의 값을 연결하여 생성된 값을 포함하는 행에 정렬된 배열로 간주 될 수 있습니다. 
+* 복합 인덱스의 대안으로 다른 열의 정보를 기반으로 해시 된 열을 도입 할 수 있습니다.
+* 이 열은 짧고 합리적으로 고유하며 인덱싱 된 경우 많은 열 기반의 "와이드" 인덱스 보다 빠를 수 있습니다
+* MYSQL에서는 이 추가 열을 사용하는 것이 매우 쉽습니다.
+```sql
+SELECT * FROM tbl_name
+  WHERE hash_col=MD5(CONCAT(val1,val2))
+  AND col1=val1 AND col2=val2;
+```
+* 다음과 같은 테이블 구조가 있다고 가정합니다.
+```sql 
+CREATE TABLE test (
+    id         INT NOT NULL,
+    last_name  CHAR(30) NOT NULL,
+    first_name CHAR(30) NOT NULL,
+    PRIMARY KEY (id),
+    INDEX name (last_name,first_name)
+);
+```
+
+## name 인덱스가 쌓이는 구조
+|last_name|first_name|
+|:--:|:--:|
+|A|1|
+|A|2|
+|B|1|
+|B|2|
+|B|3|
+|C|1|
+|C|2|
+|C|4|
+|D|1|
+|D|3|
+|D|6|
+
+* name 인덱스는 last_name 및 first_name 열에 대한 인덱스입니다. 
+* 인덱스는 last_name 과 first_name 값의 조합에 대해 알려진 범위의 값을 지정하는 쿼리에 조회에 사용 할 수 있습니다. 
+* last_name 값만 지정하는 쿼리에도 사용 할 수 있습니다. 
+* 해당 열은 인덱스의 가장 왼쪽 접두사이기 때문입니다. 
+* 따라서 name 인덱스는 다음 쿼리에서 조회에 사용됩니다. 
+```sql
+SELECT * FROM test WHERE last_name='Jones';
+
+SELECT * FROM test
+  WHERE last_name='Jones' AND first_name='John';
+
+SELECT * FROM test
+  WHERE last_name='Jones'
+  AND (first_name='John' OR first_name='Jon');
+
+SELECT * FROM test
+  WHERE last_name='Jones'
+  AND first_name >='M' AND first_name < 'N';
+```
+* 아래의 쿼리들은 인덱스를 사용할 수 없습니다. 
+```sql
+SELECT * FROM test WHERE first_name='John';
+
+SELECT * FROM test
+  WHERE last_name='Jones' OR first_name='John';
+```
+* 다음 SELECT 문을 실행 합니다.
+```sql
+SELECT * FROM tbl_name
+  WHERE col1=val1 AND col2=val2;
+```
+* col1과 col2에 다중 열 인덱스가 있는 경우 해당 행을 바로 가지고 올 수 있습니다.
+* col1과 col2에 별도의 단일 열 인덱스가 있는 경우 optimizer는 인덱스 병합 최적화를 사용하려고 시도하거나
+* 더 많은 행을 제외하는 인덱스를 결정하고 해당 인덱스를 사용해서 행을 가져옵니다. 
+* 테이블에 다중 열 인덱스가 있는 경우 optimizer는 인덱스의 가장 왼쪽 접두사를 사용해서 행을 조회 할 수 있습니다. 
+* 예를 들어 (col1, col2, col3) 3열 인덱스가 있는 경우 col1, (col1, col2), (col1, col2, col3)에 대해서 검색을 인덱싱화 했습니다. 
+* MYSQL은 왼쪽 접두사를 형성 하지 않으면 인덱스를 사용할 수 없습니다. 
 
 ## 번역주소 
 * https://dev.mysql.com/doc/refman/8.0/en/mysql-indexes.html
 * https://www.percona.com/doc/percona-tokudb/ft-index.html
 * https://dev.mysql.com/doc/refman/8.0/en/innodb-fulltext-index.html
+
+## To do
+*  Index Merge Optimization 조사
