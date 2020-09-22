@@ -45,9 +45,13 @@ score를 키로 내림차순으로 정렬해라
 ### 멀티키 인덱스 
 * MongoDB는 다중 키 인덱스를 사용해서 **배열**에 저장된 콘텐츠를 인덱싱합니다. 
 * 배열 값이 있는 필드를 인덱싱하면 MongoDB는 배열의 모든 요소에 대해 별도의 인덱스 항목을 만듭니다.
+* 이러한 멀티키 인덱스를 사용하면 배열의 요소나 요소에 매칭된 배열이 포함된 문서를 선택할 수 있습니다. 
+* 인덱싱된 필드에 배열 값이 포함 된 경우 멀티 키 인덱스를 자동으로 생성합니다. 
 * https://sarc.io/index.php/nosql/1735-mongodb-index-multi-key-index
 
-
+### Geospatial Index
+* MongoDB는 지리 공간 좌표 데이터를 효율적으로 지원 하기 위해서 2가지 타입의 인덱스를 지원합니다. 
+* 2d indexes와 2dsphere indexes
 
 ## Index 속성
 

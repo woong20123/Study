@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <title>인덱스</title>
+        <style>
+</style>
+        
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/markdown.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/highlight.css">
+<style>
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe WPC', 'Segoe UI', system-ui, 'Ubuntu', 'Droid Sans', sans-serif;
+                font-size: 14px;
+                line-height: 1.6;
+            }
+        </style>
+        <style>
+.task-list-item { list-style-type: none; } .task-list-item-checkbox { margin-left: -20px; vertical-align: middle; }
+</style>
+        
+        
+        
+    </head>
+    <body class="vscode-light">
+        <h2 id="인덱스">인덱스</h2>
+<h4 id="인덱스는-mongodb에서-쿼리를-효율적인-실행을-지원합니다">인덱스는 MongoDB에서 쿼리를 효율적인 실행을 지원합니다.</h4>
+<h4 id="인덱스가-없으면-mongodb는-쿼리문과-일치하는-문서를-선택하기-위해서-컬렉션-스캔을-수행합니다">인덱스가 없으면 MongoDB는 쿼리문과 일치하는 문서를 선택하기 위해서 컬렉션 스캔을 수행합니다</h4>
+<ul>
+<li>컬랙션 스캔은 모든 문서를 스캔함</li>
+</ul>
+<h4 id="쿼리에-적합한-인덱스가-있는-경우-mongodb는-인덱스를-사용해서-검사해야-하는-문서-수를-제한-할-수-있습니다">쿼리에 적합한 인덱스가 있는 경우 MongoDB는 인덱스를 사용해서 검사해야 하는 문서 수를 제한 할 수 있습니다.</h4>
+<h4 id="인덱스는-컬렉션-데이터-셋트의-작은-부분을-탐색하기-쉬운-형식으로-저장하는-특수-데이터-구조입니다">인덱스는 컬렉션 데이터 셋트의 작은 부분을 탐색하기 쉬운 형식으로 저장하는 특수 데이터 구조입니다.</h4>
+<h4 id="인덱스는-특정-필드-또느-필드-셋트-값을-필드에-값을-정렬하여-저장합니다">인덱스는 특정 필드 또느 필드 셋트 값을 필드에 값을 정렬하여 저장합니다.</h4>
+<h4 id="정렬된-인덱스-순서는-범위-기반-및-일치하는-값을-찾는-작업을-지원합니다">정렬된 인덱스 순서는 범위 기반 및 일치하는 값을 찾는 작업을 지원합니다.</h4>
+<h4 id="또한-mongodb는-인덱스-순서를-사용해서-정렬된-결과를-반환할-수-있습니다">또한 MongoDB는 인덱스 순서를 사용해서 정렬된 결과를 반환할 수 있습니다.</h4>
+<h4 id="다음-다이어그램은-인덱스를-사용하는-일치하는-문서를-선택하고-정렬하는-쿼리를-보여줍니다">다음 다이어그램은 인덱스를 사용하는 일치하는 문서를 선택하고 정렬하는 쿼리를 보여줍니다.</h4>
+<h4 id="기본적으로-mongodb의-인덱스는-다른-데이터-베이스-시스템의-인덱스와-유사합니다">기본적으로 MongoDB의 인덱스는 다른 데이터 베이스 시스템의 인덱스와 유사합니다.</h4>
+<h4 id="mongodb은-컬렉션-수준에서-인덱스를-정의하고-mongodb-컬렉션이-있는-문서의-모든-필드-또는-하위-필드에-대한-인덱스를-지원합니다">MongoDB은 컬렉션 수준에서 인덱스를 정의하고 MongoDB 컬렉션이 있는 문서의 모든 필드 또는 하위 필드에 대한 인덱스를 지원합니다.</h4>
+<h4 id="mongodb는-컬랙션이-생성-될-때-_id-필드에-unique_index를-생성합니다">MongoDB는 컬랙션이 생성 될 때 _id 필드에 unique_index를 생성합니다.</h4>
+<h4 id="_id-인덱스는-클라이언트가-_id-필드에-대해서-중복된-값을-가지는-문서를-방지합니다">_id 인덱스는 클라이언트가 _id 필드에 대해서 중복된 값을 가지는 문서를 방지합니다.</h4>
+<h4 id="사용자는-_id필드의-인덱스를-제거할-수-없습니다">사용자는 _id필드의 인덱스를 제거할 수 없습니다.</h4>
+<ul>
+<li>샤딩된 클러스터에서 _id 필드를 샤드키로 사용하지 않는 경우 애플리케이션인 오류를 방지하기 위해서 _id필드 값의 고유성을 확인해야합니다.</li>
+<li>이는 대부분의 경우 표준 자동 생성 ObjectID를 사용하여 수행됩니다.</li>
+</ul>
+<h4 id="몽코에서-인덱스를-생헝하는-방법">몽코에서 인덱스를 생헝하는 방법</h4>
+<pre><code class="language-sql"><div>db.collection.createIndex( { name: -1 } )
+</div></code></pre>
+<ul>
+<li>MongoDB 인덱스는 B-tree 구조를 사용합니다.</li>
+</ul>
+<h2 id="index-이름">Index 이름</h2>
+<ul>
+<li>인덱스의 기본 이름은 인덱스화 된 키와 정렬 방향을 연결한 값을 가집니다.(1, -1은 정렬 방향)</li>
+<li>예를 들어서 {item : 1, quantity : -1} 인덱스를 생성하면 item_1_quantity_-1 이름을 가집니다.</li>
+</ul>
+<h2 id="index-타입">Index 타입</h2>
+<ul>
+<li>MongoDb는 특정 유형의 데이터 및 쿼리를 지원하기 위해 다양한 인덱스 유형을 제공합니다.</li>
+</ul>
+<h3 id="single-field">Single Field</h3>
+<ul>
+<li>MongoDB는 _id외에도 Document의 단일 필드에서 사용자 오름차순/내림차순 인덱스 생성을 지원합니다.</li>
+</ul>
+<pre><code class="language-sql"><div>{ score: 1}
+score를 키로 내림차순으로 정렬해라
+</div></code></pre>
+<ul>
+<li>단일 필드 인덱스 및 정렬 작업의 경우 MongoDB가 인덱스를 양방향으로 탐색할 수 있으므로 인덱스 키의 정렬 순서는 중요하지 않습니다.</li>
+</ul>
+<h3 id="compound-index">Compound Index</h3>
+<ul>
+<li>MongoDB는 또한 여러 필드, 즉 복합 인덱스에 대한 사용자 정의 인덱스를 지원합니다.</li>
+<li>복합 색인에 나열된 필드의 순서는 중요합니다.</li>
+<li>복합 인덱스가 {userid : 1, score : -1}로 구성된경우 인덱스는 먼저 userid 별로 정렬된 다음 score별로 정렬됩니다.</li>
+<li>MYSQL의 복합 인덱스와 구조가 동일함</li>
+<li>복합 인덱스 및 정렬 작업의 경우 인덱스 키의 정렬 순서에 따라서 인덱스 정렬 작업을 지원할 수 있는지 여부를 결정합니다.</li>
+</ul>
+<h3 id="멀티키-인덱스">멀티키 인덱스</h3>
+<ul>
+<li>MongoDB는 다중 키 인덱스를 사용해서 <strong>배열</strong>에 저장된 콘텐츠를 인덱싱합니다.</li>
+<li>배열 값이 있는 필드를 인덱싱하면 MongoDB는 배열의 모든 요소에 대해 별도의 인덱스 항목을 만듭니다.</li>
+<li>이러한 멀티키 인덱스를 사용하면 배열의 요소나 요소에 매칭된 배열이 포함된 문서를 선택할 수 있습니다.</li>
+<li>인덱싱된 필드에 배열 값이 포함 된 경우 멀티 키 인덱스를 자동으로 생성합니다.</li>
+<li><a href="https://sarc.io/index.php/nosql/1735-mongodb-index-multi-key-index">https://sarc.io/index.php/nosql/1735-mongodb-index-multi-key-index</a></li>
+</ul>
+<h3 id="geospatial-index">Geospatial Index</h3>
+<ul>
+<li>MongoDB는 지리 공간 좌표 데이터를 효율적으로 지원 하기 위해서 2가지 타입의 인덱스를 지원합니다.</li>
+<li>2d indexes와 2dsphere indexes</li>
+</ul>
+<h2 id="index-속성">Index 속성</h2>
+<h2 id="참조">참조</h2>
+<ul>
+<li><a href="https://docs.mongodb.com/manual/indexes/">https://docs.mongodb.com/manual/indexes/</a></li>
+</ul>
+
+    </body>
+    </html>
