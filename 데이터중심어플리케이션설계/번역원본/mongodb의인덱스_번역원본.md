@@ -42,18 +42,94 @@ score를 키로 내림차순으로 정렬해라
 * MYSQL의 복합 인덱스와 구조가 동일함
 * 복합 인덱스 및 정렬 작업의 경우 인덱스 키의 정렬 순서에 따라서 인덱스 정렬 작업을 지원할 수 있는지 여부를 결정합니다. 
   
-### 멀티키 인덱스 
+### Multikey Index 
 * MongoDB는 다중 키 인덱스를 사용해서 **배열**에 저장된 콘텐츠를 인덱싱합니다. 
 * 배열 값이 있는 필드를 인덱싱하면 MongoDB는 배열의 모든 요소에 대해 별도의 인덱스 항목을 만듭니다.
 * 이러한 멀티키 인덱스를 사용하면 배열의 요소나 요소에 매칭된 배열이 포함된 문서를 선택할 수 있습니다. 
 * 인덱싱된 필드에 배열 값이 포함 된 경우 멀티 키 인덱스를 자동으로 생성합니다. 
+* Multikey Index는 동시에 같은 document를 가르킬수 있기 때문에 shared key로 사용 불가
 * https://sarc.io/index.php/nosql/1735-mongodb-index-multi-key-index
+
+* 예제 인덱스 생성
+```java
+db.user.insert({
+name:"kimdubi",
+addr:{ city : "seongnam", dong: "sampyeong" },
+db:["MongoDB","Mysql","Oracle"]})
+
+// embeded document field
+db.user.createIndex({addr:1})
+// array field
+db.user.createIndex({db:1})
+```
+* 예제용 검색용
+```java 
+// 인덱스 정의문 그대로 검색 가능
+db.user.find({addr:{city:"seongnam",dong:"sampyeong"}}).pretty()
+
+// 인덱스 정의문에서 일부를 제거하면 검색불가
+db.user.find({addr:{dong:"sampyeong"}}).pretty()
+db.user.find({addr:{city:"seongnam"}}).pretty()
+
+// embeded document의 field 지정 검색 가능
+// embeded document의 field별로 인덱스가 생성됨
+db.user.find({"addr.city":"seongnam"})
+db.user.find({"addr.dong":"sampyeong"})
+
+// array의 경우 검색가능 
+db.user.find({db:"MongoDB"})
+
+```
+
+
+
+#### Index Bounds
+* 만약 인덱스가 multikey인 경우 인덱스 경계 계산은 특수한 규칙을 따릅니다. 
 
 ### Geospatial Index
 * MongoDB는 지리 공간 좌표 데이터를 효율적으로 지원 하기 위해서 2가지 타입의 인덱스를 지원합니다. 
 * 2d indexes와 2dsphere indexes
 
+### Text Indexes
+* 전문처리?
+### Hashed Indexes
+* hash 기반 샤딩을 위해서 필드 값의 해시를 인덱스를 지원합니다. 
+* 일반적인 해시와 마찬가지로 일치 값에 대해서는 조회가 가능하지만 범위값을 조회할 수 
+없습니다.
+### Hashed Sharding
+* 해시 샤딩은 단일 필드나 복합 해시 인덱스(4.4버전 신규 기능)를 샤드 키로 사용해서 클러스터에 데이터를 분할 합니다.
+* 이건 이번 스터디의 범위를 넘어간다.!! 카산드라랑 비슷하게 샤딩하넹
+
 ## Index 속성
+
+### Unique index
+* unique 속성으로 MongoDB는 인덱싱 된 필드에 대한 중복값을 거부합니다. 
+* unique 속성외에도 unique 인덱스는 다른 MongoDB 인덱스와 기능적으로 상호 교환 할 수 있습니다.
+
+### Partial index
+* Partial index는 지정된 필터 표현식을 충족하는 컬렉션의 문서만 인덱싱합니다. 
+* 컬렉션에 있는 문서의 하위 집합을 인덱싱 해서 Partial index는 인덱스 생성가 유지관리를 위한 저장공간 및 성능 비용을 효율적으로 관리합니다. 
+* Partial index는 sparse index의 기능적으로 상위에 있으므로 더 선호되어야 합니다. 
+* 예를 들면 다음 예제는 rating 필드가 5보다 큰 document만 인덱싱하는 복합 인덱스를 만듭니다. 
+* MongoDB는 쿼리나 sort 작업이 불완전한 결과가 발생한다면 Partial index를 사용하지 않습니다.
+* Partial index를 사용하려면 쿼리 조건의 일부로 필터 표현식이 포함되어야 합니다. 
+```java
+db.restaurants.createIndex(
+   { cuisine: 1 },
+   { partialFilterExpression: { rating: { $gt: 5 } } }
+)
+
+// 사용가능 부분 인덱스 범위에 들어 있음 - rating이 8보다 크거나 같음
+db.restaurants.find( { cuisine: "Italian", rating: { $gte: 8 } } )
+
+// 사용불가 부분 인덱스 범위 아님 - rating이 8보다 작음
+db.restaurants.find( { cuisine: "Italian", rating: { $lt: 8 } } )
+
+// 부분 인덱스의 범위조건이 없음 불가 !!
+db.restaurants.find( { cuisine: "Italian" } )
+```
+
+### Sparse Indexes
 
 ## 참조 
 * https://docs.mongodb.com/manual/indexes/
