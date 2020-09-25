@@ -130,6 +130,26 @@ db.restaurants.find( { cuisine: "Italian" } )
 ```
 
 ### Sparse Indexes
+* Sparse index는 인덱스된 필드를 가진 문서에 대한 항목만 포함합니다. 해당 필드가 널 값이어도 포함됨
+* 이 인덱스는 인덱스된 필드가 없는 문서는 건너 뜁니다. 
+* 이 인덱스는 모든 문서를 포함하지 않기 때문에 sparse입니다.
+* 반대로 non-Sparse 인덱스는 collection안에 모든 문서를 가지고 인덱스된 필드를 포함하지 않는 문서에 대해서는 Null으로 지정합니다. 
+* 3.2버전 부터는 partial indexes을 생성할 수 있습니다. 
+  * partial indexes는 Sparse index보다 상위 집합을 제공하기 때문에 더 선호되어야 합니다. 
+
+### TTL indexes
+* TTL index는 MongoDB가 특정 시간 후에 컬렉션에 문서를 자동으로 제거하는 데 사용 할 수 있는 특수 단일 필드 인덱스 입니다. 
+* 데이터 만료는 제한된 시간동안만 데이터 베이스에 유지 되어야 하는 머신 생성 이벤트 데이터, 로그 및 세션 정보와 같은 특정 유형의 정보에 유용합니다. 
+* 인덱스된 필드의 값의 지정된 expireAfterSeconds값을 더한 시간이 지난후에 document는 만료됩니다.
+* mongod의 백그라운드 스레드를 통해서 만료된 문서는 제거됩니다. 
+```java
+db.eventlog.createIndex( { "lastModifiedDate": 1 }, { expireAfterSeconds: 3600 } )
+```
+  
+#### TTL indexes 비고
+* 스토리지 비용을 절약하기 위해서 Document를 제거하는 경우 MongoDB Atlas의  Online Archive를 고려하세요
+
+### Hidden Index
 
 ## 참조 
 * https://docs.mongodb.com/manual/indexes/
