@@ -44,3 +44,6 @@ Windows > Preferences > Java > Code Style > Code Templates
   * Shift + alt + s 누르거나 우클릭 소스
   * Generate Getter and Setter 실행 
 * 참조: https://gopae02.tistory.com/65
+
+## 자동 주석 설정
+* Windows > Preferences > java > Code Style > Code Templates > Comments
