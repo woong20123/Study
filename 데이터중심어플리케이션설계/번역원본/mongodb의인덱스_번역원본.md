@@ -150,6 +150,18 @@ db.eventlog.createIndex( { "lastModifiedDate": 1 }, { expireAfterSeconds: 3600 }
 * 스토리지 비용을 절약하기 위해서 Document를 제거하는 경우 MongoDB Atlas의  Online Archive를 고려하세요
 
 ### Hidden Index
+* 숨겨진 인덱는 쿼리 플레너에 표시되지 않으며 쿼리를 지원하는데 사용되지 않습니다. 
+* 플레너에서 인덱스를 숨기면 실제로 인덱스를 삭제하지 않고  사용자는 인덱스 삭제로 인한 영향을 평가 할 수 있습니다. 
+* 만약 성능에 부정적인 경우 삭제된 인덱스를 다시 만들 필요 없이 인덱스를 숨기기를 해제할 수 있습니다. 
+* 그리고 인덱스는 숨겨져 있는 동안 완벽히 유지되기 때문에 숨겨져 있지 않으면 인덱스를 즉시 사용 할 수 있습니다. 
+
+### Covered Queries
+* 쿼리 기준 및 쿼리 프로젝션에 인덱싱 된 필드만 포함 된 경우 MongoDB는 문서를 스캔하거나 문서를 메모리로 가져오지 않고 인덱스에 직접 결과를 반환합니다.
+* Covered Querie들은 매우 효율적 일 수 있습니다. 
+* mysql과 동일한 내용
+
+### Index Intersection
+* 인덱스 교차를 사용해서 쿼리를 수행할 수 있습니다. 
 
 ## 참조 
 * https://docs.mongodb.com/manual/indexes/
