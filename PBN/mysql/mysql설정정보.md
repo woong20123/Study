@@ -46,3 +46,6 @@ GRANT ALL ON TempDB.* TO 'root'@'%';
 GRANT ALL ON ScheduleDB.* TO 'root'@'%';
 flush privileges
 ```
+
+## mysql insert 속도 향상
+* innodb_flush_log_at_trx_commit 기능을 끄면 로그 파일을 기록하지 않음
