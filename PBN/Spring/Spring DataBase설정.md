@@ -79,6 +79,58 @@ public interface CustomerRepository extends CrudRepository<Customer, Long>
 }
 ```
 
+## Spring에서 bulk insert 설정하기
+### spring.datasource.result.jdbc-url에 "&rewriteBatchedStatements=true" 옵션 추가 
+```ini
+spring.datasource.result.jdbc-url=jdbc:mysql://172.19.153.153:3306/pbn?serverTimezone=Asia/Seoul&rewriteBatchedStatements=true
+```
+### jdbcTemplate를 사용해서 batchUpdate 사용
+* 구현 예제
+```java
+@Override
+	public void saveAll(List<PersonalStrava> items) {
+		// TODO Auto-generated method stub
+		int batchCount = 0;
+		List<PersonalStrava> subItems = new ArrayList<>();
+		for(int i = 0; i < items.size(); i++) {
+			subItems.add(items.get(i));
+			if((i + 1)  % batchSize == 0) {
+				batchCount = batchInsert(batchSize, batchCount, subItems);
+			}
+		}
+		
+		if (!subItems.isEmpty()) {
+			batchCount = batchInsert(batchSize, batchCount, subItems);
+		}
+		System.out.println("batchCount: " + batchCount + " products size : " + items.size());
+	}
+	
+	private int batchInsert(int batchSize, int batchCount, List<PersonalStrava> subItems) {
+		jdbcTemplate.batchUpdate("INSERT INTO `pbn`.`personal_strava` (`log_date`,`instance_id`,`partition_seq`,`time`,`row_seq`,`actor_id`,`total_exp`)"
+				+ "VAlUES( ?, ?, ?, ?, ?, ?, ?)",
+				new BatchPreparedStatementSetter() {
+					@Override
+					public void setValues(PreparedStatement ps, int i) throws SQLException {
+						// TODO Auto-generated method stub
+						ps.setString(1, subItems.get(i).getLogDate());
+						ps.setString(2, subItems.get(i).getInstanceId());
+						ps.setString(3, subItems.get(i).getPartitionSeq());
+						ps.setString(4, subItems.get(i).getTime());
+						ps.setString(5, subItems.get(i).getRowSeq());
+						ps.setString(6, subItems.get(i).getActorId());
+						ps.setLong(7, subItems.get(i).getTotalExp());
+					}
+					
+					@Override
+					public int getBatchSize() {
+						return subItems.size();
+					}
+				});
+		subItems.clear();
+		batchCount++;
+		return batchCount;
+	}
+```
 
 ### 참조 사이트 
 * https://spring.io/guides/gs/accessing-data-jpa/#scratch
