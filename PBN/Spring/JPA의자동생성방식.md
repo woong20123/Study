@@ -39,6 +39,32 @@ public class EntityWithIdentityId {
 * 차이점은 ID 생성기가 계층별로 관리되므로 생성된값은 계층별로 고유하다는 것입니다. 
 # The Sequence Strategy
 * Sequence 전략은 2부분으로 구성되는데 명명된 Sequence를 정의하고 하나이상의 클래스에 있는 하나 이상의 필드에서 이름 붙여진 sequence의 사용입니다.
-* @SequenceGenerator은 시퀀스를 정의하는 데 사용되며 이름을 전달받습니다. 
+* @SequenceGenerator은 시퀀스를 정의하는 데 사용되며 이름, 초기 값 및 할당 크기을 전달받습니다. 
+  * 초기값의 기본 값은 1이고 할당 크기의 기본값은 50입니다.
+* sequence는 응용 프로그램에서 전역적이며 하나 이상의 클래스의 하나 이상의 필드에 사용할 수 있습니다.
+* sequence전략은 @GenerattedValue annotation에 사용되어서 주어진 필드를 이전에 정의된 sequence의 이름으로 연결합니다. 
+```java
+@Entity
+// Define a sequence - might also be in another class:
+@SequenceGenerator(name="seq", initialValue=1, allocationSize=100)
+public class EntityWithSequenceId {
+    // Use the sequence that is defined above:
+    @GeneratedValue(strategy=GenerationType.SEQUENCE, generator="seq")
+    @Id long id;
+}
+```
+* AUTO 및 IDENTITY와 달리 SEQUENCE 전략은 새로운 엔티티 객체가 유지되는 즉시 자동값을 생성합니다.(commit 전에)
+* primary key 값이 먼저 필요할 때 유용 할 수 있습니다. 
+* 데이터베이스 서버로의 왕복을 최소화하기 위해 ID가 그룹으로 할당됩니다. 
+* 각 allocation에 ID의 수는 allocationSize 속성으로 지정됩니다. 
+* 지정된 할당의 일부 ID가 사용되지 않을 수 있습니다. 
+* 그러므로 이 전략은 sequence 값에 gap이 없음을 보장하지 않습니다. 
+
+
+## org.hibernate.id.enhanced.SequenceStyleGenerator
+* sequence 데이터 베이스 구조를 기반으로 식별자 값을 생성합니다. 
+* 변형의 범위는 시퀀스를 실제로 사용하는 것부터 테이블을 사용하여 시퀀스를 모방하는 것까지 다양합니다.
+* 이러한 변형은 내부적으로 DatabaseStructure의 인터페이스에 의해서 캡슐화 됩니다.  
+
 ## 참조
 * https://www.objectdb.com/java/jpa/entity/generated
