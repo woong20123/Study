@@ -21,7 +21,36 @@ https://launchbylunch.com/posts/2014/Feb/16/sql-naming-conventions/
 * https://dev.mysql.com/doc/refman/8.0/en/innodb-init-startup-configuration.html
 
 ## mysql 옵션
-### Document 주소 : https://dev.mysql.com/doc/refman/8.0/en/innodb-buffer-pool-resize.html
+## Document 주소 : https://dev.mysql.com/doc/refman/8.0/en/
+innodb-buffer-pool-resize.html
+## 번역
+### InnoDB Buffer Pool Size 설정하기
+* InnoDB 버퍼 풀 사이즈를 오프라인 또는 서버가 구동중일 때 설정할 수 있습니다. 
+* 이 섹션에 설명된 동작은 두 방법에 모두 적용 됩니다. 
+* 온라인으로 버퍼 풀 사이즈를 설정하는 방법에 대한 자세한 내용은 아래 링크를 참조하세요
+  * https://dev.mysql.com/doc/refman/8.0/en/innodb-buffer-pool-resize.html#innodb-buffer-pool-online-resize
+* innodb_buffer_pool_size를 늘리거나 줄이는 작업은 청크 단위로 수행됩니다. 
+* 청크 크기는 innodb_buffer_pool_chunk_size 설정옵션으로 정의되며 기본값은 128MB입니다. 
+* 버퍼 풀의 사이즈는 innodb_buffer_pool_chunk_size * innodb_buffer_pool_instances의 배수여야 합니다. 
+* 만약에 배수가 아닌 값으로 설정하면 자동으로 버퍼 풀의 크기는 배수의 값으로 자동 조정됩니다. 
+* 만약 아래와 같이 설정되어 있다고 가정합니다.
+  * innodb_buffer_pool_size : 8G
+  * innodb_buffer_pool_instances = 16
+  * innodb_buffer_pool_chunk_size = 128M
+  * innodb_buffer_pool_chunk_size * innodb_buffer_pool_instances = 2G
+  * innodb_buffer_pool_size는 2G의 배수입니다. 
+* 만약에 innodb_buffer_pool_size = 9G라면 10G로 자동조정 됩니다.
+### InnoDB Buffer Pool Chunk Size 설정하기
+* innodb_buffer_pool_chunk_size는 1MB 단위로 조정할 수 있지만 명령어나 Mysql 구성 파일로만 설정할 수 있습니다. 
+```bash
+// 명령어
+shell> mysqld --innodb-buffer-pool-chunk-size=134217728
+
+// 설정파일
+[mysqld]
+innodb_buffer_pool_chunk_size=134217728
+```
+
 ### innodb_buffer_pool_size
   * InnoDB 스토리지에서 가장 중요한 옵션 
   * 버퍼 풀은 디스크의 데이터를 메모리에 캐싱함과 동시에 데이터의 변경을 버퍼링 하는 역활
@@ -41,7 +70,7 @@ innodb_buffer_pool_size = 25G
 innodb_log_buffer_size = 32M
 innodb_log_file_size = 2048M
 innodb_log_files_in_group = 2
-```
+```               
 
 ### innodb_log_file_size
 * redo 로그파일은 1개이상의 파일로 구성되며 순환되면서 사용됨 
