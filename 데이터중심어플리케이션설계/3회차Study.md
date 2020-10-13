@@ -226,8 +226,6 @@ SELECT ?personName WHERE {
 * 각 데이터 모델은 각자의 쿼리언어나 프레임 워크 제공함
   * sql, 맵리듀스, 몽고DB 집계 파이프라인, 사이퍼, 스파클, 데이터로그 
   
-
-
 ## Append
 ### neo4j 설치 하기 
 * https://neo4j.com/developer/docker-run-neo4j/

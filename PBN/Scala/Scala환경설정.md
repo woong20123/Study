@@ -1,0 +1,1 @@
+* https://kalipso.github.io/2018/01/04/Setup-Spark-in-ScalaIDE-and-WordCount-example/
