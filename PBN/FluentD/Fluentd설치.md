@@ -135,29 +135,52 @@ sudo gem install fluent-plugin-kafka
 ```
 
 ```
-<match PersonalStrava>
+
+## File input
+## read apache logs continuously and tags td.apache.access
+<source>
+  @type tail
+  @id input_tail
+  <parse>
+    @type ltsv
+  </parse>
+  path /var/log/td-agent/performenceData.log
+  pos_file /var/log/td-agent/performenceData.log.pos
+  tag kafka.to
+</source>
+
+
+<match **>
   @type kafka2
 
   brokers 172.19.138.12:9092
-  default_topic PersonalStrava
+  default_topic test-none
 
   <format>
-    @type json
+    @type ltsv
   </format>
 
   # Optional. See https://docs.fluentd.org/v/1.0/configuration/inject-section
 
   # See fluentd document for buffer related parameters: https://docs.fluentd.org/v/1.0/configuration/buffer-section
   # Buffer chunk key should be same with topic_key. If value is not found in the record, default_topic is used.
-  <buffer PersonalStrava>
-    flush_interval 3s
+  <buffer test_none>
+    @type file
+    path /var/log/td-agent/buffer_test
+    chunk_limit_size 5MB
+    total_limit_size 2048MB
+    flush_interval 1s
   </buffer>
 
-  # ruby-kafka producer options
-  compression_codec snappy
-</match>
+  max_send_limit_bytes 100000
 
+  # ruby-kafka producer options
+  # compression_codec gzip
+</match>
 ```
+* Kafka - Broker: Message size too large 에러 메시지 발생시
+* 카프카 /usr/local/kafka/config/server.properties
+  * message.max.bytes=15242880 설정
 
 ### 백업 폴더
 * /tmp/fluent/backup
@@ -168,6 +191,7 @@ sudo apt-get install build-essential autoconf automake libtool libsnappy-dev
 gem install snappy --no-document
 ```
 
+### 파일로 전송하려면
 
 
 ## td-agent는 무엇입니까?
@@ -177,3 +201,7 @@ gem install snappy --no-document
 * 이 설치 가이드는 td-agent v3/v4 용입니다. 
 * td-agent v3/v4 코어에서 fluentd v1을 사용합니다. \
 
+
+## 테스트
+gzip : 448MB, 6분
+none : 2.1GB, 3분
