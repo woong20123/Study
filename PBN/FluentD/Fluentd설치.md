@@ -167,7 +167,7 @@ sudo gem install fluent-plugin-kafka
   <buffer test_none>
     @type file
     path /var/log/td-agent/buffer_test
-    chunk_limit_size 5MB
+    chunk_limit_size 10MB
     total_limit_size 2048MB
     flush_interval 1s
   </buffer>
@@ -203,5 +203,33 @@ gem install snappy --no-document
 
 
 ## 테스트
-gzip : 448MB, 6분
-none : 2.1GB, 3분
+### 테스트 환경
+* 청크의 크기는 10M
+
+### 처리 offset
+* 4814628
+* 4814636
+* 4814635
+
+### 압축률
+|압축타입|데이터사이즈|압축률|처리시간|
+|:--|:--:|:--:|:--:|
+|none|2,070MB|100%|3분30초|
+|gzip|448MB|21.6%|4분 30초|
+|snappy|753MB|36.3%|3분30초|
+
+### CPU사용량
+* none과 snappy의 경우 26%
+* gzip인 경우 32% 였다가 후반부에 10%로 다운됨
+
+### 네트워크 사용량
+* none > snappy > gzip의 순서를 가짐
+* 압축률과 매우 비슷한 모양을 보임 
+
+
+
+* none : Thu Oct 15 15:13:51 KST 2020
+* 원본 데이터 1980MB
+* none 15:13:45 -> 17:15 => 3분 30초
+* snappy 15:20:30 -> 24:00 => 3분 30초
+* snappy 15:27:45 -> 32:15 => 4분 30초
