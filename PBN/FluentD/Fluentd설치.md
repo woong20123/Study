@@ -210,6 +210,9 @@ gem install snappy --no-document
 * 4814628
 * 4814636
 * 4814635
+* 16732005
+* 17627059
+* 17208519
 
 ### 압축률
 |압축타입|데이터사이즈|압축률|처리시간|
@@ -217,6 +220,13 @@ gem install snappy --no-document
 |none|2,070MB|100%|3분30초|
 |gzip|448MB|21.6%|4분 30초|
 |snappy|753MB|36.3%|3분30초|
+
+
+|압축타입|데이터사이즈|압축률|처리시간|
+|:--|:--:|:--:|:--:|
+|none|7,319MB|100%|2분45초|
+|gzip|1,621MB|22.1%|2분 45초|
+|snappy|2,782MB|38.0%|2분45초|
 
 ### CPU사용량
 * none과 snappy의 경우 26%
@@ -233,3 +243,52 @@ gem install snappy --no-document
 * none 15:13:45 -> 17:15 => 3분 30초
 * snappy 15:20:30 -> 24:00 => 3분 30초
 * snappy 15:27:45 -> 32:15 => 4분 30초
+
+### FluentD 버퍼링 설정 옵션
+* https://docs.fluentd.org/configuration/buffer-section
+* chunk_limit_size 
+  * memory : 8MB, file : 256MB
+  * 개별 청크의 크기 : 이벤트는 다음 청크로 기록됩니다. 덩어리의 크기는 이 크기가 됩닏.
+* chunk_limit_records
+  * 선택조건
+  * 각 chunk가 저장할 수 있는 이벤트 수
+* total_limit_size
+  * 플러그인 인스턴스의 버퍼 제한 
+  * 저장된 버퍼의 총 크기가 임계값에 도달하면 모든 추가 작업이 에러와 함께 실패합니다. 
+* queue_limit_length
+  * v1에서는 total_limit_size를 사용
+* chunk_full_threshold
+  * flushing을 위한 청크의 한계 값
+  * 출력 플러그인은 청크 크기가 실제로 도달하면 flush합니다. 
+* queued_chunks_limit_size
+  * flush_thread_count 동일한 값이어야함
+  * 대기중인 청크 수를 제한합니다
+
+### FluentD Flushing 설정 옵션
+* flush_at_shutdown
+  * 종료시 모든 버퍼 청크를 플러시 할지 여부를 지정합니다. 
+* flust_mode
+  * lazy : 시간당 한번 청크를 플러시/쓰기합니다.
+  * interval : 다음을 통해서 지정된 시간당 청크를 플러시/쓰기 합니다. 
+    * flush_interval
+  * immediate
+    * 이벤트가 추가 된 직후에 청크를 플러시/쓰기 합니다. 
+* flush_interval
+  * 기본값 60s
+* flush_thread_count
+  * 청크를 병렬로 플러시/쓰기 할 스레드 수
+* flush_thread_interval
+  * 대기중인 청크가 없을 때 휴식하는 시간 
+* flush_thread_burst_interval
+  * 출력이 출력될 때 플러시 사이 스레드에 대한 휴면 간격
+
+
+### Performance Turning
+* https://docs.fluentd.org/deployment/performance-tuning-single-process
+* 이 문서에는 단일 프로세스 내에서 FluentD 성능을 최적화 하는 방법을 설명합니다. 
+* 만약 트래픽이 초당 5000개인 경우 다음 기술로 충분합니다. 
+* 트래픽이 많을 수록 FluentD는 CPU에 더 많이 의존하는 경향이 있습니다. 
+* 이 경우에는 다중 작업자 기능 사용을 고려하세요
+  * https://docs.fluentd.org/deployment/multi-process-workers
+* os 설정을 체크하세요
+  * https://docs.fluentd.org/installation/before-install
