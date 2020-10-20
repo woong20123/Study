@@ -20,6 +20,8 @@
 * 해당 hash map의 크기가 메모리보다 커지게 되면 Swap 메모리가 발생되어 성능 저하가 발생  
   * 만약에 디스크에서 해시 맵을 유지 할 경우 랜덤 접근 I/O 발생
 * 범위 질의에 비효율적이기 때문에 검색 범위가 일정크기 이상이면 fullscan이 더 효율적임
+
+#### 카프카의 데이터 로그 저장 방식이 해시 색인 방식을 사용합니다. 
   
 ### Appendix
 
@@ -81,3 +83,28 @@
 
 
 ## SS테이블과 LSM트리
+### SS테이블(Sorted String Table)
+* 로그 구조화 저장소의 세그먼트의 데이터를 키 값을 기준으로 정렬해서 관리하는 데이터 구조
+### SS테이블 장점
+* 세그먼트에 내의 데이터가 정렬되어 있기 때문에 부분 데이터를 읽고 병합이 가능함
+* 특정 키를 검색하기 위해서 모든 키의 인덱스를 메모리에 유지 할 필요 없음
+  * 정렬되어 있기 때문에 드문드문 인덱스를 생성할 수 있음
+* 희소 인덱스의 구간 만큼 블록을 그룹화해서 단위별로 압축 가능 
+  
+### SS테이블 관리 방법
+* 데이터 생성 흐름
+  * InputData -> 인메모리(memtable) -> (일정 크기에 도달) -> 디스크(SSTable)
+* memtable이란 인메모리에 유지되는 밸런스 트리 구조(B tree)
+* 장애발생시 memtable 데이터가 유실을 방지하기 위해서 로그를 따로 유지 해야 함
+
+### LSM 트리(Log-Structured Merge-Tree) 
+* 
+
+
+### Appendix
+#### 구글의 빅테이블
+* 카산드라와 HBase는 구글의 빅테이블 논문(2006년 osdi, SStable MemTable용어)에서 영감을 얻었음
+* 빅테이블 설명 
+  * https://cloud.google.com/bigtable/docs/overview?hl=ko
+* 논문 주소
+  * https://static.googleusercontent.com/media/research.google.com/ko//archive/bigtable-osdi06.pdf?hl=ko
