@@ -134,5 +134,8 @@ spring.datasource.result.jdbc-url=jdbc:mysql://172.19.153.153:3306/pbn?serverTim
 
 ### 참조 사이트 
 * https://spring.io/guides/gs/accessing-data-jpa/#scratch
+
+### spring rest doc
+* https://docs.spring.io/spring-restdocs/docs/2.0.5.RELEASE/reference/html5/
   
 

@@ -30,6 +30,9 @@ https://seohs.tistory.com/488
 ### Ctrl + F
 기본 검색
 
+### Ctrl + H
+프로젝트 검색
+
 ## 소스 편집
 ### Ctrl + Space
 입력중에 완성 기능 호출
@@ -47,3 +50,4 @@ Windows > Preferences > Java > Code Style > Code Templates
 
 ## 자동 주석 설정
 * Windows > Preferences > java > Code Style > Code Templates > Comments
+* ALT + SHIFT + J

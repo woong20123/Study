@@ -1,3 +1,6 @@
+## 관련 document 경로
+* https://docs.spring.io/spring-data/cassandra/docs/3.0.4.RELEASE/reference/html/#reference
+
 ## 필요한 의존성
 * Spring Data for Apache Cassandra
 * Srping Data JPA
