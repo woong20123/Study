@@ -7,14 +7,6 @@ int main(int argc, char *argv[])
     std::cout << "a = " << a << std::endl;
 
     TGD::TGDString ts;
-    std::cout << "maxsize = " << ts.MaxSize() << std::endl;
-
-    std::string b;
-    b.length();
-    b.append("1");
-    b.append("12");
-    b.append("123");
-    b.append("123456");
-    b.append("12345678999999999999999999999999999999999999999999999999999999999999999");
+    std::cout << "max size = " << ts.MaxSize() << std::endl;
     return 0;
 }
