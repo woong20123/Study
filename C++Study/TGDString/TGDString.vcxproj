@@ -139,7 +139,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="TGDBasicString.h" />
+    <ClInclude Include="TGDString.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />

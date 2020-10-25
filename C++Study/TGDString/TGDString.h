@@ -41,7 +41,7 @@ namespace TGD
 
         /// @brief TGDSting의 내부 문자열 전용 메모리를 예약하는 함수
         /// @param reserved 예약할 메모리 크기
-        void Reserve(size_t reserved);
+        void Reserve(const size_t reserved);
 
         /// @brief TGDSting의 문자열 길이를 리턴하는 함수
         /// @return TGDSting의 문자열 길이
@@ -66,7 +66,7 @@ namespace TGD
 
         /// @brief TGD String의 최대 사이즈를 리턴합니다.
         /// @return TGD String의 최대 사이즈
-        constexpr size_t MaxSize() noexcept
+        constexpr static size_t MaxSize() noexcept
         {
             return static_cast<std::uint64_t>(-1);
         }
@@ -89,12 +89,12 @@ namespace TGD
 
         /// @brief 메모리 재할당이 필요한지 체크한 후에 필요한 경우 메모리를 재할당합니다. 
         /// @param needMemSize 필요한 메모리의 크기
-        void ReallocateGrowby(size_t needMemSize);
+        void ReallocateGrowby(const size_t needMemSize);
 
         /// @brief 재할당시 필요한 메모리 사이즈를 구하는 함수
         /// @param newSize 최소 새로 할당 해야할 메모리 사이즈 
         /// @return 실제로 할당할 메모리 사이즈 
-        size_t GetGrowth(size_t newSize);
+        const size_t GetGrowth(const size_t newSize) const;
 
         /// @brief TGDBasicString가 생성시 기본적으로 메모리를 할당하는데 사용하는 함수
         /// 기본 할당 메모리를 사용하면 재할당 횟수를 줄여서 최적화에 도움이 됩니다. 
@@ -104,15 +104,15 @@ namespace TGD
         /// @param elems 입력된 Element's 
         /// @param compareSize 비교할 문자 길이
         /// @return 같으면 0, 다르면 -1, 1
-        int Compare(const Element* elems, size_t compareSize) const noexcept;
+        int Compare(const Element* elems, const size_t compareSize) const noexcept;
 
         /// @brief 입력된 Element's 의 크기를 구하는 함수 
         /// @param elems 입력된 Element's 
         /// @return Element's 크기를 리턴
         size_t Strlen(const Element* elems) const noexcept;
 
-        void Memcpy(Element* dest, Element* source, size_t copySize);
-        void MemZeroSet(Element* dest, size_t setSize);
+        void Memcpy(Element* dest, Element* source, const size_t copySize);
+        void MemZeroSet(Element* dest, const size_t setSize);
 
         // 기본 메모리 할당 사이트
         static constexpr size_t DEFAULT_ALLOCATE_SIZE = 15;
@@ -164,7 +164,7 @@ namespace TGD
     }
 
     template<typename Element>
-    void TGDBasicString<Element>::Reserve(size_t newReserved)
+    void TGDBasicString<Element>::Reserve(const size_t newReserved)
     {
         if (this->reserved < newReserved) {
             ReallocateGrowby(newReserved);
@@ -235,9 +235,9 @@ namespace TGD
     }
 
     template<typename Element>
-    size_t TGDBasicString<Element>::GetGrowth(size_t newSize)
+    const size_t TGDBasicString<Element>::GetGrowth(const size_t newSize) const
     {
-        auto newAllocSize = newSize | DEFAULT_ALLOCATE_SIZE;
+        const auto newAllocSize = newSize | DEFAULT_ALLOCATE_SIZE;
 
         // can not exceed the max size
         if (newAllocSize > MaxSize())
@@ -275,9 +275,9 @@ namespace TGD
     }
 
     template<typename Element>
-    int TGDBasicString<Element>::Compare(const Element* elems, size_t compareSize) const noexcept
+    int TGDBasicString<Element>::Compare(const Element* elems, const size_t compareSize) const noexcept
     {
-        for (int i = 0; i < compareSize; i++) {
+        for (size_t i = 0; i < compareSize; i++) {
             if (ptr[i] != elems[i])
             {
                 return ptr[i] < elems[i] ? -1 : 1;
@@ -299,12 +299,12 @@ namespace TGD
     }
 
     template<typename Element>
-    void TGDBasicString<Element>::Memcpy(Element * dest, Element* source, size_t copySize)
+    void TGDBasicString<Element>::Memcpy(Element * dest, Element* source, const size_t copySize)
     {
         ::memcpy(reinterpret_cast<void*>(dest), reinterpret_cast<void*>(source), copySize * ElementSize());
     }
     template<typename Element>
-    void TGDBasicString<Element>::MemZeroSet(Element* dest, size_t setSize)
+    void TGDBasicString<Element>::MemZeroSet(Element* dest, const size_t setSize)
     {
         ::memset(reinterpret_cast<void*>(dest), 0, setSize * ElementSize());
     }
