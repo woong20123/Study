@@ -51,3 +51,8 @@ Windows > Preferences > Java > Code Style > Code Templates
 ## 자동 주석 설정
 * Windows > Preferences > java > Code Style > Code Templates > Comments
 * ALT + SHIFT + J
+
+## 이클립스 에러 발생시
+```java
+!MESSAGE Unable to load resource platform:/plugin/org.eclipse.platform. 
+```

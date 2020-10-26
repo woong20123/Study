@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <title>카산드라 데이터 모델링 특징</title>
+        <style>
+</style>
+        
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/markdown.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/highlight.css">
+<style>
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe WPC', 'Segoe UI', system-ui, 'Ubuntu', 'Droid Sans', sans-serif;
+                font-size: 14px;
+                line-height: 1.6;
+            }
+        </style>
+        <style>
+.task-list-item { list-style-type: none; } .task-list-item-checkbox { margin-left: -20px; vertical-align: middle; }
+</style>
+        
+        
+        
+    </head>
+    <body class="vscode-light">
+        <h2 id="카산드라-데이터-모델링-특징">카산드라 데이터 모델링 특징</h2>
+<ul>
+<li>쿼리 기반 데이터 모델링
+<ul>
+<li>ex) 어떤 쿼리가 필요하면 그것에 최적화된 테이블을 생성</li>
+</ul>
+</li>
+<li>읽기를 빠르게 하기 위해서 비정규화를 통해 데이터를 중복적재 합니다.</li>
+<li>카산드라는 조인을 지원하지 않으므로 필요한 데이터는 한 테이블에 구성되어야 합니다.</li>
+</ul>
+<h2 id="파티션partition">파티션(partition)</h2>
+<ul>
+<li>카산드라는 노드 클러스터에 데이터를 저장하는 분산 데이터 베이스입니다.</li>
+<li>파티션 키를 해싱 처리하여 스토리지 노드에 데이터를 분산시킵니다.</li>
+<li>파티션 키를 통해서 해시 테이블로 분산된 데이터를 빠르게 접근 할 수 있습니다.</li>
+<li>쿼리를 작성할 때 파티션이 적게 사용 될 수록 응답시간이 빨라집니다.</li>
+</ul>
+<h2 id="파티션-키partition-key-및-클러스터링-키clustering-key-생성-방식">파티션 키(partition key) 및 클러스터링 키(clustering key) 생성 방식</h2>
+<ul>
+<li>partition key는 primary key의 첫번째 필드로부터 생성됩니다.</li>
+<li>primary key의 나머지 필드는 clustering키가 됩니다.</li>
+</ul>
+<pre><code class="language-sql"><div><span class="hljs-keyword">CREATE</span> <span class="hljs-keyword">TABLE</span> t (
+   <span class="hljs-keyword">id</span> <span class="hljs-built_in">int</span>,
+   c <span class="hljs-built_in">text</span>,
+   k <span class="hljs-built_in">int</span>,
+   v <span class="hljs-built_in">text</span>,
+   PRIMARY <span class="hljs-keyword">KEY</span> (<span class="hljs-keyword">id</span>, c)
+);
+</div></code></pre>
+<ul>
+<li>예를 들면 위의 예제 테이블의 경우 id 필드는 partition key가 되고 c 필드는 clustering key가 됩니다.</li>
+<li>만약에 PRIMARY KEY(id) 였다면  id 필드는 partition key이고 clustering key는 없습니다.
+<ul>
+<li>partition key만 필수 조건입니다.</li>
+</ul>
+</li>
+<li>앞서 설명한 것과 같이 partition key의 역활은 해싱 처리를 통한 클러스터의 노드들에 데이터를 분산시키는데 사용 됩니다.</li>
+<li>clustering key는 파티션안에서 데이터를 정렬 시키는데 사용되는 값입니다.</li>
+</ul>
+<pre><code class="language-sql"><div><span class="hljs-keyword">CREATE</span> <span class="hljs-keyword">TABLE</span> t2 (
+   id1 <span class="hljs-built_in">int</span>,
+   id2 <span class="hljs-built_in">int</span>,
+   c1 <span class="hljs-built_in">text</span>,
+   c2 <span class="hljs-built_in">text</span>
+   k <span class="hljs-built_in">int</span>,
+   v <span class="hljs-built_in">text</span>,
+   PRIMARY <span class="hljs-keyword">KEY</span> ((id1,id2),c1,c2)
+);
+</div></code></pre>
+<ul>
+<li>위의 예제 테이블 처럼 partition key도 복합 키(id1, id2 필드)로 구성될 수 있습니다.</li>
+<li>id1, id2 필드는 partition key가 되고 c1, c2 필드는 clustering key가 됩니다.</li>
+</ul>
+<h2 id="데이터-모델링의-목표">데이터 모델링의 목표</h2>
+<ul>
+<li>primary key와 partition key를 선택하는 것은 클러스터에 데이터를 균등하게 분산하기 위해서 중요합니다.</li>
+<li>쿼리를 위해서 읽어야 하는 파티션의 수를 최소한으로 유지하는 것이 중요합니다.
+<ul>
+<li>이유
+<ul>
+<li>서로 다른 파티션은 다른 노드에 있을 수 있고 만약 그렇다면 각 노드들에게 Request 해야 하는 비용이 발생</li>
+<li>파티션이 동일한 노드에 있더라도 더 적은 파티션이 효율적임</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h2 id="관계형-데이터-모델과-비교">관계형 데이터 모델과 비교</h2>
+<ul>
+<li>카산드라는 join을 지원하지 않습니다.</li>
+<li>카산드라 데이터 중복에 대해서 비정규화를 통해 중복적으로 데이터 적재합니다.</li>
+<li>카산드라는 쿼리 기반으로 테이터 모델을 설계합니다.</li>
+<li>만약에 카산드라가 엔티티간의 복잡성을 완전히 통합하지 못한다면 Client Side Join을 수행할 수있습니다.
+<ul>
+<li>Client Side Join란 간단히 클라이언트에서 여러개의 쿼리를 요청해서 조합하는 것을 말합니다.</li>
+<li>이런 상황이라면 디자인에 대한 재설계가 중요 할듯</li>
+</ul>
+</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th style="text-align:center"></th>
+<th style="text-align:center">관계형 데이터</th>
+<th style="text-align:center">카산드라</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">Join</td>
+<td style="text-align:center">사용가능</td>
+<td style="text-align:center">사용불가</td>
+</tr>
+<tr>
+<td style="text-align:center">무결성</td>
+<td style="text-align:center">있음</td>
+<td style="text-align:center">없음</td>
+</tr>
+<tr>
+<td style="text-align:center">디자인 설계</td>
+<td style="text-align:center">테이블 관계 기반</td>
+<td style="text-align:center">쿼리 기반</td>
+</tr>
+<tr>
+<td style="text-align:center">데이터중복</td>
+<td style="text-align:center">정규화</td>
+<td style="text-align:center">비정규화</td>
+</tr>
+</tbody>
+</table>
+<h2 id="데이터-모델링-고려사항">데이터 모델링 고려사항</h2>
+<ul>
+<li>파티션 설계시 고려사항
+<ul>
+<li>파티션안의 Value는 10만개 이하로 유지</li>
+<li>디스크 공간을 100MB 이하로 유지</li>
+</ul>
+</li>
+<li>어쩔 수 없이 설계상 카산드라는 중복 데이터를 사용할 수 있지만 최소한으로 유지하려고 노력 해야 합니다.</li>
+<li>LWT는 성능에 영향을 미칠 수 있으므로 LWT를 사용하는 쿼리는 최소로 유지해야합니다.
+<ul>
+<li>LWT는 if절을 지원하는 update, insert 구문</li>
+<li>Compare and Set이라고 불림</li>
+<li>CAS(Compare and Set) coordinator들간의 통신작업으로 작업시간이 4배정도 증가합니다.</li>
+</ul>
+</li>
+</ul>
+<h2 id="데이터-모델링-예제">데이터 모델링 예제</h2>
+<p><img src="file:///c:\Users\woong20123\Documents\GitHub\Study\PBN\cassandra\img\cassandra_modeling_example.png" alt="예제"></p>
+<ul>
+<li>예를 들어 위의 그림과 같이 Magazine이라는 데이터 구조로 구성된 데이터 셋트가 있습니다.</li>
+<li>만약 사용자가 magazine의 이름과 발생빈도(frequency)를 나열하기 위한 Q1 쿼리가 필요합니다.</li>
+<li>Q1 쿼리를 기반으로 필요한 데이터를 구성해서 magazine_name이라는 테이블을 만듭니다.</li>
+<li>id를 partition key를 가진 테이블입니다.</li>
+</ul>
+<pre><code class="language-sql"><div><span class="hljs-keyword">CREATE</span> <span class="hljs-keyword">TABLE</span> magazine_name(<span class="hljs-keyword">id</span> <span class="hljs-built_in">int</span> PRIMATRY <span class="hljs-keyword">KEY</span>, <span class="hljs-keyword">name</span> <span class="hljs-built_in">text</span>, frequency <span class="hljs-built_in">text</span>);
+</div></code></pre>
+<ul>
+<li>또 다른 쿼리인 Q2는 publisher 별로 모든 magazine의 이름과 발생 빈도를 나열해야 합니다.</li>
+<li>Q2를 기반으로 publisher를 partition key로 가지고 id를 clustering key를 가진 테이블을 생성합니다.</li>
+</ul>
+<pre><code class="language-sql"><div><span class="hljs-keyword">CREATE</span> <span class="hljs-keyword">TABLE</span> magazine_pulisher (publisher <span class="hljs-built_in">text</span>, <span class="hljs-keyword">id</span> <span class="hljs-built_in">int</span>, <span class="hljs-keyword">name</span> <span class="hljs-built_in">text</span>, frequency <span class="hljs-built_in">int</span>, PRIMARY <span class="hljs-keyword">KEY</span>(publisher, <span class="hljs-keyword">id</span>) <span class="hljs-keyword">WITH</span> <span class="hljs-keyword">CLUSTERING</span> <span class="hljs-keyword">ORDER</span> <span class="hljs-keyword">BY</span>(<span class="hljs-keyword">id</span> <span class="hljs-keyword">DESC</span>));
+</div></code></pre>
+<ul>
+<li>쿼리 기반으로 최적화 하기 위해서 비정규화를 중복된 데이터 적재가 발생합니다.</li>
+</ul>
+<h1 id="materialized-view">Materialized View</h1>
+<ul>
+<li>4.0부터 지원합니다.</li>
+<li>기 능
+<ul>
+<li>단일 테이블에 대해서 여러 쿼리를 구현할 수 잇습니다.</li>
+<li>기본 테이블을 기준으로 새로운 primary key와 새로운 요소로 작성된 테이블입니다.</li>
+<li>기본 테이블의 데이터가 변경되면 MV에 데이터가 자동으로 적용됩니다.</li>
+</ul>
+</li>
+</ul>
+<h2 id="참조">참조</h2>
+<ul>
+<li><a href="https://cassandra.apache.org/doc/latest/data_modeling/intro.html">https://cassandra.apache.org/doc/latest/data_modeling/intro.html</a></li>
+</ul>
+
+    </body>
+    </html>

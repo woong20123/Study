@@ -24,7 +24,6 @@
 #### 카프카의 데이터 로그 저장 방식이 해시 색인 방식을 사용합니다. 
   
 ### Appendix
-
 #### 카산드라에서 Row Tombstones
 * Cassandra에서 삭제 요청을 받으면 실제로 데이터를 삭제하지 않고 tombstone이라고 기록을 합니다.
 * tombstone표시된 데이터는 쿼리에 나타나지 않습니다.
@@ -72,7 +71,15 @@
 #### 해시 알고리즘
 * 해시 함수란 임의 길이의 데이터를 고정된 길이의 데이터로 매핑하는 함수 뜻함. 함수에 의해서 얻어지는 값을 해시라고 불름
 * 해시 충돌 해소 방법
-
+  * Open addressing(linear probing)
+    * 버킷당 들어갈수 있는 엔트리가 하나뿐인 해시 테이블
+    * 충돌 발생시 비어있는 공간을 찾아서 넣어줍니다. 
+  * Separate Chaining
+    * 충돌 발생시 첫부분을 링크드 리스트로 구성함
+  * 데이터가 적다면 Open addressing가 유리하지만 데이터가 많다면 Separete Chaning 유리함
+* Java8에서의 개선된 해시 충돌 개선
+  * 충돌된 데이터가 8개가 모이면 링크드 리스트(레드블랙트리)로 변경
+  * 다시 해당 값이 6개가 되면 링크드 리스트(레드블랙트리)로 변경
 
 ## SS테이블과 LSM트리
 ### SS테이블(Sorted String Table)
@@ -102,6 +109,28 @@
     * https://cassandra.apache.org/doc/latest/operating/compaction/lcs.html#lcs
   * 카산드라는 두가지 모두 지원
 
+* leveled compaction 번역
+  * SizeTieredCompactionStrategy (STCS)의 기본 아이디어는 동일한 크기의 안정된 데이터를 병합하는 것입니다. 
+  * 모든 SStable은 크기에 따라서 서로 다른 버킷에 배치됩니다. 
+  * 버킷안에 있는 sstable들의 평균 크기가 bucket_low와 bucket_high 사이라면 sstable이 버킷에 추가됩니다. 
+  * 여러개의 버킷들이 생성되고 가장 interesting 한 버킷들은 컴팩션 될 것입니다. 
+  * interesting 한것에 대한 판정은 bucket의 sstable들 중에 가장 많이 read를 하는 것을 파악하는 것입니다. 
+* Major compaction
+  * STCS로 major 컴팩션이 수행 될 때 데이터 디렉토리당 두개의 sstable들이 생성됩니다. 
+    * (하나는 복구된 데이터이고 하나는 복구되지 않은 데이터용)
+* STCS options
+  * min_sstable_size (기본값 : 50MB)
+    * 이값보다 sstable이 작다면 동일한 버킷에 담깁니다. 
+  * bucket_low (기본값 : 0.5)
+    * SStable이 버켓에 포함되지 않으려면 버킷의 평균 크기보다 훨씬 작아야 하는가?
+    * `bucket_low * avg_bucket_size < sstable_size`이라면 sstable은 버켓에 추가됩니다. 
+  * bucket_high  (기본값 : 1.5)
+    * 버켓의 평균 크기보다 얼마나 크다면 SStable이 버켓이 포함되지 않는 지정하비다. 
+    * `sstable_size < bucket_high * avg_bucket_size`이라면 sstable은 버켓에 추가됩니다. 
+
+### 카산드라에서 버킷
+* 노드와 버킷과 비슷한 구조로 생각되는듯 
+* https://cassandra.apache.org/doc/latest/architecture/dynamo.html?highlight=bucket
 
 ### Appendix
 #### 블룸 필터란
@@ -122,22 +151,57 @@
 |부정오류(false negative)|집합에 속하지 않음|집합에 속함|
 
 #### 카산드라의 블룸 필터 (번역, 요약 필요)
-* 카산드라는 Ram에 있는 데이터를 디스크에 병합합니다. 
 * 요청되는 파티션의 모든 SSTable 풀 스캔을 방지하기 위해서 블룸 필터라는 데이터구조 사용
 * 블룸필터는 카산드라가 2가지 상태중에 하나인지 결정할 수 있는 확률적 데이터 구조입니다.
-  * 파일에 데이터가 확실이 존재하지 않는다.
-  * 데이터가 파일에 있을 수도 있음
-* 블룸필터는 주어진 SSTable에 데이터가 존재한다고 보장할 수 없지만 더 많은 RAM을 사용하게 하면 조금 더 정확하게 만들 수 있습니다 
-* 테이블 별로 bloom_filter_fp_chance 값을 0 ~ 1사이의 소수점으로 조절할 수 있습니다. 
-* bloom_filter_fp_chance 기본값은 0.01이고 LeveledCompactionStrategy은 0.1입니다.
-* 블룸 필터는 램에 저장되고 offHeap에 저장되기 때문에 운영자는 최대 힙크기 블룸필터 크기를 고려하지 않아도 됩니다. 
-* 정확도가 향상 됨으로써 메모리 사용량이 비선형적으로 증가합니다. (0에 가까워질수록 정확도 증가)
-  * bloom_filter_fp_chance인 0.01인 경우는 0.1보다 3배의 메모리를 필요로 합니다. 
-* 카산드라의 인스턴스 장비의 램과 디스크의 상태에 따라서 조절해야합니다. 
-  * 램이 넉넉하고 디스크를 아껴야 한다면 bloom_filter_fp_chance을 낮게 유지
+  * 긍정오류만 발생
+    * 필터에서 존재하지 않으면 데이터는 존재하지 않는다.
+    * 필터에서 존재한다고 해서 데이터가 존재한다고 100% 가정 불가
+* 카산드라에서는 `bloom_filter_fp_chance`(0 ~ 1) 변수를 통해서 블룸필터의 정확도를 조절 할 수 있음
+  * `bloom_filter_fp_chance` 낮을 수록 정확도 증가
+  * 정확도가 높을 수록 Ram소비 증가
+  * `bloom_filter_fp_chance`인 0.01(오차율 1%)인 경우는 0.1(오차율 10%)보다 3배의 메모리를 필요로 합니다. 
+* 블룸 필터는 램에 저장되고 offHeap에 저장되기 때문에 운영자는 최대 힙크기 블룸필터 크기를 고려하지 않아도 됨
 
 #### 참조 사이트
 * https://meetup.toast.com/posts/192
 * https://cassandra.apache.org/doc/latest/operating/bloom_filters.html?highlight=bloom%20filter
 
 ## B-Tree
+* 가장 널리 사용되는 색인 구조
+* 범위 검색과 키-값 검색에 효율적 
+* 페이지 단위로 데이터를 관리
+* 페이지가 가득찰 경우 페이지 분할이 발생 -> 이것을 이용해서 트리는 balance를 이룬다\
+* 분기계수(branching factor)
+  * 하나의 페이지에서 참조하는 페이지의 숫자 
+  * 분기계수가 500인 4kb는 한 깊이마다 500제곱으로 크기가 증가합니다. 
+
+### B트리와 LSM 트리 비교
+* 일반적으로 LSM 트리는 쓰기가 빠르고 읽기가 느림
+  * 쓰기는 순차쓰기이고 읽기는 memtable, sstable을 순차적으로 읽어야 함
+
+### LSM 트리 장점
+* LSM은 순차쓰기 및 압축률 좋음
+* 파편화 발생 안함
+### LSM 트리 단점
+* 컴팩션으로 인한 지연현상 발생
+* 강력한 트랜젝션 지원 안됨
+
+### Appendix
+### 습득한 정보 응용
+#### 카산드라는 일반적인 SQL과 다르게 Insert시 중복된 키에 대해서 업데이트가 발생하는가?
+* LSM트리의 데이터 구조상 중복된 데이터는 컴팩션을 통해서 최신 데이터로 업데이트 됨
+* 충돌 체크를 위한 비용이 비쌈!!
+* 반면에 B-tree는 Insert시에 키에 해당하는 페이지 위치에 데이터를 기록하기 때문에 충돌 체크 바로 가능
+#### 카산드라의 디자인 구조상 파티션 키를 10MB이하로 구성 해야 하는가?
+* LSM트리 구조상 데이터의 크기가 커질수록 데이터 검색의 비용이 커진다. 
+* 일정 크기 이하로 분할 해 놓아야 최적의 성능을 보장할 수 있음
+* 반면에 B-tree는 데이터가 커진다해도 검색의 비용이 그다지 커지지 않음.
+  * 페이지의 깊이가 증가 할때마다 분기계수의 제곱만큼 데이터 크기가 커짐!
+#### Paxos 프로토콜
+* https://ko.wikipedia.org/wiki/%ED%8C%A9%EC%86%8C%EC%8A%A4_(%EC%BB%B4%ED%93%A8%ED%84%B0_%EA%B3%BC%ED%95%99)
+
+
+#### 퍼지(fuzzy) 색인
+
+#### 안티 캐싱
+#### 비휘발성 메모리(NVM)

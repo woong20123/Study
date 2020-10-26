@@ -70,4 +70,5 @@
 #### foreground로 수행 될 때 INFO level은 Console에 기록됩니다. 
 #### logback.xml을 편집하거나 notetool의 setlogginglevel 명령을 실행해서 속성을 변경할 수 있습니다. 
 
-  
+## 카산드라 복제 문서
+* https://cassandra.apache.org/doc/latest/architecture/dynamo.html?highlight=bucket#replication-strategy
