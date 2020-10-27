@@ -21,12 +21,14 @@
   * 만약에 디스크에서 해시 맵을 유지 할 경우 랜덤 접근 I/O 발생
 * 범위 질의에 비효율적이기 때문에 검색 범위가 일정크기 이상이면 fullscan이 더 효율적임
 
-#### 카프카의 데이터 로그 저장 방식이 해시 색인 방식을 사용합니다. 
+#### `카프카의 데이터 로그` 저장 방식이 해시 색인 방식을 사용합니다. 
   
 ### Appendix
 #### 카산드라에서 Row Tombstones
-* Cassandra에서 삭제 요청을 받으면 실제로 데이터를 삭제하지 않고 tombstone이라고 기록을 합니다.
-* tombstone표시된 데이터는 쿼리에 나타나지 않습니다.
+* Cassandra에서 삭제 요청을 받으면 실제로 데이터를 삭제하지 않고 tombstone이라고 기록을 하며 tombstone표시된 데이터는 쿼리에 나타나지 않습니다.
+#### tombstone을 사용하는 이유
+* 컴팩션시 한번에 데이터를 지워서 효율적인 측면도 있지만 
+* 아래 예제처럼 노드간의 데이터의 안정성을 보장하기 위함도 있음
 #### tombstone 없이 삭제되는 예제
 ```sql
 --값 A가 3개의 노드에 복제된 상태
@@ -53,23 +55,20 @@
 [A, tombstone[A]]  [A, tombstone[A]]  [A, tombstone[A]] 
 ```
 * 위의 예제에서 설명한 것 처럼 복제를 통한 복구 작업에도 삭제 작업이 문제없이 동작하도록 합니다. 
-* 이것은 디스크 공간에 tombstone 표시가 영구적으로 저장된 다는 것을 의미합니다. 
-* tombstone 표시를 영원히 유지하지 않으려면 gc_grace_seconds라는 매개변수를 사용합니다. 
 
 #### gc_grace_seconds와 tombstone 제거 
-* 테이블 단위의 gc_grace_seconds는 컴팩션을 통해서 제거하기 전에 tombstone된 데이터를  유지하는 기간을 제어합니다. 
-* 이 값은 삭제 요청이 특정 노드에 실패에 대한 복구하는데 예상되는 시간을 반영 해야 합니다.
-* gc_grace_seconds 경과하더라고 컴팩션이 발생되기 전까지 Tombstone은 삭제되지 않습니다. 
-* 만약에 gc_grace_seconds 이상 동안 node가 연결이 끊겼고 컴팩션을 통해서 tombstone이 삭제되었다면 삭제된 데이터가 복구되는 현상이 발생 할 수 있습니다.
-  * tombstone 없이 삭제되는 예제와 같은 독작
-* gc_grace_seconds의 기본값은 10일입니다. 
+* tombstone은 얼마나 유지되어야 할까요?
+* 카산드라에서는 테이블 단위로 gc_grace_seconds값으로 유지기간을 제어합니다. 
+* 이 값은 위에서 설명한 특정 노드의 삭제 실패에 대한 복구하는데 예상되는 시간이 반영되어함
+* gc_grace_seconds의 기본값은 10일
 
 #### 참조 
   * https://cassandra.apache.org/doc/latest/operating/compaction/index.html?highlight=tombstone#tombstones-and-garbage-collection-gc-grace 
   * https://docs.datastax.com/en/dse/5.1/dse-arch/datastax_enterprise/dbInternals/archTombstones.html
 
 #### 해시 알고리즘
-* 해시 함수란 임의 길이의 데이터를 고정된 길이의 데이터로 매핑하는 함수 뜻함. 함수에 의해서 얻어지는 값을 해시라고 불름
+* 해시 함수란 임의 길이의 데이터를 고정된 길이의 데이터로 매핑하는 함수 뜻함. 
+* 함수에 의해서 얻어지는 값을 해시라고 불름
 * 해시 충돌 해소 방법
   * Open addressing(linear probing)
     * 버킷당 들어갈수 있는 엔트리가 하나뿐인 해시 테이블
@@ -108,8 +107,20 @@
   * leveled compaction
     * https://cassandra.apache.org/doc/latest/operating/compaction/lcs.html#lcs
   * 카산드라는 두가지 모두 지원
-
-* leveled compaction 번역
+#### LeveledCompactionStrategy
+* LCS의 기본 아이디어느 모든 sstable들이 다른 level에 배치하여 같은 level안에 sstable이 겹치지 않음을 보장합니다.
+* 겹침이란 단일 sstable의 first/last 토큰이 다른 sstable과 겹치지 않음을 의미합니다. 
+* 즉 SELECT의 경우 레벨당 하나의 sstable 안에서 파티션 키를 찾아야 합니다.
+* 각 레벨은 이전 것보다 10배이고 각 sstable은 기본적으로 160MB입니다. 
+* L0은 sstable이 streamed/flushed되고 중복 없음이 제공됩니다. 
+* compaction 후보를 선택 할 때 compaction은 대상 level에서 겹침이 발생되지 않도록 합니다. 
+* 다음 레벨에서 모든 겹치는 sstable을 포함하야 수행됩니다. 
+* 예를 들어 L3에서 sstable을 선택하면 L4에서 겹치는 모든 sstable을 선택하도록 보장해야 하고 compaction을 시작하면 진행중인 compaction이 겹침을 생성하지 않도록 해야 합니다.
+* 겹침을 만들지 않을 것이라고 보장하면 레벨 안에서 병렬로 compaction을 시작할 수 있습니다. 
+* L0 -> L1 compaction의 경우 L0 sstable은 전체 범위를 포함하기에 대부분 모든 L1 sstable을 포함해야합니다. 
+* 너무 많은 메모리를 사용하기 때문에 하나의 compaction안에서 모든 L1 sstable과 모든 L0 sstable을 compact할 수 없습니다. 
+* https://www.datastax.com/blog/leveled-compaction-apache-cassandra
+#### SizeTieredCompactionStrategy
   * SizeTieredCompactionStrategy (STCS)의 기본 아이디어는 동일한 크기의 안정된 데이터를 병합하는 것입니다. 
   * 모든 SStable은 크기에 따라서 서로 다른 버킷에 배치됩니다. 
   * 버킷안에 있는 sstable들의 평균 크기가 bucket_low와 bucket_high 사이라면 sstable이 버킷에 추가됩니다. 
