@@ -55,4 +55,6 @@ Windows > Preferences > Java > Code Style > Code Templates
 ## 이클립스 에러 발생시
 ```java
 !MESSAGE Unable to load resource platform:/plugin/org.eclipse.platform. 
+
+eclipse -clean
 ```
