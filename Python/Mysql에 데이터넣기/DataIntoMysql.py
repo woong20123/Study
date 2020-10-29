@@ -29,7 +29,6 @@ dbcon = WSMysql.GetDBCon('root','pbn!2345','172.19.153.153','pbn')
 # csvPath='C://Users//woong20123//Documents//GitHub//Study//Python//Mysql에 데이터넣기//Data//아이템.csv', 
 # columCount=25)
 
-
 select_actor_id_lists = '''(37436171902517251,
 37436171902522464,
 37436171902524788,
@@ -49,7 +48,7 @@ select_actor_id_lists = '''(37436171902517251,
 '''
 
 # 포지션 정보 추가
-TGDselectSql='''
+selectSqlPosition='''
 SELECT b.actor_name, a.pday_minutes, a.actor_location, total_exp, total_money
 from personal_strava_record as a
 join basic_data as b 
@@ -57,10 +56,16 @@ on a.actor_id = b.actor_id
 where a.actor_id in %s
 order by a.actor_id
 ''' % select_actor_id_lists
-baseDic=WSMysql.BaseSelectMysqlToJson(dbcon,TGDselectSql,"C://Users//woong20123//Documents//GitHub//Study//Python//Mysql에 데이터넣기//Data//기본.json")
+
+baseDic = {}
+curs=WSMysql.GetSelectAllResult(dbcon, selectSqlPosition)
+for row in curs:
+    pos = row[2].split('/')
+    key = row[0]+'_'+str(row[1])
+    baseDic[key] ={"name":row[0],"time":row[1],"x":pos[0], "y":pos[1],"exp":row[3],"adena":row[4],"event":[]}
 
 # 아이템 정보 추가
-TGDselectSql='''
+selectSqlItem='''
 SELECT b.actor_name, a.time, a.item_nm
 from pbn.item_data as a
 join pbn.basic_data as b 
@@ -68,10 +73,16 @@ on a.actor_id = b.actor_id
 where a.actor_id in %s
 order by a.actor_id
 ''' % select_actor_id_lists
-WSMysql.ItemSelectMysqlToJson(baseDic,dbcon,TGDselectSql,"C://Users//woong20123//Documents//GitHub//Study//Python//Mysql에 데이터넣기//Data//아이템.json")
+curs=WSMysql.GetSelectAllResult(dbcon, selectSqlItem)
+for row in curs:
+    dt = row[1]
+    time = (int(dt.hour) * 60 + int(dt.minute)) + 1
+    key = row[0]+'_'+str(time)
+    value=baseDic[key]
+    value["event"].append({"time":time,"type":"getItem", "name":row[2],"text":row[2]})
 
 # Death 정보
-TGDselectSql='''
+selectSqlDeath='''
 SELECT b.actor_name, a.time, a.Target_Name
 from pbn.death_data as a
 join pbn.basic_data as b 
@@ -79,10 +90,16 @@ on a.actor_id = b.actor_id
 where a.actor_id in %s
 order by a.actor_id
 ''' % select_actor_id_lists
-WSMysql.DeathSelectMysqlToJson(baseDic,dbcon,TGDselectSql,"C://Users//woong20123//Documents//GitHub//Study//Python//Mysql에 데이터넣기//Data//죽음.json")
+curs=WSMysql.GetSelectAllResult(dbcon, selectSqlDeath)
+for row in curs:
+    dt = row[1]
+    time = (int(dt.hour) * 60 + int(dt.minute)) + 1
+    key = row[0]+'_'+str(time)
+    value=baseDic[key]
+    value["event"].append({"time":time,"type":"death", "name":row[2],"text":row[2]})
 
 # 레벨업 정보
-TGDselectSql='''
+selectSqlLevelup='''
 SELECT b.actor_name, a.time, a.actor_level
 from pbn.level_data as a
 join pbn.basic_data as b 
@@ -90,10 +107,17 @@ on a.actor_id = b.actor_id
 where a.actor_id in %s
 order by a.actor_id
 ''' % select_actor_id_lists
-WSMysql.LevelUpSelectMysqlToJson(baseDic,dbcon,TGDselectSql,"C://Users//woong20123//Documents//GitHub//Study//Python//Mysql에 데이터넣기//Data//레벨업.json")
-
+curs=WSMysql.GetSelectAllResult(dbcon, selectSqlLevelup)
+for row in curs:
+    dt = row[1]
+    time = (int(dt.hour) * 60 + int(dt.minute)) + 1
+    key = row[0]+'_'+str(time)
+    value=baseDic[key]
+    text = '124일 소요'
+    value["event"].append({"time":time,"type":"levelup", "name":row[2],"text":text})
+        
 # pvp 정보
-TGDselectSql='''
+selectSqlPVP='''
 SELECT b.actor_name, a.time, a.Actor_str2, a.Target_Name, a.Target_str2
 from pbn.pvp_data as a
 join pbn.basic_data as b 
@@ -101,16 +125,21 @@ on a.actor_id = b.actor_id
 where a.actor_id in %s 
 order by a.actor_id
 ''' % select_actor_id_lists
-WSMysql.PvPSelectMysqlToJson(baseDic,dbcon,TGDselectSql,"C://Users//woong20123//Documents//GitHub//Study//Python//Mysql에 데이터넣기//Data//PVP.json")
+curs=WSMysql.GetSelectAllResult(dbcon, selectSqlPVP)
+for row in curs:
+    dt = row[1]
+    time = (int(dt.hour) * 60 + int(dt.minute)) + 1
+    key = row[0]+'_'+str(time)
+    value=baseDic[key]
+    value["event"].append({"time":time,"type":"pvp", "name":row[3],"text":row[4]})
 
 # 최종 결과 저장
-resultData=[]
-for v in baseDic.values():
-    resultData.append(v)
-f=open("C://Users//woong20123//Documents//GitHub//Study//Python//Mysql에 데이터넣기//Data//Result.json", 'w+' , encoding='utf-8')
-json_val = json.dumps(resultData,ensure_ascii=False )
-f.write(json_val)
-f.close()
+resultData={}
+for k, v in baseDic.items():
+    keys = k.split('_')
+    if keys[0] not in resultData.keys() :
+        resultData[keys[0]] = []
+    resultData[keys[0]].append(v)
+WSMysql.MakeJsonFileFromDic(resultData,"C://Users//woong20123//Documents//GitHub//Study//Python//Mysql에 데이터넣기//Data//Result.json")
 
-
-dbcon.close()
+WSMysql.CloseDBCon(dbcon)
