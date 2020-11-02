@@ -141,7 +141,25 @@
 
 ### 카산드라에서 버킷
 * 노드와 버킷과 비슷한 구조로 생각되는듯 
+
+### datastax 번역 
 * https://cassandra.apache.org/doc/latest/architecture/dynamo.html?highlight=bucket
+* 그림 1
+  * size tiered compaction 으로 sstable 추가 
+  * 시간이 지남에 따라서 여러 버전의 행이 다른 sstable에 존재할 수 있습니다.
+  * 이러한 각 버전은 서로 다른 컬럼 집합이 있을 수 있습니다. 
+  * 만약 sstable이 늘어나도록 허용 된 경우, 결과를 반환하기 위해서 행을 읽으려면 다른 파일에서 많은 검색이 필요할 수 있습니다.
+  * 읽기 속도가 저하 되는 것을 방지하기 위해서 컴팩션이 백그라운드에서 실행되어 sstable을 병합합니다.
+  * 행은 각 sstable에 기본키로 정렬되어 있기 때문에 ramdon i/o 없이 성능이 발휘됨
+* 그림 2
+  * 많은 insert 후에 size-tired compaction 아래의 sstable
+  * 카산드라의 size-tired compaction 전략은 Google 빅테이블 문서에 설명된 것과 매우 유사합니다. 
+  * 비슷한 크기의 sstable이 있을 때(기본적으로 4개 ) 그것들을 병합합니다. 
+  * 그림 1에서 각 녹색 상자는 sstable을 나타내고 화살표는 compaction을 나타냅니다. 
+  * 새로운 sstable이 생성되면 처음에는 아무일도 일어나지 않고 4개가 될때 마다 압축이 일어 남
+  * 그림 2는 2단계의 sstable이 결합되어서 3단계가 되고 3단계가 결합되어서 4단계되는 것 같이 우리가 추후에 기대하는 것을 보여줍니다. 
+* 업데이트가 많은 워크로드에서 size-tiered compaction에는 세 가지 문제가 있습니다. 
+  * 
 
 ### Appendix
 #### 블룸 필터란
