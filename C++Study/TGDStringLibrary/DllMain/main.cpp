@@ -1,5 +1,3 @@
-#pragma comment(lib, "TGDStringDll.lib")
-#pragma comment(lib, "zstd.lib")
 #include "pch.h"
 #include <TGDString.h>
 #include <zstd.h>
