@@ -119,7 +119,6 @@
 * 겹침을 만들지 않을 것이라고 보장하면 레벨 안에서 병렬로 compaction을 시작할 수 있습니다. 
 * L0 -> L1 compaction의 경우 L0 sstable은 전체 범위를 포함하기에 대부분 모든 L1 sstable을 포함해야합니다. 
 * 너무 많은 메모리를 사용하기 때문에 하나의 compaction안에서 모든 L1 sstable과 모든 L0 sstable을 compact할 수 없습니다. 
-* https://www.datastax.com/blog/leveled-compaction-apache-cassandra
 #### SizeTieredCompactionStrategy
   * SizeTieredCompactionStrategy (STCS)의 기본 아이디어는 동일한 크기의 안정된 데이터를 병합하는 것입니다. 
   * 모든 SStable은 크기에 따라서 서로 다른 버킷에 배치됩니다. 
@@ -143,7 +142,8 @@
 * 노드와 버킷과 비슷한 구조로 생각되는듯 
 
 ### datastax 번역 
-* https://cassandra.apache.org/doc/latest/architecture/dynamo.html?highlight=bucket
+
+* https://www.datastax.com/blog/leveled-compaction-apache-cassandra
 * 그림 1
   * size tiered compaction 으로 sstable 추가 
   * 시간이 지남에 따라서 여러 버전의 행이 다른 sstable에 존재할 수 있습니다.
@@ -158,8 +158,20 @@
   * 그림 1에서 각 녹색 상자는 sstable을 나타내고 화살표는 compaction을 나타냅니다. 
   * 새로운 sstable이 생성되면 처음에는 아무일도 일어나지 않고 4개가 될때 마다 압축이 일어 남
   * 그림 2는 2단계의 sstable이 결합되어서 3단계가 되고 3단계가 결합되어서 4단계되는 것 같이 우리가 추후에 기대하는 것을 보여줍니다. 
-* 업데이트가 많은 워크로드에서 size-tiered compaction에는 세 가지 문제가 있습니다. 
-  * 
+  * 업데이트가 많은 워크로드에서 size-tiered compaction에는 세 가지 문제가 있습니다. 
+    * 첫번째 
+      * 얼마나 많은 sstable에 행이 분산되는지 보장되지 않기 때문에 성능이 일관되지 않습니다. 
+      * 최악의 경우 각 sstable안에 조회하려는 행의 열이 있을 수 있습니다. 
+    * 두번째 
+      * 사용되지 않는 컬럼의 빠른 병합이 보장 되지 않아서 상당향 양의 공간이 낭비될 수 있습니다. 
+      * 이는 삭제 비율이 높을 때 문제가 됩니다. 
+    * 세번째
+      * 반복되는 압축으로 인해 테이블이 커짐에 따라 공간도 문제가 될 수 있습니다.
+      * 왜냐하면 병합된 sstable이 완전히 기록 될 때까지 쓸모없는 sstable 제거할 수 없기 때문입니다.  
+      * 제거 할 쓸모없는 행이 없는 단일의 대형 테이블인 경우 
+      * 카산드라는 병합된 테이블을 작성하기 위해 compaction 되는 테이블에서 사용하는 100%의 여유공간이 필요합니다. 
+  * 그림3
+    * 카산드라 1.0에서는 구글의 크로미움팀의 LevelDB를 기반으로 한 leveled compaction 전략을 도입했습니다. 
 
 ### Appendix
 #### 블룸 필터란
