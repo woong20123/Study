@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <title>작업시 공유할 내용</title>
+        <style>
+</style>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.10.2/dist/katex.min.css" integrity="sha384-yFRtMMDnQtDRO8rLpMIKrtPCD5jdktao2TV19YiZYWMDkUR5GQZR/NOVTdquEx1j" crossorigin="anonymous">
+<link href="https://cdn.jsdelivr.net/npm/katex-copytex@latest/dist/katex-copytex.min.css" rel="stylesheet" type="text/css">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/markdown.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/highlight.css">
+<style>
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe WPC', 'Segoe UI', system-ui, 'Ubuntu', 'Droid Sans', sans-serif;
+                font-size: 14px;
+                line-height: 1.6;
+            }
+        </style>
+        <style>
+.task-list-item { list-style-type: none; } .task-list-item-checkbox { margin-left: -20px; vertical-align: middle; }
+</style>
+        
+        <script src="https://cdn.jsdelivr.net/npm/katex-copytex@latest/dist/katex-copytex.min.js"></script>
+        
+    </head>
+    <body class="vscode-light">
+        <h1 id="작업시-공유할-내용">작업시 공유할 내용</h1>
+<h2 id="static-라이브러리">static 라이브러리</h2>
+<ul>
+<li>TGDStringStatic, StaticMain 프로젝트 생성
+<ul>
+<li>TGDStringStatic는 속성 -&gt; 일반 -&gt; 구성 형식 -&gt; 정적라이브러리 설정</li>
+</ul>
+</li>
+<li>StaticMain 프로젝트에서 참조를 통해 TGDStringStatic 라이브러리 등록
+<ul>
+<li>프로젝트 우클릭 -&gt; 추가 -&gt; 참조</li>
+</ul>
+</li>
+<li>라이브러리 헤더 파일 경로 추가
+<ul>
+<li>속성 -&gt; VC++ 디렉터리 -&gt; 라이브러리 디렉터리 수정</li>
+</ul>
+</li>
+</ul>
+<h2 id="dll-라이브러리">dll 라이브러리</h2>
+<ul>
+<li>TGDStringDll, DllMain 프로젝트 추가</li>
+</ul>
+<h3 id="tgdstringdll-프로젝트">TGDStringDll 프로젝트</h3>
+<ul>
+<li>TGDStringDll 프로젝트 는 속성 -&gt; 일반 -&gt; 구성 형식 -&gt; 동적라이브러리 설정</li>
+<li>TGDStringDll의 TGDString 헤더 파일에 dllexport 셋팅</li>
+</ul>
+<pre><code class="language-c++"><div><span class="hljs-meta">#<span class="hljs-meta-keyword">ifdef</span> TGDSTRINGDLL_EXPORTS</span>
+<span class="hljs-meta">#<span class="hljs-meta-keyword">define</span> DllAPI __declspec(dllexport)</span>
+<span class="hljs-meta">#<span class="hljs-meta-keyword">else</span></span>
+<span class="hljs-meta">#<span class="hljs-meta-keyword">define</span> DllAPI __declspec(dllimport)</span>
+<span class="hljs-meta">#<span class="hljs-meta-keyword">endif</span></span>
+
+<span class="hljs-keyword">namespace</span> TGD
+{
+	<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">DllAPI</span> <span class="hljs-title">TGDString</span>
+    {</span>
+        ...
+    }
+}
+</div></code></pre>
+<ul>
+<li>TGDStringDll의 빌드 후 이벤트에서 dll, lib, h 파일을 library 폴더로 복사</li>
+</ul>
+<pre><code class="language-bash"><div>copy /Y <span class="hljs-string">"<span class="hljs-variable">$(TargetDir)</span><span class="hljs-variable">$(ProjectName)</span>.dll"</span> <span class="hljs-string">"<span class="hljs-variable">$(SolutionDir)</span>\Library\bin"</span>
+copy /Y <span class="hljs-string">"<span class="hljs-variable">$(TargetDir)</span><span class="hljs-variable">$(ProjectName)</span>.lib"</span> <span class="hljs-string">"<span class="hljs-variable">$(SolutionDir)</span>\Library\lib"</span>
+copy /Y <span class="hljs-string">"<span class="hljs-variable">$(ProjectDir)</span>TGDString.h"</span> <span class="hljs-string">"<span class="hljs-variable">$(SolutionDir)</span>\Library\include"</span>
+</div></code></pre>
+<h3 id="dllmain-프로젝트">DllMain 프로젝트</h3>
+<ul>
+<li>프로젝트 속성 -&gt; 링커 -&gt; 입력 -&gt; 추가 종속성 추가
+<ul>
+<li>zstd.lib</li>
+<li>TGDStringDll.lib</li>
+</ul>
+</li>
+<li>프로젝트 속성 -&gt; VC++ 디렉터리 -&gt; 포함 디렉터리, 라이브러리 디렉터리 셋팅
+<ul>
+<li>포함 디렉터리 : $(SolutionDir)\Library\include</li>
+<li>라이브러기 디렉터리 : $(SolutionDir)\Library\lib</li>
+</ul>
+</li>
+<li>소스 코드에 DLL 라이브러리 추가 작업</li>
+</ul>
+<pre><code class="language-c++"><div><span class="hljs-meta">#<span class="hljs-meta-keyword">pragma</span> comment(lib, <span class="hljs-meta-string">"TGDStringDll.lib"</span>)</span>
+<span class="hljs-meta">#<span class="hljs-meta-keyword">include</span> <span class="hljs-meta-string">&lt;TGDString.h&gt;</span></span>
+<span class="hljs-function"><span class="hljs-keyword">int</span> <span class="hljs-title">main</span><span class="hljs-params">(<span class="hljs-keyword">int</span> argc, <span class="hljs-keyword">char</span>* argv[])</span>
+</span>{
+	TGD::TGDString s;
+    ...
+}
+</div></code></pre>
+<h2 id="zstd-라이브러리-추가-작업">Zstd 라이브러리 추가 작업</h2>
+<ul>
+<li>vcpkg를 사용해서  zstd 라이브러리 추가</li>
+</ul>
+<pre><code class="language-bash"><div>vcpkg install zstd:x64-windows
+</div></code></pre>
+<ul>
+<li>vcpkg가 설치된 폴더의 vcpkg\installed\x64-windows 폴더에 zstd 설치됨</li>
+<li>해당 경로를 프로젝트에 추가하거나 dll, lib, header 파일을 복사해옵니다.
+<ul>
+<li>dll파일 : vcpkg\installed\x64-windows\bin</li>
+<li>lib파일 : vcpkg\installed\x64-windows\lib</li>
+<li>header 파일 : vcpkg\installed\x64-windows\include</li>
+</ul>
+</li>
+<li><a href="https://github.com/facebook/zstd/tree/dev/examples/simple_compression.c">https://github.com/facebook/zstd/tree/dev/examples/simple_compression.c</a> 소스 추가 후 테스트 완료</li>
+</ul>
+<h1 id="appendix">appendix</h1>
+<h2 id="vcpkg-관련-내용">vcpkg 관련 내용</h2>
+<h3 id="vcpkg-관련-사이트">vcpkg 관련 사이트</h3>
+<ul>
+<li><a href="https://docs.microsoft.com/ko-kr/cpp/build/vcpkg?view=msvc-160">https://docs.microsoft.com/ko-kr/cpp/build/vcpkg?view=msvc-160</a></li>
+<li><a href="https://jungwoong.tistory.com/77?category=1119236">https://jungwoong.tistory.com/77?category=1119236</a></li>
+</ul>
+
+    </body>
+    </html>
