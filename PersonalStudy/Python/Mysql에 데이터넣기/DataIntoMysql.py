@@ -49,7 +49,7 @@ select_actor_id_lists = '''(37436171902517251,
 
 # 포지션 정보 추가
 selectSqlPosition='''
-SELECT b.actor_name, a.pday_minutes, a.actor_location, total_exp, total_money, zone_code, zone_name
+SELECT b.actor_name, a.pday_minutes, a.actor_location, total_exp, total_money
 from personal_strava_record as a
 join basic_data as b 
 on a.actor_id = b.actor_id
@@ -62,7 +62,7 @@ curs=WSMysql.GetSelectAllResult(dbcon, selectSqlPosition)
 for row in curs:
     pos = row[2].split('/')
     key = row[0]+'_'+str(row[1])
-    baseDic[key] ={"name":row[0],"time":row[1],"x":pos[0], "y":pos[1],"exp":row[3],"adena":row[4], "zone_code":row[5], "zone_name":row[6],"event":[]}
+    baseDic[key] ={"name":row[0],"time":row[1],"x":pos[0], "y":pos[1],"exp":row[3],"adena":row[4],"event":[]}
 
 # 아이템 정보 추가
 selectSqlItem='''
