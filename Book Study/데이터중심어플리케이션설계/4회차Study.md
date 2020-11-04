@@ -27,7 +27,8 @@
 #### 카산드라에서 Row Tombstones
 * Cassandra에서 삭제 요청을 받으면 실제로 데이터를 삭제하지 않고 tombstone이라고 기록을 하며 tombstone표시된 데이터는 쿼리에 나타나지 않습니다.
 #### tombstone을 사용하는 이유
-* 컴팩션시 한번에 데이터를 지워서 효율적인 측면도 있지만 
+* 컴팩션시 한번에 데이터를 지워서 효율적인 측면도 있다.
+  * 대신에 컴팩션이 진행될 때 까지 쓸모없는 데이터가 유지된다. 
 * 아래 예제처럼 노드간의 데이터의 안정성을 보장하기 위함도 있음
 #### tombstone 없이 삭제되는 예제
 ```sql
@@ -141,7 +142,35 @@
 * 블룸 필터는 램에 저장되고 offHeap에 저장되기 때문에 운영자는 최대 힙크기 블룸필터 크기를 고려하지 않아도 됨
 
 ## Compaction Strategy
-#### LeveledCompactionStrategy
+#### SizeTieredCompactionStrategy 특징
+* 비슷한 크기의 sstable들을 병합하도록 구현됨 
+  * 구현 난이도 낮음
+* 데이터가 커짐에 따라 발생되는 문제
+  1. 첫번째
+     * row가 저장되는 sstable이 지정되지 않기 때문에 성능이 일관되지 않음
+     * 최악의 경우 모든 sstable에 조회하려는 row가 있을 수 있습니다.
+     
+  2. 두번째 
+     * 컴팩션의 특성상 빠른 병합이 보장되지 않기 때문에 공간 낭비 발생
+     * 특히 삭제 비율이 높을 때 발생함
+  3. 세번째
+      * 반복되는 컴팩션으로 sstable이 커지면 병합시 사용 공간이 문제가 될 수 있음
+      * sstable의 병합을 하기 위해서는 컴팩션되는 sstable의 100% 여유공간이 필요함
+
+#### LeveledCompactionStrategy 특징
+* sstable들을 레벨 단위로 나뉘어서 관리하며 sstable 작은 단위 크기로 고정됨
+* 같은 레벨의 sstable의 내용이 겹치지 않음을 보장함
+* 해당 레벨이 가득차면 다음레벨로 확장되며 다음레벨은 이전 레벨의 10배(기본값)임
+* 컴팩션 작업은 겹치는 하위레벨의 모든 sstable을 포함해서 수행됨
+* tiered compaction의 문제 해결
+    * leveled compaction은 모든 읽기의 90%가 sstable에서 충족되도록 보장합니다.(거의 균일한 행 크기 가정)
+      * 최악의 경우는 총 레벨에 의해서 제한됨
+        * 예를 들어 10TB는 7레벨
+    * 사용되지 않는 행으로 인해 최대 10% 공간이 낭비됩니다.
+    * 컴팩션을 위한 임시 공간이 테이블의 크기의 10배의 공간만 예약하면 됩니다.
+
+### 컴팩션 관련 번역 
+#### https://cassandra.apache.org/doc/latest/operating/compaction/lcs.html#lcs
 * LCS의 기본 아이디어는 모든 sstable들이 다른 level에 배치하여 같은 level안에 sstable이 겹치지 않음을 보장합니다.
 * 겹침이란 단일 sstable의 first/last 토큰이 다른 sstable과 겹치지 않음을 의미합니다. 
 * 즉 SELECT의 경우 레벨당 하나의 sstable 안에서 파티션 키를 찾아야 합니다.
@@ -153,28 +182,27 @@
 * 겹침을 만들지 않을 것이라고 보장하면 레벨 안에서 병렬로 compaction을 시작할 수 있습니다. 
 * L0 -> L1 compaction의 경우 L0 sstable은 전체 범위를 포함하기에 대부분 모든 L1 sstable을 포함해야합니다. 
 * 너무 많은 메모리를 사용하기 때문에 하나의 compaction안에서 모든 L1 sstable과 모든 L0 sstable을 compact할 수 없습니다. 
-#### SizeTieredCompactionStrategy
-  * SizeTieredCompactionStrategy (STCS)의 기본 아이디어는 동일한 크기의 안정된 데이터를 병합하는 것입니다. 
-  * 모든 SStable은 크기에 따라서 서로 다른 버킷에 배치됩니다. 
-  * 버킷안에 있는 sstable들의 평균 크기가 bucket_low와 bucket_high 사이라면 sstable이 버킷에 추가됩니다. 
-  * 여러개의 버킷들이 생성되고 가장 interesting 한 버킷들은 컴팩션 될 것입니다. 
-  * interesting 한것에 대한 판정은 bucket의 sstable들 중에 가장 많이 read를 하는 것을 파악하는 것입니다. 
+
+#### https://cassandra.apache.org/doc/latest/operating/compaction/stcs.html#stcs
+* SizeTieredCompactionStrategy (STCS)의 기본 아이디어는 동일한 크기의 안정된 데이터를 병합하는 것입니다. 
+* 모든 SStable은 크기에 따라서 서로 다른 버킷에 배치됩니다. 
+* 버킷안에 있는 sstable들의 평균 크기가 bucket_low와 bucket_high 사이라면 sstable이 버킷에 추가됩니다. 
+* 여러개의 버킷들이 생성되고 가장 interesting 한 버킷들은 컴팩션 될 것입니다. 
+* interesting 한것에 대한 판정은 bucket의 sstable들 중에 가장 많이 read를 하는 것을 파악하는 것입니다. 
 * Major compaction
-  * STCS로 major 컴팩션이 수행 될 때 데이터 디렉토리당 두개의 sstable들이 생성됩니다. 
-    * (하나는 복구된 데이터이고 하나는 복구되지 않은 데이터용)
+* STCS로 major 컴팩션이 수행 될 때 데이터 디렉토리당 두개의 sstable들이 생성됩니다. 
+  * (하나는 복구된 데이터이고 하나는 복구되지 않은 데이터용)
 * STCS options
-  * min_sstable_size (기본값 : 50MB)
-    * 이값보다 sstable이 작다면 동일한 버킷에 담깁니다. 
-  * bucket_low (기본값 : 0.5)
-    * SStable이 버켓에 포함되지 않으려면 버킷의 평균 크기보다 훨씬 작아야 하는가?
-    * `bucket_low * avg_bucket_size < sstable_size`이라면 sstable은 버켓에 추가됩니다. 
-  * bucket_high  (기본값 : 1.5)
-    * 버켓의 평균 크기보다 얼마나 크다면 SStable이 버켓이 포함되지 않는 지정하비다. 
-    * `sstable_size < bucket_high * avg_bucket_size`이라면 sstable은 버켓에 추가됩니다. 
+* min_sstable_size (기본값 : 50MB)
+  * 이값보다 sstable이 작다면 동일한 버킷에 담깁니다. 
+* bucket_low (기본값 : 0.5)
+  * SStable이 버켓에 포함되지 않으려면 버킷의 평균 크기보다 훨씬 작아야 하는가?
+  * `bucket_low * avg_bucket_size < sstable_size`이라면 sstable은 버켓에 추가됩니다. 
+* bucket_high  (기본값 : 1.5)
+  * 버켓의 평균 크기보다 얼마나 크다면 SStable이 버켓이 포함되지 않는 지정하비다. 
+  * `sstable_size < bucket_high * avg_bucket_size`이라면 sstable은 버켓에 추가됩니다.
 
-### datastax 번역 
-
-* https://www.datastax.com/blog/leveled-compaction-apache-cassandra
+#### https://www.datastax.com/blog/leveled-compaction-apache-cassandra
 * 그림 1
   * size tiered compaction 으로 sstable 추가 
   * 시간이 지남에 따라서 여러 버전의 행이 다른 sstable에 존재할 수 있습니다.
@@ -250,15 +278,15 @@
 * 충돌 체크를 위한 비용이 비쌈!!
 * 반면에 B-tree는 Insert시에 키에 해당하는 페이지 위치에 데이터를 기록하기 때문에 충돌 체크 바로 가능
 #### 카산드라의 디자인 구조상 파티션 키를 10MB이하로 구성 해야 하는가?
+* 카산드라의 각 노드들에게 분산되는 단위가 적당한 크기여야 효율적임
 * LSM트리 구조상 데이터의 크기가 커질수록 데이터 검색의 비용이 커진다. 
+  * 많은 memtable, sstable을 조회 해야함
 * 일정 크기 이하로 분할 해 놓아야 최적의 성능을 보장할 수 있음
 * 반면에 B-tree는 데이터가 커진다해도 검색의 비용이 그다지 커지지 않음.
   * 페이지의 깊이가 증가 할때마다 분기계수의 제곱만큼 데이터 크기가 커짐!
 #### Paxos 프로토콜
 * https://ko.wikipedia.org/wiki/%ED%8C%A9%EC%86%8C%EC%8A%A4_(%EC%BB%B4%ED%93%A8%ED%84%B0_%EA%B3%BC%ED%95%99)
 
-
-#### 퍼지(fuzzy) 색인
-
 #### 안티 캐싱
-#### 비휘발성 메모리(NVM)
+* 메모리가 충분하지 않을 때 최근에 사용하지 않는 데이터를 메모리에서 디스크로 내보내고 다시 접근시 적재하는 방법
+* 가상메모리 기법과 비슷하지만 페이지 단위가 아닌 레코드 단위로 동작
