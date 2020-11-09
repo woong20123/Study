@@ -25,7 +25,7 @@ void TestRun(size_t threadCount, std::function<void()> TestLogic)
 int main() {
 	
 	try{
-		size_t testSize = 100000;
+		size_t testSize = 1000000;
 		size_t threadCount = 10;
 
 		std::cout << "[Test Environment]" << std::endl;
