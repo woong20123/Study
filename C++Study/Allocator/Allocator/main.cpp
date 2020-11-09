@@ -25,7 +25,7 @@ void TestRun(size_t threadCount, std::function<void()> TestLogic)
 int main() {
 	
 	try{
-		size_t testSize = 10000000;
+		size_t testSize = 100000;
 		size_t threadCount = 10;
 
 		std::cout << "[Test Environment]" << std::endl;
@@ -40,7 +40,7 @@ int main() {
 				for (size_t i = 0; i < testSize; i++) {
 
 					auto pi = alloc.Allocate();
-					pi->value[0] = (int)i;
+					//pi->value[0] = (int)i;
 					if (i % 2 == 0)
 						alloc.DeAllocate(pi);
 
@@ -60,7 +60,7 @@ int main() {
 				for (size_t i = 0; i < testSize; i++) {
 
 					auto pi = new Data;
-					pi->value[0] = (int)i;
+					//pi->value[0] = (int)i;
 					if (i % 2 == 0)
 						delete pi;
 

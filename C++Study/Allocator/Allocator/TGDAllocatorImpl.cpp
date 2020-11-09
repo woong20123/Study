@@ -19,13 +19,13 @@ namespace TGD {
 
 	TGDAllocatorImpl::TGDAllocatorImpl(size_t objectSize)
 	{
-		pimpl = std::make_unique<Impl>();
+		pimpl = std::make_shared<Impl>();
 		pimpl->chunk = nullptr;
 		pimpl->chunkSize = 0;
 		pimpl->chunckAllocIndex = 0;
 		pimpl->objectSize = objectSize;
 		pimpl->objectPerChunk = 1024;
-		pimpl->waitingMemory.reserve(10000000);
+		pimpl->waitingMemory.reserve(1024);
 	}
 
 	TGDAllocatorImpl::~TGDAllocatorImpl() 

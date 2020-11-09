@@ -17,6 +17,6 @@ namespace TGD {
 	
 	private:
 		struct Impl;
-		std::unique_ptr<Impl> pimpl;
+		std::shared_ptr<Impl> pimpl;
 	};
 }
