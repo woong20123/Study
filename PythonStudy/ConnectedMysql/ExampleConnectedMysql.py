@@ -8,10 +8,10 @@ itemSql = """
 INSERT INTO `pbn`.`item_data` (`seq`,`time`,`name`)
 VALUES (%s,%s,%s)
 """
-dbcon = WSMysql.GetDBCon('root','test','test','test')
+dbcon = LibMysql.GetDBCon('root','test','test','test')
 
 # mysql에 csv데이터를 insert합니다.
-# WSMysql.InsertMysqlFromCSV(dbcon,itemSql, 
+# LibMysql.InsertMysqlFromCSV(dbcon,itemSql, 
 # csvPath='C://Users//woong20123//Documents//GitHub//Study//Python//Mysql에 데이터넣기//Data//아이템.csv', 
 # columCount=25)
 
@@ -30,7 +30,7 @@ order by a.actor_id
 ''' % select_actor_id_lists
 
 baseDic = {}
-curs=WSMysql.GetSelectAllResult(dbcon, selectSqlPosition)
+curs=LibMysql.GetSelectAllResult(dbcon, selectSqlPosition)
 for row in curs:
     pos = row[2].split('/')
     key = row[0]+'_'+str(row[1])
@@ -43,6 +43,6 @@ for k, v in baseDic.items():
     if keys[0] not in resultData.keys() :
         resultData[keys[0]] = []
     resultData[keys[0]].append(v)
-WSMysql.MakeJsonFileFromDic(resultData,"C://Users//woong20123//Documents//GitHub//Study//Python//Mysql에 데이터넣기//Data//Result.json")
+LibMysql.MakeJsonFileFromDic(resultData,"C://Users//woong20123//Documents//GitHub//Study//Python//Mysql에 데이터넣기//Data//Result.json")
 
-WSMysql.CloseDBCon(dbcon)
+LibMysql.CloseDBCon(dbcon)
