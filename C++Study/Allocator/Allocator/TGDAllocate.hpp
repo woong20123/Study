@@ -27,7 +27,7 @@ namespace TGD {
 	TGDAllocate<T>::TGDAllocate() 
 	{
 		allocateImpl = std::make_shared<TGDAllocatorImpl>(sizeof(T));
-		AllocateList.insert(AllocateContainer::value_type(std::this_thread::get_id(), std::make_shared<TGDAllocatorImpl>(sizeof(T))));
+		AllocateList.clear();
 	}
 
 	template<typename T>
