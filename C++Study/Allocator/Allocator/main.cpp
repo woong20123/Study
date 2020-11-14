@@ -25,24 +25,23 @@ void TestRun(size_t threadCount, std::function<void()> TestLogic)
 int main() {
 	
 	try{
-		size_t testSize = 1000000;
+		size_t testSize = 100000;
 		size_t threadCount = 10;
 
 		std::cout << "[Test Environment]" << std::endl;
 		std::cout << "Test ObjCount = " << testSize << " threadCount = " << threadCount << std::endl;
-
+		std::shared_ptr<TGD::TGDAllocate<Data>> alloc = std::make_shared<TGD::TGDAllocate<Data>>();
 		// TGD allocate Test
 		{
-			TGD::TGDAllocate<Data> alloc;
+			
 			ElapsedTimeOutput TGDAllocatorElapsed("TGD Allocator");
-			TestRun(threadCount, [&alloc, testSize]() {
-
+			TestRun(threadCount, [alloc, testSize]() {
 				for (size_t i = 0; i < testSize; i++) {
 
-					auto pi = alloc.Allocate();
+					auto pi = alloc->Allocate();
 					//pi->value[0] = (int)i;
 					if (i % 2 == 0)
-						alloc.DeAllocate(pi);
+						alloc->DeAllocate(pi);
 
 				}
 				});
