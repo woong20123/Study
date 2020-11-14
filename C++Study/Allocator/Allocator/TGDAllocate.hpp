@@ -1,13 +1,13 @@
 #include <shared_mutex>
 #include <vector>
-#include <unordered_map>
+#include <map>
 #include "TGDAllocatorImpl.h"
 
 namespace TGD {
 	template<typename T>
 	class TGDAllocate {
 	public:		
-		using AllocateContainer = std::unordered_map<std::thread::id, std::shared_ptr<TGDAllocatorImpl>>;
+		using AllocateContainer = std::map<std::thread::id, std::shared_ptr<TGDAllocatorImpl>>;
 		TGDAllocate();
 		virtual ~TGDAllocate() {};
 
@@ -18,7 +18,7 @@ namespace TGD {
 		std::shared_ptr<TGDAllocatorImpl> GetAllocateImpl();
 
 	private:
-		std::unordered_map<std::thread::id, std::shared_ptr<TGDAllocatorImpl>> AllocateList;
+		AllocateContainer AllocateList;
 		std::shared_ptr<TGDAllocatorImpl> allocateImpl;
 		std::shared_mutex sm;
 	};
@@ -27,6 +27,7 @@ namespace TGD {
 	TGDAllocate<T>::TGDAllocate() 
 	{
 		allocateImpl = std::make_shared<TGDAllocatorImpl>(sizeof(T));
+		AllocateList.clear();
 	}
 
 	template<typename T>
@@ -58,12 +59,16 @@ namespace TGD {
 	{
 		const auto threadId = std::this_thread::get_id();
 		auto itr = AllocateList.find(threadId);
-		if (itr == AllocateList.end())
+		if (itr != AllocateList.end()) {
+			return itr->second;
+		}
+
 		{
+			std::unique_lock<std::shared_mutex> l(sm);
 			auto newallocateImpl = std::make_shared<TGDAllocatorImpl>(sizeof(T));
-			auto ret = AllocateList.insert(AllocateContainer::value_type(threadId, newallocateImpl));
+			AllocateList.insert(AllocateContainer::value_type(threadId, newallocateImpl));
 			return newallocateImpl;
 		}
-		return itr->second;
+		
 	}
 }

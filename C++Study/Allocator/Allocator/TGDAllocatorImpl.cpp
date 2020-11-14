@@ -2,6 +2,7 @@
 #include <set>
 #include <deque>
 #include <shared_mutex>
+#include <Windows.h>
 #include "TGDAllocatorImpl.h"
 
 namespace TGD {
@@ -13,8 +14,6 @@ namespace TGD {
 		size_t objectPerChunk;		
 		std::vector<void*> waitingMemory;
 		std::vector<void*> chuckLists;
-
-		std::shared_mutex mutex;
 	};
 
 	TGDAllocatorImpl::TGDAllocatorImpl(size_t objectSize)
@@ -32,7 +31,8 @@ namespace TGD {
 	{
 		for (auto& pchuck : pimpl->chuckLists) 
 		{
-			free(pchuck);
+			//free(pchuck);
+			::VirtualFree(pchuck, 0, MEM_RELEASE);
 		}
 	}
 
@@ -76,9 +76,12 @@ namespace TGD {
 	}
 
 	bool TGDAllocatorImpl::newChunk() {
-		pimpl->chunk = ::malloc(pimpl->objectSize * pimpl->objectPerChunk);
+
+		size_t allocPageSize = ((pimpl->objectSize * pimpl->objectPerChunk) / 4096) + 1;
+
+		pimpl->chunk = VirtualAlloc(NULL, allocPageSize * 4096, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
 		pimpl->chuckLists.push_back(pimpl->chunk);
-		pimpl->chunkSize = pimpl->objectSize * pimpl->objectPerChunk;
+		pimpl->chunkSize = allocPageSize * 4096;
 		pimpl->chunckAllocIndex = 0;
 
 		// set new objectPerChunk value
