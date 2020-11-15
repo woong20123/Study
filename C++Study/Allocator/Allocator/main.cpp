@@ -11,6 +11,7 @@ struct Data {
 void TestRun(size_t threadCount, std::function<void()> TestLogic) 
 {
 	std::vector<std::thread> thread_group_;
+	thread_group_.reserve(100);
 
 	for (size_t tc = 0; tc < threadCount; tc++)
 	{

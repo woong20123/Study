@@ -10,10 +10,10 @@
     <ClInclude Include="TGDAllocatorImpl.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="TGDAllocate.hpp">
+    <ClInclude Include="ElapsedTimeOutput.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="ElapsedTimeOutput.h">
+    <ClInclude Include="TGDAllocate.hpp">
       <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>

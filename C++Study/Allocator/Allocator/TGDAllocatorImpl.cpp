@@ -29,6 +29,7 @@ namespace TGD {
 
 	TGDAllocatorImpl::~TGDAllocatorImpl() 
 	{
+		
 		for (auto& pchuck : pimpl->chuckLists) 
 		{
 			//free(pchuck);
