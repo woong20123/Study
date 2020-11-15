@@ -1,0 +1,27 @@
+@startuml
+호출 -> CChild : 생성자 호출
+activate CChild
+CChild -> CParent: 부모 클래스 생성자 호출
+activate CParent
+CParent -> CParent : CParent 생성자 로직 수행
+CChild <- CParent
+deactivate CParent
+CChild -> CChild : 클래스 타입 멤버 변수 생성자 호출 
+CChild -> CChild : CChild 생성자 로직 수행
+호출 <- CChild : 생성자 작업 완료
+deactivate CChild
+
+
+호출 -> CChild : 소멸자 호출
+activate CChild
+CChild -> CChild : CChild 소멸자 로직 수행
+CChild -> CChild : 클래스 타입 멤버 변수 소멸자 호출 
+CChild -> CParent : 부모 클래스 생성자 호출
+activate CParent
+CParent -> CParent : CParent 소멸자 로직 수행
+CChild <- CParent
+deactivate CParent
+호출 <- CChild : 소멸자 작업 완료
+deactivate CChild
+
+@enduml

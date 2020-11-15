@@ -22,6 +22,7 @@ public :
     ~CEmpty() {};
 };
 
+
 // 가상 함수 테이블 포인터를 보유하기 때문에 sizeof = 8 (64비트 경우)
 class CVirtualEmpty
 {
@@ -69,11 +70,18 @@ class CChild : public CParent{
 * 
 ```c++
 class CParent{
-    // 생성자 & 소멸자 선언
+    CParent() { std::cout << "CParent  생성자" << std::endl;}
+    virtual ~CParent() { std::cout << "CParent  소멸자" << std::endl;}
 }
 
 class CChild : public CParent{
-    // 생성자 & 소멸자 선언
+    CChild() { std::cout << "CChild  생성자" << std::endl;}
+    virtual ~CChild() { std::cout << "CChild  소멸자" << std::endl;}
+}
+
+void main(){
+{
+  CChild c;
 }
 
 void main(){
