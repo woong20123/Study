@@ -91,4 +91,9 @@ void main(){
     // 만약 CParent의 소멸자가 virtual이 아니라면 가상 테이블이 없기 때문에 Child 소멸자 호출되지 않음 
     delete pParent;
 }
+
+class CTest{}
+CTest t = t0;  // 복사 생성자 호출
+
+CTest t2; t2 = t0;  // 복사 대입 연산자 호출
 ```

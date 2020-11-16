@@ -1,0 +1,34 @@
+@startuml
+
+CTop <|-- CMiddleA
+CTop <|-- CMiddleB
+CMiddleA <|-- CBottom
+CMiddleB <|-- CBottom
+
+
+class CTop {
++int m_Top
+}
+
+class CMiddleA {
++int m_Top
++int m_MiddleA
+}
+
+class CMiddleB {
++int m_Top
++int m_MiddleB
+}
+
+class CBottom{
+.. CMiddleA ..
++int CTop::CMiddleA::m_Top
++int CMiddleA::m_MiddleA
+.. CMiddleB ..
++int CTop::CMiddleB::m_Top
++int CMiddleB::m_MiddleB
+....
++int m_Bottom
+}
+
+@enduml
