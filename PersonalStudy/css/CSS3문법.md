@@ -70,4 +70,93 @@ div.keyboard:hover{width: 300px; opacity: 1;}
 
 ## transition과 transform 동시 적용
 ```css
+.App-header .DeathPlayer {
+    position: absolute;
+    width: 50px;
+    top: 50px;
+    opacity: 0.2;
+    transition: all 0.5s;
+    transition-timing-function: ease;
+}
+.App-header .DeathPlayer:hover{
+    opacity: 1;
+    transform:matrix(1, 0, 0, 1, 0, 50);
+}
+
+```
+
+# 애니메이션 
+* CSS3에서는 애니메이션 효과를 사용하기 위해서 애니메이션에 대한 키프레임을 정의해야 함 
+```css
+.ani {
+  animation-name: movingPara;
+  animation-duration: 3s;
+}
+
+@keyframes movingPara{
+  /* from에 처음 스타일, to에 마지막 스타일 정의 */
+  from { margin-left: 100% }
+  to { margin-left: 0% }
+}
+
+@keyframes DeathPlayerEffect{
+  /* %를 사용해서 키프레임 적용 */
+  0% {  opacity: 1; }
+  50% { opacity: 1; transform:matrix(1, 0, 0, 1, 0, 50px); }
+  100% { opacity: 0; top: 100px;}
+}
+```
+
+## 애니메이션 키프레임 
+* from(시작) => to (종료) 까지 설정할 수 있음
+* 또는 %를 사용해서 키프레임을 설정할 수 있음
+
+## animation-duration 속성
+* 애니메이션의 재생시간을 정의합니다. 
+* 기본 값은 0이며 재생 할 시간을 명시하지 않으면 아무 효과가 없습니다. 
+
+## animation-delay 속성
+* 애니메이션이 나타나기 까지 지연 시간을 설정합니다. 
+  
+## animation-iteration-count 속성
+* 애니메이션의 반복횟수를 설정합니다. 
+* 이 값을 infinite로 설정하면 무한히 반복됩니다. 
+```css
+* {
+animation-iteration-count: 2;
+}
+```
+
+## animation-direction 속성
+* 애니메이션의 진행 방향을 설정합니다. 
+* reverse : 반대방향으로 설정
+* alternate : 정방향 -> 반대 방향 반복해서 동작 
+```css
+   div {
+        animation-name: movingPara;
+        animation-duration: 2s;
+    }
+
+    /* backward는 반대방향으로 동작 */
+    #backward {
+        animation-direction: reverse;
+    }
+```
+
+## animation-timing-function 속성
+* transition-timing-function 속성과 같음
+
+## 애니메이션 축약 표현
+```css
+div{
+  animation-name: hand;
+  animation-duration: 3s;
+  animation-timing-function: ease-in-out;
+  animation-delay: 1s;
+  animation-iteration-count: 3;
+  animation-direction: alternate;
+}
+
+/* 위의 애니메이션을 축약해서 표현 */
+div{ animation: hand 3s ease-in-out 1s 3 alternate}
 ```
