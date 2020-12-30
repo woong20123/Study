@@ -94,3 +94,18 @@ module.exports = {
 var listTpl = require('./example-tpl.html');
 listTpl( { greeting: 'Hello World'} );
 ```
+
+# 개발자 도구 연동
+* webpack의 경우 컴파일이후에 엔트리 파일 갯수에 따라서 모듈들이 병합됨 
+* 파일 구조를 파악해서 디버깅할 때 어려움이 있음
+* webpack.config.js 파일에 아래와 같이 추가해서 컴파일하면 파일 구조 확인 가능
+```js
+module.exports = {
+    ...
+    devtool : '#inline-source-map'
+}
+```
+
+# 빌드 도구 연동
+* grunt-webpack
+* gulp-webpack

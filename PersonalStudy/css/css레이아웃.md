@@ -275,3 +275,76 @@ section {
 ## css에서 class와 id 프로퍼티의 차이 
 * id : 유일한 요소에 스타일을 적용합니다. `#` 사용
 * class : 다수의 요소에 스타일을 적용합니다. `.` 사용
+
+## CSS 선택자
+* CSS 에서는 스타일을 적용할 대상을 선택하기 위해서 선택자를 사용합니다.
+### 전체 선택자
+* CSS를 적용할 대상으로 HTML 문서 내부의 모든 요소를 선택합니다. 
+```css
+* {
+  color: red;
+}
+```
+
+### 요소 선택자
+* 적용할 요소의 이름을 지정합니다. 
+```css
+h2 {
+  color: teal;
+  text-decoration: underline;
+}
+```
+
+### 아이디 선택자
+* 스타일을 적용할 특정 요소를 선택합니다. 
+* 중복된 아이디를 가지고 자바스크립트 작업을 하게되면 오류가 발생함 
+```css
+#heading {
+  color:sandybrown;
+  text-decoration: line-through;
+}
+
+<h2 id="heading">...
+```
+
+### 클래스 선택자
+* 클래스 선택자는 특정 집단의 요소를 한번에 선택할 때 사용함
+```css
+.heading {
+  color:sandybrown;
+  text-decoration: line-through;
+}
+```
+
+### 그룹 선택자
+* 위에 언급한 여러 선택자를 같이 사용하고자 할 때 사용함
+```css
+ h2,h3 { text-align:center}
+```
+
+## 결합 선택자 
+* 연관된 선택자들 간의 관계를 설정합니다. 
+### 자손 선택자
+* 자손 선택자는 해당 요소의 하위 요소 중에 특정 타입을 요소를 모두 선택합니다. 
+```css
+/* class = App-header 하위에 class DeathPlayer 선택*/
+.App-header .DeathPlayer {
+    width: 5%;
+    transform: matrix(2.0, 0, 0, 2.0, 100, 100)
+}
+```
+### 자식 선택자
+* 자식 선택자는 해당 요소의 바로 밑에 존재하는 하위 요소 선택
+```css
+/* class = App-header의 바로 밑class DeathPlayer 선택*/
+.App-header > .DeathPlayer {
+    width: 5%;
+    transform: matrix(2.0, 0, 0, 2.0, 100, 100)
+}
+```
+
+## 동위 선택자
+* 동일한 부모를 가지는 요소들을 선택합니다. 
+```
+div ~ p {스타일;}
+```

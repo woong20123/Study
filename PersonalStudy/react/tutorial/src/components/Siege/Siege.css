@@ -1,0 +1,29 @@
+.App-header .DeathPlayer {
+    position: absolute;
+    width: 50px;
+    top: 50px;
+    opacity: 0.2;
+    transition: all 2s;
+    transition-timing-function: ease;
+}
+.App-header .DeathPlayer:hover{
+    width: 100px;
+    opacity: 1;
+    transform:rotate(720deg);
+}
+
+
+.App-header .TeleportEnterPlayer {
+    position: absolute;
+    height: 20px;
+    top: 150px;
+    opacity: 0.1;
+    transition: all 2s;
+}
+.App-header .TeleportEnterPlayer:hover{
+    height: 100px;
+    top: 110px;
+    opacity: 1;
+    transform:rotate(1080deg);
+}
+  
