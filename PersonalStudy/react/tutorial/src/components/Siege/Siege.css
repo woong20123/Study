@@ -3,7 +3,7 @@
     top: 50px;
     width: 50px;
     opacity: 0;
-    animation: DeathPlayerEffect 0.5s ease 0s 14 alternate;
+    animation: DeathPlayerEffect 0.5s ease 0s infinite alternate;
     /*
     animation-name: DeathPlayerEffect;
     animation-duration: 0.5s;
