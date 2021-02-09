@@ -1,24 +1,9 @@
+var i; 
 
-$(document).ready(function(){
-    'use strict';
-    paper.install(window);
-    paper.setup(document.getElementById('mainCanvas'));
+setTimeout(function() {console.log("hello");}, 1500);
 
-    // TODO
-    let c = Shape.Circle(200, 200, 80);
-    c.fillColor = 'black';
-
-    let text = new PointText(200, 200);
-    text.justification = 'center';
-    text.fillColor = 'white';
-    text.fontSize = 20;
-    text.content = 'hello world';
-
-    let tool = new Tool();
-    tool.onMouseDown = function(event){
-        let c = Shape.Circle(event.point, 20);
-        c.fillColor = 'green';
-    }
-    
-    paper.view.draw();
-});
+for(i = 5; i>= 0; i++){
+    setTimeout(function() {
+        console.log(i === 0 ? "go" : i);
+    }, (5-i)*1000);
+}
