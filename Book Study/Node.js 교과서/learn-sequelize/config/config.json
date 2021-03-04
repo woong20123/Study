@@ -1,0 +1,23 @@
+{
+  "development": {
+    "username": "root",
+    "password": "root",
+    "database": "pbn",
+    "host": "172.19.152.140",
+    "dialect": "mysql"
+  },
+  "test": {
+    "username": "root",
+    "password": "root",
+    "database": "pbn",
+    "host": "172.19.152.140",
+    "dialect": "mysql"
+  },
+  "production": {
+    "username": "root",
+    "password": "root",
+    "database": "pbn",
+    "host": "172.19.152.140",
+    "dialect": "mysql"
+  }
+}
