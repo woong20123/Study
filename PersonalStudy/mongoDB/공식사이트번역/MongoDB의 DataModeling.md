@@ -40,3 +40,26 @@
 ## Embedded Document
 * 관계형 DB와는 다르게 조인 문장을 사용하지 않음
 * Document안에 내장형 Document로 표현합니다. 
+* 장점
+  * 쿼리가 단순해지고 Join이 삭제됨
+  * 데이터 보안에 좋음
+* 단점
+  * Embedded되는 도큐먼트의 크기가 최대 16MB까지 가능함
+  * Embedded는 도큐먼트가 없는 구조라면 적합하지 않음
+* 강한 관계를 가진 Collection 간에는 유리한 데이터 구조
+
+## Extend Document
+* insert후에 내장형 Document를 추가함
+* 결과는 `Embedded Document`와 동일함
+
+## Link
+* ObjectID를 통해서 연결을 링크 합니다.
+* DBRef를 통해서 Link를 구현합니다. 
+* 장점
+  * 별도의 논리적 구조로 저장되지 않기 때문에 도큐먼트 크기에 제한 받지 않음
+  * 비즈니스 룰 상으로 처리되는 데이터
+* 단점
+  * ㅇㅇ
+
+
+
