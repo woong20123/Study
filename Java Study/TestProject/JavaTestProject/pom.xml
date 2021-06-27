@@ -5,4 +5,8 @@
   <version>0.0.1-SNAPSHOT</version>
   <name>JavaTestProject</name>
   <description>JavaTestProject ..</description>
+  <properties>
+    <maven.compiler.source>1.6</maven.compiler.source>
+    <maven.compiler.target>1.6</maven.compiler.target>
+  </properties>
 </project>
