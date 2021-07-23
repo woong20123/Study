@@ -50,6 +50,8 @@ Spring 프레임 워크를 사용하기 위한 툴
 <br>라이브러리 설정하기<br>
 ![Eclipse_Create2](./img/eclipse_create_springboot3.png)
 
+### Lombok 라이브러리 적용
+* https://m.blog.naver.com/PostView.naver?isHttpsRedirect=true&blogId=sharplee7&logNo=221674229726
 
 
 ### factory method 'datasource' 에러 발생시 
