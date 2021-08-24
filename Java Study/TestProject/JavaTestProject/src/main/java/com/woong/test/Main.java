@@ -1,32 +1,19 @@
 package com.woong.test;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 public class Main {
 	public static void main(String args[]) {
-		Value v1 = new Value(10);
-		Value v2 = new Value(10);
+		String[] data = { "bat", "baby", "bonus", "cA", "ca", "co", "c.", "c0", "car", "combat", "count", "date",
+				"disc" };
 
-		String str1 = "ttt";
-		str1.hashCode();
+		Pattern p = Pattern.compile("c[a-z]*");
 
-		if (v1.equals(v2))
-			System.out.println("v1과 v2는 같습니다.");
-		else
-			System.out.println("v1과 v2는 다릅니다.");
-
-		v2 = v1;
-
-		if (v1.equals(v2))
-			System.out.println("v1과 v2는 같습니다.");
-		else
-			System.out.println("v1과 v2는 다릅니다.");
-
-	}
-}
-
-class Value {
-	int value;
-
-	Value(int value) {
-		this.value = value;
+		for (int i = 0; i < data.length; i++) {
+			Matcher m = p.matcher(data[i]);
+			if (m.matches())
+				System.out.print(data[i] + ",");
+		}
 	}
 }
