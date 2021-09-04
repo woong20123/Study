@@ -5,6 +5,7 @@ import java.util.regex.Pattern;
 
 public class Main {
 	public static void main(String args[]) {
+		List<Integer> list = new ArrayList<>();
 		String[] data = { "bat", "baby", "bonus", "cA", "ca", "co", "c.", "c0", "car", "combat", "count", "date",
 				"disc" };
 
