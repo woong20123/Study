@@ -27,60 +27,46 @@ var Sequelize = require('sequelize');
 module.exports =
 /*#__PURE__*/
 function (_Sequelize$Model) {
-  _inherits(User, _Sequelize$Model);
+  _inherits(Comment, _Sequelize$Model);
 
-  function User() {
-    _classCallCheck(this, User);
+  function Comment() {
+    _classCallCheck(this, Comment);
 
-    return _possibleConstructorReturn(this, _getPrototypeOf(User).apply(this, arguments));
+    return _possibleConstructorReturn(this, _getPrototypeOf(Comment).apply(this, arguments));
   }
 
-  _createClass(User, null, [{
+  _createClass(Comment, null, [{
     key: "init",
     value: function init(sequelize) {
-      return _get(_getPrototypeOf(User), "init", this).call(this, {
-        name: {
-          type: Sequelize.STRING(20),
-          allowNull: false,
-          unique: true
-        },
-        age: {
-          type: Sequelize.INTEGER.UNSIGNED,
-          allowNull: false
-        },
-        married: {
-          type: Sequelize.BOOLEAN,
-          allowNull: false
-        },
+      return _get(_getPrototypeOf(Comment), "init", this).call(this, {
         comment: {
-          type: Sequelize.TEXT,
-          allowNull: true
+          type: Sequelize.STRING(100),
+          allowNull: false
         },
-        create_at: {
+        created_at: {
           type: Sequelize.DATE,
-          allowNull: false,
+          allowNull: true,
           defaultValue: Sequelize.NOW
         }
       }, {
         sequelize: sequelize,
         timestamps: false,
-        underscored: false,
-        modelName: 'User',
-        tableName: 'users',
+        modelName: 'Comment',
+        tableName: 'comments',
         paranoid: false,
-        charset: 'utf8',
-        collate: 'utf8_general_ci'
+        charset: 'utf8mb4',
+        collate: 'utf8mb4_general_ci'
       });
     }
   }, {
     key: "associate",
     value: function associate(db) {
-      db.User.hasMany(db.Comment, {
+      db.Comment.belongsTo(db.User, {
         foreignKey: 'commenter',
-        sourceKey: 'id'
+        targetKey: 'id'
       });
     }
   }]);
 
-  return User;
+  return Comment;
 }(Sequelize.Model);
