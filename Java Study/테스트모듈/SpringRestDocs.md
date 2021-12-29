@@ -204,7 +204,277 @@ include::{snippets}/index/http-response.adoc[]
 ```
 
 ### Section Title
+* operation 매크로에 추가 할 수 있는 내장 스니펫
+* curl-requst, http-request, http-response, httpie-request, links, request-body, request-fields, response-body, response-fields
+* 기본 스니펫을 제외한 스니펫은 `-`문자를 공백으로 첫글자로 대문자로 변경한 제목이 디폴트 입니다.
+  * custom-snippet -> Custom snippet
+```java
+// curl-request를 Example request로 변경한 예제
+:operation-curl-request-title: Example request
+```
 
+# configuration
+## Docuemnted URIs
+### MockMvc URI Customization
+* MockMvc를 사용하면 스프링 Rest Docsd은 다음을 디폴트 설정을 가집니다. 
+* Schema : `http`
+* Host : `localhost`
+* Port : `8080`
+* 설정 값을 셋팅하는 예제 입니다.
+```java
+this.mockMvc = MockMvcBuilders.webAppContextSetup(this.context)
+                .apply(documentationConfiguration(this.restDocumentation).uris()
+                                .withSchema("https")
+                                .withHost("example.com")
+                                .withPort(443))
+                .build();
+```
+
+### WebTestClient URI Customization
+* WebTestClient는 스프링 Rest Docs는 `http://localhost:8080`를 기본 베이스로 작성합니다. 
+* URI 베이스는 WebTestClient.Builder에 있는 baseUrl 메서로 커스텀 할 수 있음
+```java
+public void setUp(){
+    this.webTestClient = WebTestClient.bindToApplicationContext(this.context)
+            .configureClient()
+            .baseUrl("https://api.example.com")
+            .filter(documentationConfiguration(this.restDocumentation)
+                    .snippets().withEncoding("ISO-8859-1") // 인코딩 추가 작업 
+            ).build();
+}
+```
+
+### Snippet Template Format 변경
+* 디폴트 스니펫 템플릿은 asciidoctor이지만 markdown으로 지원함
+```java
+this.webTestClient = WebTestClient.bindToApplicationContext(this.context).configureClient()
+	.filter(documentationConfiguration(this.restDocumentation)
+		.snippets().withTemplateFormat(TemplateFormats.markdown()))
+	.build();
+```
+
+### 기본 Opearation PreProcessors 등록 가능
+* 기본 요청/응답 전처리기도 RestDocumentationConfigurer API로 등록할 수 있음
+```java
+// 다음 예제는 모든 요청에서 Foo 헤더를 제거하고, 모든 응답을 보기 좋게 출력합니다. 
+this.webTestClient = WebTestClient.bindToApplicationContext(this.context)
+        .configureClient()
+        .filter(documentationConfiguration(this.restDocumentation))
+            .operationPreprocessors()
+                    .withRequestDefaults(removeHeader("Foo"))
+                    .withResponseDefaults(prettypPrint()))
+        .build();
+```
+
+# Documenting API
+## Hypermedia
+* 하이퍼 기반의 API에서 링크도 문서화 가능 
+```java
+this.webTestClient().get().uri("/").accept(MediaType.APPICATION_JSON).exchange()
+    .expectStatus().isOk().expectBody()
+    .consumeWith(document("index", links(       // 응답에 링크가 있는지 검증합니다. 
+        linkWithRel("alpha").description("Link to the alpha resource"), // 링크를 설명합니다.
+        linkWithRel("bravo").description("Link to the bravo resource"),
+    )))
+```
+
+## 요청 및 응답 Payloads
+* 일반적인 요청/응답 페이로드 문서도 작성 할 수 있습니다.
+* 기본적으로 Spring Rest Docs은 요청과 응답 바디를 위한 스니펫을 자동으로 만들어 줍니다. 
+* 각 스니펫이름은 `request-body.adoc`과 `response-body/adoc`입니다. 
+### 요청 및 응답 필드 
+* 아래 페이로드를 필드로 문서화 할 수 있습니다. 
+* 필드를 문서화 할 떄는 모든 필드를 작성하지 않는다면 실패합니다. 
+* 문서화한 필드가 페이로드에 없을 경우 해당 필드를 선택사항으로 마킹하지 않는다면 테스트는 실패
+```json
+{
+    "contact" : {
+        "name" : "Jane Doe",
+        "email" : "jane.doe@example.com"
+    } 
+}
+```
+```java
+this.webTestClient.get().uri("user/5").accept(MediaType.APPLICATION_JSON)
+	.exchange().expectStatus().isOk().expectBody()
+    .consumeWith(document("user",
+        responseFields(
+            fieldWithPath("contact.emain").description("The user's email address")
+            fieldWithPath("contact.name").description("The user's name")
+        )));
+```
+* 문서의 모든 필드를 상세하게 적고 싶지 않다면 하위 패스를 하나로 묶어서 문서화도 가능합니다. 
+```java
+this.webTestClient.get().uri("user/5").accept(MediaType.APPLICATION_JSON)
+	.exchange().expectStatus().isOk().expectBody()
+    .consumeWith(document("user",
+        responseFields(
+            subsectionWithPath("contact").description("The user's contact details"))));
+```
+* 만약 모든 필드를 문서화 하지 않아도 테스트가 실패하지 않도록 설정하려면 다음 메소드를 사용하면 된다.
+  * org.springframework.restdocs.payload.PayloadDocumentation의 relaxedRequestFields, relaxedResponseFields를 사용
+
+#### JSON 페이로드 필드를 다루는 법
+* Spring Rest Docs은 기본적으로 페이로드가 JSON이라고 가정합니다. 
+* JSON 필드의 패스는 점이나 괄호 표기법을 사용
+  * a.b
+  * ['a']['b']
+  * a['b']
+  
+* 예제 JSON 페이로드
+```json
+{
+	"a":{
+		"b":[
+			{
+				"c":"one"
+			},
+			{
+				"c":"two"
+			},
+			{
+				"d":"three"
+			}
+		],
+		"e.dot" : "four"
+	}
+}
+```
+* 패스 정보 
+  * a : b를 가지고 있는 객체
+  * a.b : 객체 세개가 들어있는 배열
+  * ['a']['b'] : 객체 세개가 들어있는 배열
+  * a.b[] : 객체 세개가 들어있는 배열
+  * a.b[].c : 문자열 "one", "two"가 들어있는 배열
+  * a.['e.dot'] : 문자열 "four"
+
+* 루트가 배열인 경우 [] 패스가 전체 배열을 가르킴 
+* 이름이 다른 필드를 한번에 매칭하고 싶다면 `*`를 사용할 수 있습니다.
+```json
+// user.*.role -> 문서화 할 수 있음
+{
+	"users":{
+		"ab12cd34":{
+			"role": "Administrator"
+		},
+		"12ab34cd":{
+			"role": "Guest"
+		}
+	}
+}
+```
+
+#### JSON 필드 타입 
+* array : 필드에 사용한 값이 배열일 때
+* boolean : 필드의 사용한 값이 boolean
+* object : 필드 사용 값이 모두 객체 일 때
+* number : 필드에 사용한 값이 모두 숫자일 때
+* null : 필드의 사용한 값이 모두 null 일 때
+* string : 필드에 사용한 값이 모두 문자열일 때
+* varies : 페이로드 내에서 필드를 각기 다른 타입으로 
+
+* 필드타입을 적용한 예제
+```java
+.consumeWith(document("user",
+    responseFields(
+        fieldWithPath("contract.email")
+            .type(JsonFieldType.STRING)
+            .description("The user's email address")
+    )));
+```
+
+### 페이로드가 크거나 복잡하다면 섹션별로 문서화 할 수 있음
+
+## 요청 파라미터
+* request 파라미터도 문서화 할 수 있습니다. 
+```java
+// WebTestClient get을 통한 파라미터 처리
+this.webTestClient.get().uri("/users?page=2&per_page=100") // (1)
+	.exchange().expectStatus().isOk().expectBody()
+    // requestParameter를 사용해서 문서화 합니다. 
+	.consumeWith(document("users", requestParameter(  
+        parameterWithName("page").description("The page to retrieve"),
+        parameterWithName("per_page").description("Entries per page")
+
+    )));
+
+// WebTestClient post를 통한 파라미터 처리
+MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
+formData.add("username", "Tester");
+this.webTestClient.post().uri("/users").body(BodyInserters.fromFormData(formData))
+        .exchange().expectStatus().isCreated().expectBody()
+        .consumeWith(document("create-user", requestParameters(
+            parameterWithName("username").description("The user's username")
+        )));
+```
+
+### Path 파라미터
+```java
+this.webTestClient.get().uri("/locations/{latitude}/{longitude}", 51.5072, 0.1275) // (1)
+	.exchange().expectStatus().isOk().expectBody()
+	.consumeWith(document("locations",
+		pathParameters( // (2)
+			parameterWithName("latitude").description("The location's latitude"), // (3)
+			parameterWithName("longitude").description("The location's longitude")))); // (4)
+```
+
+### 요청 Part
+```java
+MultiValueMap<String, Object> multipartData = new LinkedMultiValueMap<>();
+multipartData.add("file", "example".getBytes());
+this.webTestClient.post().uri("/upload").body(BodyInserters.fromMultipartData(multipartData)) // (1)
+	.exchange().expectStatus().isOk().expectBody()
+	.consumeWith(document("upload", requestParts( // (2)
+		partWithName("file").description("The file to upload")) // (3)
+));
+```
+
+## HTTP Header 
+* 요청, 응답 헤더는 requestHeaders, responseHeader로 문서화 할 수 있음
+* `request-headers.adoc`, `request-headers.adoc` 이 만들어집니다. 
+```java
+this.webTestClient.get().uri("/people").header("Authorization", "Basic fjatjeot09klfv=")
+    .exchange().expectStatus().isOk().expectBody()
+    .consumeWith(document("headers"),
+        requestHeaders(
+            headerWithName("Authorization").description("Basic auth credentials")),
+        responseHaders(
+            headerWithName("X-RateLimit-Limit")
+				.description("The total number of requests permitted per period"),
+			headerWithName("X-RateLimit-Remaining")
+				.description("Remaining requests permitted in current period")
+        )
+    
+    )))
+```
+
+## 재사용 Snippets
+* 여러 리소스들은 공통 기능이 있습니다. 
+* 공통 요소의 Snippet을 재사용하면 중복 코드를 피할 수 있습니다. 
+```java
+protected final LinksSnippet pagingLinks = links(
+		linkWithRel("first").optional().description("The first page of results"),
+		linkWithRel("last").optional().description("The last page of results"),
+		linkWithRel("next").optional().description("The next page of results"),
+		linkWithRel("prev").optional().description("The previous page of results"));
+
+this.webTestClient.get().uri("/").accept(MediaType.APPLICATION_JSON).exchange()
+	.expectStatus().isOk().expectBody()
+	.consumeWith(document("example", this.pagingLinks.and( // (1)
+		linkWithRel("alpha").description("Link to the alpha resource"),
+		linkWithRel("bravo").description("Link to the bravo resource"))));
+
+```
+
+## 기본 Snippets 
+* 기본으로 생성되는 Snippets 목록
+  * curl-request.adoc : 동일한 curl 명령어가 있는 경우
+  * httpie-request.adoc : 동일한 HTTPie 명령어가 있는 경우
+  * http-request.adoc : HTTP 요청이 있는 경우 
+  * http-response.adoc : 반환된 HTTP 응답이 있는 경우
+  * request-body.adoc : 전송한 요청 Body가 있는 경우
+  * response-body.adoc : 반환된 응답 Body가 있는 경우  
+ 
 ## 참조 사이트
 * https://godekdls.github.io/Spring%20REST%20Docs/gettingstarted/
   
