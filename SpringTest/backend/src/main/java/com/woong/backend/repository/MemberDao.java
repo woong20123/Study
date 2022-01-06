@@ -22,4 +22,9 @@ public class MemberDao {
     public void update(Member member){
         map.put(member.getEmail(), member);
     }
+
+    @Override
+    public String toString(){
+        return "MemberDao";
+    }
 }

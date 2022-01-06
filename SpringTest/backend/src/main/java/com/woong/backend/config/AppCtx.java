@@ -1,6 +1,7 @@
 package com.woong.backend.config;
 
 import com.woong.backend.repository.MemberDao;
+import com.woong.backend.repository.MemberDaoEx;
 import com.woong.backend.service.ChangePasswordService;
 import com.woong.backend.service.MemberRegisterService;
 import org.springframework.context.annotation.Bean;
@@ -14,6 +15,11 @@ public class AppCtx {
     }
 
     @Bean
+    public MemberDaoEx memberDaoEx(){
+        return new MemberDaoEx();
+    }
+
+    @Bean
     public MemberRegisterService memberRegSvc(){
         return new MemberRegisterService(memberDao());
     }
@@ -21,7 +27,8 @@ public class AppCtx {
     @Bean
     public ChangePasswordService changePwdSvc(){
         ChangePasswordService pwdSvc = new ChangePasswordService();
-        pwdSvc.setMemberDao(memberDao());
+        pwdSvc.setMemberDao(`memberDao`());
         return pwdSvc;
     }
+
 }
