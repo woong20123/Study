@@ -1,50 +1,77 @@
 package com.woong.backend.config;
 
-import com.woong.backend.entity.Calculator;
-import com.woong.backend.entity.ExeTimeAspect;
-import com.woong.backend.entity.RecCalculator;
-import com.woong.backend.repository.MemberDao;
-import com.woong.backend.repository.MemberDaoEx;
-import com.woong.backend.service.ChangePasswordService;
-import com.woong.backend.service.MemberRegisterService;
+import org.apache.tomcat.jdbc.pool.DataSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.EnableAspectJAutoProxy;
+import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
 
-@EnableAspectJAutoProxy
+import com.woong.backend.spring.ChangePasswordService;
+import com.woong.backend.spring.MemberDao;
+import com.woong.backend.spring.MemberInfoPrinter;
+import com.woong.backend.spring.MemberListPrinter;
+import com.woong.backend.spring.MemberPrinter;
+import com.woong.backend.spring.MemberRegisterService;
+
 @Configuration
+@EnableTransactionManagement
 public class AppCtx {
 
-    @Bean
-    public ExeTimeAspect exeTimeAspect(){
-        return new ExeTimeAspect();
-    }
+	@Bean(destroyMethod = "close")
+	public DataSource dataSource() {
+		DataSource ds = new DataSource();
+		ds.setDriverClassName("com.mysql.jdbc.Driver");
+		ds.setUrl("jdbc:mysql://localhost/spring5fs?characterEncoding=utf8");
+		ds.setUsername("spring5");
+		ds.setPassword("spring5");
+		ds.setInitialSize(2);
+		ds.setMaxActive(10);
+		ds.setTestWhileIdle(true);
+		ds.setMinEvictableIdleTimeMillis(60000 * 3);
+		ds.setTimeBetweenEvictionRunsMillis(10 * 1000);
+		return ds;
+	}
 
-    @Bean
-    public Calculator calculator(){
-        return new RecCalculator();
-    }
+	@Bean
+	public PlatformTransactionManager transactionManager() {
+		DataSourceTransactionManager tm = new DataSourceTransactionManager();
+		tm.setDataSource(dataSource());
+		return tm;
+	}
 
-    @Bean
-    public MemberDao memberDao(){
-        return new MemberDao();
-    }
+	@Bean
+	public MemberDao memberDao() {
+		return new MemberDao(dataSource());
+	}
 
-    @Bean
-    public MemberDaoEx memberDaoEx(){
-        return new MemberDaoEx();
-    }
+	@Bean
+	public MemberRegisterService memberRegSvc() {
+		return new MemberRegisterService(memberDao());
+	}
 
-    @Bean
-    public MemberRegisterService memberRegSvc(){
-        return new MemberRegisterService(memberDao());
-    }
+	@Bean
+	public ChangePasswordService changePwdSvc() {
+		ChangePasswordService pwdSvc = new ChangePasswordService();
+		pwdSvc.setMemberDao(memberDao());
+		return pwdSvc;
+	}
 
-    @Bean
-    public ChangePasswordService changePwdSvc(){
-        ChangePasswordService pwdSvc = new ChangePasswordService();
-        pwdSvc.setMemberDao(memberDao());
-        return pwdSvc;
-    }
+	@Bean
+	public MemberPrinter memberPrinter() {
+		return new MemberPrinter();
+	}
 
+	@Bean
+	public MemberListPrinter listPrinter() {
+		return new MemberListPrinter(memberDao(), memberPrinter());
+	}
+
+	@Bean
+	public MemberInfoPrinter infoPrinter() {
+		MemberInfoPrinter infoPrinter = new MemberInfoPrinter();
+		infoPrinter.setMemberDao(memberDao());
+		infoPrinter.setPrinter(memberPrinter());
+		return infoPrinter;
+	}
 }
