@@ -1,22 +1,33 @@
 package com.woong.backend.config;
 
+import com.woong.backend.spring.*;
 import org.apache.tomcat.jdbc.pool.DataSource;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
-import com.woong.backend.spring.ChangePasswordService;
-import com.woong.backend.spring.MemberDao;
-import com.woong.backend.spring.MemberInfoPrinter;
-import com.woong.backend.spring.MemberListPrinter;
-import com.woong.backend.spring.MemberPrinter;
-import com.woong.backend.spring.MemberRegisterService;
-
 @Configuration
 @EnableTransactionManagement
 public class AppCtx {
+
+	@Bean
+	@Qualifier("client")
+	public Applicant ClientApplicant() {return new ClientApplicant(); }
+
+	@Bean
+	@Qualifier("server")
+	public Applicant serverApplicant() {return new ServerApplicant(); }
+
+	@Bean
+	public InterviewRoom interviewRoom(){
+		InterviewRoom room = new InterviewRoom();
+		ClientApplicant applicant = new ClientApplicant();
+		room.setApplicant(applicant);
+		return room;
+	}
 
 	@Bean(destroyMethod = "close")
 	public DataSource dataSource() {
