@@ -23,6 +23,42 @@
 doReturn(new ArrayList()).when(userService).findAllUser();
 ```
 
+## 몇번 호출되었는지 체크하는 로직 
+* verify를 통해서 몇번 호출 되었는지 체크 할 수 있습니다.
+```java
+mockedList.add("once");
+
+mockedList.add("twice"); 
+mockedList.add("twice");
+
+mockedList.add("three times");
+mockedList.add("three times");
+mockedList.add("three times");
+
+// times(1)는 생략 가능 = verify(mockedList, times(1)).add("once") 같음 
+// 1번 호출 되었는지 체크
+verify(mockedList).add("once"); 
+
+// 두번 호출 되었는지 확인
+verify(mockedList, times(2)).add("twice"); 
+// 세번 호출 되었는지 확인 
+verify(mockedList, times(3)).add("three times");
+
+// 호출되지 않았는지 확인 
+verify(mockedList, never()).add("never happened");
+```
+
+## 순서 검증하기 
+```java
+List firstMock = mock(List.class); 
+List secondMock = mock(List.class);
+
+firstMock.add("was called first"); 
+secondMock.add("was called second");
+
+// 순서를 검증합니다. 
+InOrder inOrder = inOrder(firstMock, secondMock);
+```
 ### Mockito와 JUnit의 결합
 * Mockito가 JUnit과 결합되기 위해서는 다음과 같은 작업이 필요합니다.
 * JUnit4에서는 @RunWith(MokitoJUnitRunner.class)를 붙여서 연동
@@ -35,6 +71,10 @@ doReturn(new ArrayList()).when(userService).findAllUser();
     * 여러번 중복 사용 가능
     * 메타 애노테이션을 지원함
 
+### 연속적인 콜 stubbing 
+```java
+when(mock.someMethod("some arg")) .thenReturn("one", "two", "three");
+```
 
 ### 참조문서
 * https://code.google.com/archive/p/mockito/wikis/MockitoFeaturesInKorean.wiki
