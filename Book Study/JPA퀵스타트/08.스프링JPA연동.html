@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <title>&#xc2a4;&#xd504;&#xb9c1;&#xacfc; JPA &#xc5f0;&#xb3d9;</title>
+        <style>
+/* From extension vscode.github */
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+.vscode-dark img[src$=\#gh-light-mode-only],
+.vscode-light img[src$=\#gh-dark-mode-only] {
+	display: none;
+}
+
+/* From extension vscode.markdown-math */
+@font-face{font-family:KaTeX_AMS;font-style:normal;font-weight:400;src:url(fonts/KaTeX_AMS-Regular.woff2) format("woff2"),url(fonts/KaTeX_AMS-Regular.woff) format("woff"),url(fonts/KaTeX_AMS-Regular.ttf) format("truetype")}@font-face{font-family:KaTeX_Caligraphic;font-style:normal;font-weight:700;src:url(fonts/KaTeX_Caligraphic-Bold.woff2) format("woff2"),url(fonts/KaTeX_Caligraphic-Bold.woff) format("woff"),url(fonts/KaTeX_Caligraphic-Bold.ttf) format("truetype")}@font-face{font-family:KaTeX_Caligraphic;font-style:normal;font-weight:400;src:url(fonts/KaTeX_Caligraphic-Regular.woff2) format("woff2"),url(fonts/KaTeX_Caligraphic-Regular.woff) format("woff"),url(fonts/KaTeX_Caligraphic-Regular.ttf) format("truetype")}@font-face{font-family:KaTeX_Fraktur;font-style:normal;font-weight:700;src:url(fonts/KaTeX_Fraktur-Bold.woff2) format("woff2"),url(fonts/KaTeX_Fraktur-Bold.woff) format("woff"),url(fonts/KaTeX_Fraktur-Bold.ttf) format("truetype")}@font-face{font-family:KaTeX_Fraktur;font-style:normal;font-weight:400;src:url(fonts/KaTeX_Fraktur-Regular.woff2) format("woff2"),url(fonts/KaTeX_Fraktur-Regular.woff) format("woff"),url(fonts/KaTeX_Fraktur-Regular.ttf) format("truetype")}@font-face{font-family:KaTeX_Main;font-style:normal;font-weight:700;src:url(fonts/KaTeX_Main-Bold.woff2) format("woff2"),url(fonts/KaTeX_Main-Bold.woff) format("woff"),url(fonts/KaTeX_Main-Bold.ttf) format("truetype")}@font-face{font-family:KaTeX_Main;font-style:italic;font-weight:700;src:url(fonts/KaTeX_Main-BoldItalic.woff2) format("woff2"),url(fonts/KaTeX_Main-BoldItalic.woff) format("woff"),url(fonts/KaTeX_Main-BoldItalic.ttf) format("truetype")}@font-face{font-family:KaTeX_Main;font-style:italic;font-weight:400;src:url(fonts/KaTeX_Main-Italic.woff2) format("woff2"),url(fonts/KaTeX_Main-Italic.woff) format("woff"),url(fonts/KaTeX_Main-Italic.ttf) format("truetype")}@font-face{font-family:KaTeX_Main;font-style:normal;font-weight:400;src:url(fonts/KaTeX_Main-Regular.woff2) format("woff2"),url(fonts/KaTeX_Main-Regular.woff) format("woff"),url(fonts/KaTeX_Main-Regular.ttf) format("truetype")}@font-face{font-family:KaTeX_Math;font-style:italic;font-weight:700;src:url(fonts/KaTeX_Math-BoldItalic.woff2) format("woff2"),url(fonts/KaTeX_Math-BoldItalic.woff) format("woff"),url(fonts/KaTeX_Math-BoldItalic.ttf) format("truetype")}@font-face{font-family:KaTeX_Math;font-style:italic;font-weight:400;src:url(fonts/KaTeX_Math-Italic.woff2) format("woff2"),url(fonts/KaTeX_Math-Italic.woff) format("woff"),url(fonts/KaTeX_Math-Italic.ttf) format("truetype")}@font-face{font-family:"KaTeX_SansSerif";font-style:normal;font-weight:700;src:url(fonts/KaTeX_SansSerif-Bold.woff2) format("woff2"),url(fonts/KaTeX_SansSerif-Bold.woff) format("woff"),url(fonts/KaTeX_SansSerif-Bold.ttf) format("truetype")}@font-face{font-family:"KaTeX_SansSerif";font-style:italic;font-weight:400;src:url(fonts/KaTeX_SansSerif-Italic.woff2) format("woff2"),url(fonts/KaTeX_SansSerif-Italic.woff) format("woff"),url(fonts/KaTeX_SansSerif-Italic.ttf) format("truetype")}@font-face{font-family:"KaTeX_SansSerif";font-style:normal;font-weight:400;src:url(fonts/KaTeX_SansSerif-Regular.woff2) format("woff2"),url(fonts/KaTeX_SansSerif-Regular.woff) format("woff"),url(fonts/KaTeX_SansSerif-Regular.ttf) format("truetype")}@font-face{font-family:KaTeX_Script;font-style:normal;font-weight:400;src:url(fonts/KaTeX_Script-Regular.woff2) format("woff2"),url(fonts/KaTeX_Script-Regular.woff) format("woff"),url(fonts/KaTeX_Script-Regular.ttf) format("truetype")}@font-face{font-family:KaTeX_Size1;font-style:normal;font-weight:400;src:url(fonts/KaTeX_Size1-Regular.woff2) format("woff2"),url(fonts/KaTeX_Size1-Regular.woff) format("woff"),url(fonts/KaTeX_Size1-Regular.ttf) format("truetype")}@font-face{font-family:KaTeX_Size2;font-style:normal;font-weight:400;src:url(fonts/KaTeX_Size2-Regular.woff2) format("woff2"),url(fonts/KaTeX_Size2-Regular.woff) format("woff"),url(fonts/KaTeX_Size2-Regular.ttf) format("truetype")}@font-face{font-family:KaTeX_Size3;font-style:normal;font-weight:400;src:url(fonts/KaTeX_Size3-Regular.woff2) format("woff2"),url(fonts/KaTeX_Size3-Regular.woff) format("woff"),url(fonts/KaTeX_Size3-Regular.ttf) format("truetype")}@font-face{font-family:KaTeX_Size4;font-style:normal;font-weight:400;src:url(fonts/KaTeX_Size4-Regular.woff2) format("woff2"),url(fonts/KaTeX_Size4-Regular.woff) format("woff"),url(fonts/KaTeX_Size4-Regular.ttf) format("truetype")}@font-face{font-family:KaTeX_Typewriter;font-style:normal;font-weight:400;src:url(fonts/KaTeX_Typewriter-Regular.woff2) format("woff2"),url(fonts/KaTeX_Typewriter-Regular.woff) format("woff"),url(fonts/KaTeX_Typewriter-Regular.ttf) format("truetype")}.katex{text-rendering:auto;font:normal 1.21em KaTeX_Main,Times New Roman,serif;line-height:1.2;text-indent:0}.katex *{-ms-high-contrast-adjust:none!important;border-color:currentColor}.katex .katex-version:after{content:"0.13.24"}.katex .katex-mathml{clip:rect(1px,1px,1px,1px);border:0;height:1px;overflow:hidden;padding:0;position:absolute;width:1px}.katex .katex-html>.newline{display:block}.katex .base{position:relative;white-space:nowrap;width:-webkit-min-content;width:-moz-min-content;width:min-content}.katex .base,.katex .strut{display:inline-block}.katex .textbf{font-weight:700}.katex .textit{font-style:italic}.katex .textrm{font-family:KaTeX_Main}.katex .textsf{font-family:KaTeX_SansSerif}.katex .texttt{font-family:KaTeX_Typewriter}.katex .mathnormal{font-family:KaTeX_Math;font-style:italic}.katex .mathit{font-family:KaTeX_Main;font-style:italic}.katex .mathrm{font-style:normal}.katex .mathbf{font-family:KaTeX_Main;font-weight:700}.katex .boldsymbol{font-family:KaTeX_Math;font-style:italic;font-weight:700}.katex .amsrm,.katex .mathbb,.katex .textbb{font-family:KaTeX_AMS}.katex .mathcal{font-family:KaTeX_Caligraphic}.katex .mathfrak,.katex .textfrak{font-family:KaTeX_Fraktur}.katex .mathtt{font-family:KaTeX_Typewriter}.katex .mathscr,.katex .textscr{font-family:KaTeX_Script}.katex .mathsf,.katex .textsf{font-family:KaTeX_SansSerif}.katex .mathboldsf,.katex .textboldsf{font-family:KaTeX_SansSerif;font-weight:700}.katex .mathitsf,.katex .textitsf{font-family:KaTeX_SansSerif;font-style:italic}.katex .mainrm{font-family:KaTeX_Main;font-style:normal}.katex .vlist-t{border-collapse:collapse;display:inline-table;table-layout:fixed}.katex .vlist-r{display:table-row}.katex .vlist{display:table-cell;position:relative;vertical-align:bottom}.katex .vlist>span{display:block;height:0;position:relative}.katex .vlist>span>span{display:inline-block}.katex .vlist>span>.pstrut{overflow:hidden;width:0}.katex .vlist-t2{margin-right:-2px}.katex .vlist-s{display:table-cell;font-size:1px;min-width:2px;vertical-align:bottom;width:2px}.katex .vbox{align-items:baseline;display:inline-flex;flex-direction:column}.katex .hbox{width:100%}.katex .hbox,.katex .thinbox{display:inline-flex;flex-direction:row}.katex .thinbox{max-width:0;width:0}.katex .msupsub{text-align:left}.katex .mfrac>span>span{text-align:center}.katex .mfrac .frac-line{border-bottom-style:solid;display:inline-block;width:100%}.katex .hdashline,.katex .hline,.katex .mfrac .frac-line,.katex .overline .overline-line,.katex .rule,.katex .underline .underline-line{min-height:1px}.katex .mspace{display:inline-block}.katex .clap,.katex .llap,.katex .rlap{position:relative;width:0}.katex .clap>.inner,.katex .llap>.inner,.katex .rlap>.inner{position:absolute}.katex .clap>.fix,.katex .llap>.fix,.katex .rlap>.fix{display:inline-block}.katex .llap>.inner{right:0}.katex .clap>.inner,.katex .rlap>.inner{left:0}.katex .clap>.inner>span{margin-left:-50%;margin-right:50%}.katex .rule{border:0 solid;display:inline-block;position:relative}.katex .hline,.katex .overline .overline-line,.katex .underline .underline-line{border-bottom-style:solid;display:inline-block;width:100%}.katex .hdashline{border-bottom-style:dashed;display:inline-block;width:100%}.katex .sqrt>.root{margin-left:.27777778em;margin-right:-.55555556em}.katex .fontsize-ensurer.reset-size1.size1,.katex .sizing.reset-size1.size1{font-size:1em}.katex .fontsize-ensurer.reset-size1.size2,.katex .sizing.reset-size1.size2{font-size:1.2em}.katex .fontsize-ensurer.reset-size1.size3,.katex .sizing.reset-size1.size3{font-size:1.4em}.katex .fontsize-ensurer.reset-size1.size4,.katex .sizing.reset-size1.size4{font-size:1.6em}.katex .fontsize-ensurer.reset-size1.size5,.katex .sizing.reset-size1.size5{font-size:1.8em}.katex .fontsize-ensurer.reset-size1.size6,.katex .sizing.reset-size1.size6{font-size:2em}.katex .fontsize-ensurer.reset-size1.size7,.katex .sizing.reset-size1.size7{font-size:2.4em}.katex .fontsize-ensurer.reset-size1.size8,.katex .sizing.reset-size1.size8{font-size:2.88em}.katex .fontsize-ensurer.reset-size1.size9,.katex .sizing.reset-size1.size9{font-size:3.456em}.katex .fontsize-ensurer.reset-size1.size10,.katex .sizing.reset-size1.size10{font-size:4.148em}.katex .fontsize-ensurer.reset-size1.size11,.katex .sizing.reset-size1.size11{font-size:4.976em}.katex .fontsize-ensurer.reset-size2.size1,.katex .sizing.reset-size2.size1{font-size:.83333333em}.katex .fontsize-ensurer.reset-size2.size2,.katex .sizing.reset-size2.size2{font-size:1em}.katex .fontsize-ensurer.reset-size2.size3,.katex .sizing.reset-size2.size3{font-size:1.16666667em}.katex .fontsize-ensurer.reset-size2.size4,.katex .sizing.reset-size2.size4{font-size:1.33333333em}.katex .fontsize-ensurer.reset-size2.size5,.katex .sizing.reset-size2.size5{font-size:1.5em}.katex .fontsize-ensurer.reset-size2.size6,.katex .sizing.reset-size2.size6{font-size:1.66666667em}.katex .fontsize-ensurer.reset-size2.size7,.katex .sizing.reset-size2.size7{font-size:2em}.katex .fontsize-ensurer.reset-size2.size8,.katex .sizing.reset-size2.size8{font-size:2.4em}.katex .fontsize-ensurer.reset-size2.size9,.katex .sizing.reset-size2.size9{font-size:2.88em}.katex .fontsize-ensurer.reset-size2.size10,.katex .sizing.reset-size2.size10{font-size:3.45666667em}.katex .fontsize-ensurer.reset-size2.size11,.katex .sizing.reset-size2.size11{font-size:4.14666667em}.katex .fontsize-ensurer.reset-size3.size1,.katex .sizing.reset-size3.size1{font-size:.71428571em}.katex .fontsize-ensurer.reset-size3.size2,.katex .sizing.reset-size3.size2{font-size:.85714286em}.katex .fontsize-ensurer.reset-size3.size3,.katex .sizing.reset-size3.size3{font-size:1em}.katex .fontsize-ensurer.reset-size3.size4,.katex .sizing.reset-size3.size4{font-size:1.14285714em}.katex .fontsize-ensurer.reset-size3.size5,.katex .sizing.reset-size3.size5{font-size:1.28571429em}.katex .fontsize-ensurer.reset-size3.size6,.katex .sizing.reset-size3.size6{font-size:1.42857143em}.katex .fontsize-ensurer.reset-size3.size7,.katex .sizing.reset-size3.size7{font-size:1.71428571em}.katex .fontsize-ensurer.reset-size3.size8,.katex .sizing.reset-size3.size8{font-size:2.05714286em}.katex .fontsize-ensurer.reset-size3.size9,.katex .sizing.reset-size3.size9{font-size:2.46857143em}.katex .fontsize-ensurer.reset-size3.size10,.katex .sizing.reset-size3.size10{font-size:2.96285714em}.katex .fontsize-ensurer.reset-size3.size11,.katex .sizing.reset-size3.size11{font-size:3.55428571em}.katex .fontsize-ensurer.reset-size4.size1,.katex .sizing.reset-size4.size1{font-size:.625em}.katex .fontsize-ensurer.reset-size4.size2,.katex .sizing.reset-size4.size2{font-size:.75em}.katex .fontsize-ensurer.reset-size4.size3,.katex .sizing.reset-size4.size3{font-size:.875em}.katex .fontsize-ensurer.reset-size4.size4,.katex .sizing.reset-size4.size4{font-size:1em}.katex .fontsize-ensurer.reset-size4.size5,.katex .sizing.reset-size4.size5{font-size:1.125em}.katex .fontsize-ensurer.reset-size4.size6,.katex .sizing.reset-size4.size6{font-size:1.25em}.katex .fontsize-ensurer.reset-size4.size7,.katex .sizing.reset-size4.size7{font-size:1.5em}.katex .fontsize-ensurer.reset-size4.size8,.katex .sizing.reset-size4.size8{font-size:1.8em}.katex .fontsize-ensurer.reset-size4.size9,.katex .sizing.reset-size4.size9{font-size:2.16em}.katex .fontsize-ensurer.reset-size4.size10,.katex .sizing.reset-size4.size10{font-size:2.5925em}.katex .fontsize-ensurer.reset-size4.size11,.katex .sizing.reset-size4.size11{font-size:3.11em}.katex .fontsize-ensurer.reset-size5.size1,.katex .sizing.reset-size5.size1{font-size:.55555556em}.katex .fontsize-ensurer.reset-size5.size2,.katex .sizing.reset-size5.size2{font-size:.66666667em}.katex .fontsize-ensurer.reset-size5.size3,.katex .sizing.reset-size5.size3{font-size:.77777778em}.katex .fontsize-ensurer.reset-size5.size4,.katex .sizing.reset-size5.size4{font-size:.88888889em}.katex .fontsize-ensurer.reset-size5.size5,.katex .sizing.reset-size5.size5{font-size:1em}.katex .fontsize-ensurer.reset-size5.size6,.katex .sizing.reset-size5.size6{font-size:1.11111111em}.katex .fontsize-ensurer.reset-size5.size7,.katex .sizing.reset-size5.size7{font-size:1.33333333em}.katex .fontsize-ensurer.reset-size5.size8,.katex .sizing.reset-size5.size8{font-size:1.6em}.katex .fontsize-ensurer.reset-size5.size9,.katex .sizing.reset-size5.size9{font-size:1.92em}.katex .fontsize-ensurer.reset-size5.size10,.katex .sizing.reset-size5.size10{font-size:2.30444444em}.katex .fontsize-ensurer.reset-size5.size11,.katex .sizing.reset-size5.size11{font-size:2.76444444em}.katex .fontsize-ensurer.reset-size6.size1,.katex .sizing.reset-size6.size1{font-size:.5em}.katex .fontsize-ensurer.reset-size6.size2,.katex .sizing.reset-size6.size2{font-size:.6em}.katex .fontsize-ensurer.reset-size6.size3,.katex .sizing.reset-size6.size3{font-size:.7em}.katex .fontsize-ensurer.reset-size6.size4,.katex .sizing.reset-size6.size4{font-size:.8em}.katex .fontsize-ensurer.reset-size6.size5,.katex .sizing.reset-size6.size5{font-size:.9em}.katex .fontsize-ensurer.reset-size6.size6,.katex .sizing.reset-size6.size6{font-size:1em}.katex .fontsize-ensurer.reset-size6.size7,.katex .sizing.reset-size6.size7{font-size:1.2em}.katex .fontsize-ensurer.reset-size6.size8,.katex .sizing.reset-size6.size8{font-size:1.44em}.katex .fontsize-ensurer.reset-size6.size9,.katex .sizing.reset-size6.size9{font-size:1.728em}.katex .fontsize-ensurer.reset-size6.size10,.katex .sizing.reset-size6.size10{font-size:2.074em}.katex .fontsize-ensurer.reset-size6.size11,.katex .sizing.reset-size6.size11{font-size:2.488em}.katex .fontsize-ensurer.reset-size7.size1,.katex .sizing.reset-size7.size1{font-size:.41666667em}.katex .fontsize-ensurer.reset-size7.size2,.katex .sizing.reset-size7.size2{font-size:.5em}.katex .fontsize-ensurer.reset-size7.size3,.katex .sizing.reset-size7.size3{font-size:.58333333em}.katex .fontsize-ensurer.reset-size7.size4,.katex .sizing.reset-size7.size4{font-size:.66666667em}.katex .fontsize-ensurer.reset-size7.size5,.katex .sizing.reset-size7.size5{font-size:.75em}.katex .fontsize-ensurer.reset-size7.size6,.katex .sizing.reset-size7.size6{font-size:.83333333em}.katex .fontsize-ensurer.reset-size7.size7,.katex .sizing.reset-size7.size7{font-size:1em}.katex .fontsize-ensurer.reset-size7.size8,.katex .sizing.reset-size7.size8{font-size:1.2em}.katex .fontsize-ensurer.reset-size7.size9,.katex .sizing.reset-size7.size9{font-size:1.44em}.katex .fontsize-ensurer.reset-size7.size10,.katex .sizing.reset-size7.size10{font-size:1.72833333em}.katex .fontsize-ensurer.reset-size7.size11,.katex .sizing.reset-size7.size11{font-size:2.07333333em}.katex .fontsize-ensurer.reset-size8.size1,.katex .sizing.reset-size8.size1{font-size:.34722222em}.katex .fontsize-ensurer.reset-size8.size2,.katex .sizing.reset-size8.size2{font-size:.41666667em}.katex .fontsize-ensurer.reset-size8.size3,.katex .sizing.reset-size8.size3{font-size:.48611111em}.katex .fontsize-ensurer.reset-size8.size4,.katex .sizing.reset-size8.size4{font-size:.55555556em}.katex .fontsize-ensurer.reset-size8.size5,.katex .sizing.reset-size8.size5{font-size:.625em}.katex .fontsize-ensurer.reset-size8.size6,.katex .sizing.reset-size8.size6{font-size:.69444444em}.katex .fontsize-ensurer.reset-size8.size7,.katex .sizing.reset-size8.size7{font-size:.83333333em}.katex .fontsize-ensurer.reset-size8.size8,.katex .sizing.reset-size8.size8{font-size:1em}.katex .fontsize-ensurer.reset-size8.size9,.katex .sizing.reset-size8.size9{font-size:1.2em}.katex .fontsize-ensurer.reset-size8.size10,.katex .sizing.reset-size8.size10{font-size:1.44027778em}.katex .fontsize-ensurer.reset-size8.size11,.katex .sizing.reset-size8.size11{font-size:1.72777778em}.katex .fontsize-ensurer.reset-size9.size1,.katex .sizing.reset-size9.size1{font-size:.28935185em}.katex .fontsize-ensurer.reset-size9.size2,.katex .sizing.reset-size9.size2{font-size:.34722222em}.katex .fontsize-ensurer.reset-size9.size3,.katex .sizing.reset-size9.size3{font-size:.40509259em}.katex .fontsize-ensurer.reset-size9.size4,.katex .sizing.reset-size9.size4{font-size:.46296296em}.katex .fontsize-ensurer.reset-size9.size5,.katex .sizing.reset-size9.size5{font-size:.52083333em}.katex .fontsize-ensurer.reset-size9.size6,.katex .sizing.reset-size9.size6{font-size:.5787037em}.katex .fontsize-ensurer.reset-size9.size7,.katex .sizing.reset-size9.size7{font-size:.69444444em}.katex .fontsize-ensurer.reset-size9.size8,.katex .sizing.reset-size9.size8{font-size:.83333333em}.katex .fontsize-ensurer.reset-size9.size9,.katex .sizing.reset-size9.size9{font-size:1em}.katex .fontsize-ensurer.reset-size9.size10,.katex .sizing.reset-size9.size10{font-size:1.20023148em}.katex .fontsize-ensurer.reset-size9.size11,.katex .sizing.reset-size9.size11{font-size:1.43981481em}.katex .fontsize-ensurer.reset-size10.size1,.katex .sizing.reset-size10.size1{font-size:.24108004em}.katex .fontsize-ensurer.reset-size10.size2,.katex .sizing.reset-size10.size2{font-size:.28929605em}.katex .fontsize-ensurer.reset-size10.size3,.katex .sizing.reset-size10.size3{font-size:.33751205em}.katex .fontsize-ensurer.reset-size10.size4,.katex .sizing.reset-size10.size4{font-size:.38572806em}.katex .fontsize-ensurer.reset-size10.size5,.katex .sizing.reset-size10.size5{font-size:.43394407em}.katex .fontsize-ensurer.reset-size10.size6,.katex .sizing.reset-size10.size6{font-size:.48216008em}.katex .fontsize-ensurer.reset-size10.size7,.katex .sizing.reset-size10.size7{font-size:.57859209em}.katex .fontsize-ensurer.reset-size10.size8,.katex .sizing.reset-size10.size8{font-size:.69431051em}.katex .fontsize-ensurer.reset-size10.size9,.katex .sizing.reset-size10.size9{font-size:.83317261em}.katex .fontsize-ensurer.reset-size10.size10,.katex .sizing.reset-size10.size10{font-size:1em}.katex .fontsize-ensurer.reset-size10.size11,.katex .sizing.reset-size10.size11{font-size:1.19961427em}.katex .fontsize-ensurer.reset-size11.size1,.katex .sizing.reset-size11.size1{font-size:.20096463em}.katex .fontsize-ensurer.reset-size11.size2,.katex .sizing.reset-size11.size2{font-size:.24115756em}.katex .fontsize-ensurer.reset-size11.size3,.katex .sizing.reset-size11.size3{font-size:.28135048em}.katex .fontsize-ensurer.reset-size11.size4,.katex .sizing.reset-size11.size4{font-size:.32154341em}.katex .fontsize-ensurer.reset-size11.size5,.katex .sizing.reset-size11.size5{font-size:.36173633em}.katex .fontsize-ensurer.reset-size11.size6,.katex .sizing.reset-size11.size6{font-size:.40192926em}.katex .fontsize-ensurer.reset-size11.size7,.katex .sizing.reset-size11.size7{font-size:.48231511em}.katex .fontsize-ensurer.reset-size11.size8,.katex .sizing.reset-size11.size8{font-size:.57877814em}.katex .fontsize-ensurer.reset-size11.size9,.katex .sizing.reset-size11.size9{font-size:.69453376em}.katex .fontsize-ensurer.reset-size11.size10,.katex .sizing.reset-size11.size10{font-size:.83360129em}.katex .fontsize-ensurer.reset-size11.size11,.katex .sizing.reset-size11.size11{font-size:1em}.katex .delimsizing.size1{font-family:KaTeX_Size1}.katex .delimsizing.size2{font-family:KaTeX_Size2}.katex .delimsizing.size3{font-family:KaTeX_Size3}.katex .delimsizing.size4{font-family:KaTeX_Size4}.katex .delimsizing.mult .delim-size1>span{font-family:KaTeX_Size1}.katex .delimsizing.mult .delim-size4>span{font-family:KaTeX_Size4}.katex .nulldelimiter{display:inline-block;width:.12em}.katex .delimcenter,.katex .op-symbol{position:relative}.katex .op-symbol.small-op{font-family:KaTeX_Size1}.katex .op-symbol.large-op{font-family:KaTeX_Size2}.katex .accent>.vlist-t,.katex .op-limits>.vlist-t{text-align:center}.katex .accent .accent-body{position:relative}.katex .accent .accent-body:not(.accent-full){width:0}.katex .overlay{display:block}.katex .mtable .vertical-separator{display:inline-block;min-width:1px}.katex .mtable .arraycolsep{display:inline-block}.katex .mtable .col-align-c>.vlist-t{text-align:center}.katex .mtable .col-align-l>.vlist-t{text-align:left}.katex .mtable .col-align-r>.vlist-t{text-align:right}.katex .svg-align{text-align:left}.katex svg{fill:currentColor;stroke:currentColor;fill-rule:nonzero;fill-opacity:1;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;display:block;height:inherit;position:absolute;width:100%}.katex svg path{stroke:none}.katex img{border-style:none;max-height:none;max-width:none;min-height:0;min-width:0}.katex .stretchy{display:block;overflow:hidden;position:relative;width:100%}.katex .stretchy:after,.katex .stretchy:before{content:""}.katex .hide-tail{overflow:hidden;position:relative;width:100%}.katex .halfarrow-left{left:0;overflow:hidden;position:absolute;width:50.2%}.katex .halfarrow-right{overflow:hidden;position:absolute;right:0;width:50.2%}.katex .brace-left{left:0;overflow:hidden;position:absolute;width:25.1%}.katex .brace-center{left:25%;overflow:hidden;position:absolute;width:50%}.katex .brace-right{overflow:hidden;position:absolute;right:0;width:25.1%}.katex .x-arrow-pad{padding:0 .5em}.katex .cd-arrow-pad{padding:0 .55556em 0 .27778em}.katex .mover,.katex .munder,.katex .x-arrow{text-align:center}.katex .boxpad{padding:0 .3em}.katex .fbox,.katex .fcolorbox{border:.04em solid;box-sizing:border-box}.katex .cancel-pad{padding:0 .2em}.katex .cancel-lap{margin-left:-.2em;margin-right:-.2em}.katex .sout{border-bottom-style:solid;border-bottom-width:.08em}.katex .angl{border-right:.049em solid;border-top:.049em solid;box-sizing:border-box;margin-right:.03889em}.katex .anglpad{padding:0 .03889em}.katex .eqn-num:before{content:"(" counter(katexEqnNo) ")";counter-increment:katexEqnNo}.katex .mml-eqn-num:before{content:"(" counter(mmlEqnNo) ")";counter-increment:mmlEqnNo}.katex .mtr-glue{width:50%}.katex .cd-vert-arrow{display:inline-block;position:relative}.katex .cd-label-left{display:inline-block;position:absolute;right:calc(50% + .3em);text-align:left}.katex .cd-label-right{display:inline-block;left:calc(50% + .3em);position:absolute;text-align:right}.katex-display{display:block;margin:1em 0;text-align:center}.katex-display>.katex{display:block;text-align:center;white-space:nowrap}.katex-display>.katex>.katex-html{display:block;position:relative}.katex-display>.katex>.katex-html>.tag{position:absolute;right:0}.katex-display.leqno>.katex>.katex-html>.tag{left:0;right:auto}.katex-display.fleqn>.katex{padding-left:2em;text-align:left}body{counter-reset:katexEqnNo mmlEqnNo}
+
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+.katex-error {
+	color: var(--vscode-editorError-foreground);
+}
+
+</style>
+        
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/markdown.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/highlight.css">
+<style>
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe WPC', 'Segoe UI', system-ui, 'Ubuntu', 'Droid Sans', sans-serif;
+                font-size: 14px;
+                line-height: 1.6;
+            }
+        </style>
+        <style>
+.task-list-item { list-style-type: none; } .task-list-item-checkbox { margin-left: -20px; vertical-align: middle; }
+</style>
+        
+    </head>
+    <body class="vscode-body vscode-light">
+        <h1 id="스프링과-jpa-연동">스프링과 JPA 연동</h1>
+<ul>
+<li>프레임 워크는 애플리케이션의 아키텍쳐에 해당하는 골격 코드를 제공합니다.
+<ul>
+<li>프레임 워크를 기반으로 개발자가 비즈니스 로직에만 집중할 수 있도록 합니다.</li>
+</ul>
+</li>
+</ul>
+<h2 id="비즈니스-컴포넌트-만들기">비즈니스 컴포넌트 만들기</h2>
+<h3 id="프로젝트-생성-및-설정-파일-복사">프로젝트 생성 및 설정 파일 복사</h3>
+<ul>
+<li><code>pom.xml</code> 파일과 <code>persistence.xml</code> 파일을 작성합니다.</li>
+</ul>
+<h3 id="엔티티-클래스-수정">엔티티 클래스 수정</h3>
+<pre><code class="language-java"><div><span class="hljs-meta">@Data</span>
+<span class="hljs-comment">// 순환 참조를 피하기 위해서 dept를 제거</span>
+<span class="hljs-meta">@ToString(exclude = &quot;dept&quot;)</span>
+<span class="hljs-meta">@Entity</span>
+<span class="hljs-meta">@Table(name = &quot;S_EMP&quot;)</span>
+<span class="hljs-keyword">public</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Employee</span> </span>{
+    <span class="hljs-meta">@ID</span>
+    <span class="hljs-meta">@GeneratedValue(strategy = GenerationType.IDENTITY)</span>
+    <span class="hljs-keyword">private</span> Long id;
+
+    <span class="hljs-keyword">private</span> String name;
+
+    <span class="hljs-meta">@Column(name=&quot;MAIL_ID&quot;)</span>
+    <span class="hljs-keyword">private</span> String mailId;
+
+    <span class="hljs-keyword">private</span> Double salary;
+
+    <span class="hljs-meta">@ManyToOne</span>
+    <span class="hljs-meta">@JoinColumn(name = &quot;DEPT_ID&quot;)</span>
+    <span class="hljs-keyword">private</span> Department dept;
+
+    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title">setDept</span><span class="hljs-params">(Department department)</span> </span>{
+        <span class="hljs-keyword">this</span>.dept = department;
+        department.getEmployeeList().add(<span class="hljs-keyword">this</span>);
+    }
+}
+
+<span class="hljs-meta">@Data</span>
+<span class="hljs-meta">@ToString(exclude = &quot;employeeList&quot;)</span>
+<span class="hljs-meta">@Entity</span>
+<span class="hljs-meta">@Table(name=&quot;S_DEPT&quot;)</span>
+<span class="hljs-keyword">public</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Department</span> </span>{
+    <span class="hljs-meta">@Id</span>
+    <span class="hljs-meta">@GeneratedValue(strategy = GenerationType.IDENTITY)</span>
+    <span class="hljs-meta">@Column(name = &quot;DEPT_ID&quot;)</span>
+    <span class="hljs-keyword">private</span> Long deptId;
+
+    <span class="hljs-keyword">private</span> String name;
+
+    <span class="hljs-meta">@OneToMany(mappedBy = &quot;dept&quot;)</span>
+    <span class="hljs-keyword">private</span> List&lt;Employee&gt; employeeList = <span class="hljs-keyword">new</span> ArrayList&lt;Employee&gt;();
+}
+</div></code></pre>
+<h3 id="repository-클래스-작성">Repository 클래스 작성</h3>
+<ul>
+<li>JPA 연동에 필요한 리포지터리 클래스를 작성합니다.</li>
+</ul>
+<pre><code class="language-java"><div><span class="hljs-comment">// Repository 붙은 클래스도 객체를 생성 </span>
+<span class="hljs-meta">@Repository</span>
+<span class="hljs-keyword">public</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">EmployeeRepository</span> </span>{
+    <span class="hljs-comment">// Entity를 영구 저장하는 환경 입니다. </span>
+    <span class="hljs-comment">// EntityManager를 자동 할당합니다. </span>
+    <span class="hljs-meta">@PersistenceContext</span>
+    <span class="hljs-keyword">private</span> EntityManager em;
+
+    <span class="hljs-comment">// EntityManager를 통해서 CRUD를 구현합닏. </span>
+
+    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title">insertEmployee</span><span class="hljs-params">(Employee employee)</span></span>{        
+        em.persist(employee);
+    }
+
+    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title">updateEmployee</span><span class="hljs-params">(Employee employee)</span> </span>{
+        em.mergy(employee);
+    }
+
+    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title">deleteEmployee</span><span class="hljs-params">(Employee employee)</span></span>{
+        em.remove(em.find(Employee.class, employee.getId()));
+    }
+
+    <span class="hljs-function"><span class="hljs-keyword">public</span> Employee <span class="hljs-title">getEmployee</span><span class="hljs-params">(Employee employee)</span></span>{
+        <span class="hljs-keyword">return</span> (Employee)em.find(Employee.class, employee.getId());
+    }
+
+    <span class="hljs-function"><span class="hljs-keyword">public</span> List&lt;Employee&gt; <span class="hljs-title">getEmployeeList</span><span class="hljs-params">(Employee employee)</span></span>{
+        <span class="hljs-keyword">return</span> em.createQuery(<span class="hljs-string">&quot;FROM Employee emp ORDER BY emp.id DESC&quot;</span>)
+            .getResultList();
+    }
+}
+</div></code></pre>
+<h3 id="서비스-클래스-작성">서비스 클래스 작성</h3>
+<ul>
+<li>Repository를 사용하여 요청한 비즈니스 로직을 처리하는 서비스 클래스를 작성합니다.</li>
+</ul>
+<pre><code class="language-java"><div><span class="hljs-comment">// @Component와 동일한 기능 제공</span>
+<span class="hljs-meta">@Service</span>
+<span class="hljs-keyword">public</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">EmployeeService</span> </span>{
+
+    <span class="hljs-comment">// 자동 객체 주입</span>
+    <span class="hljs-meta">@Autowired</span>
+    <span class="hljs-keyword">private</span> EmployeeRepository empRepository;
+
+    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title">insertEmployee</span><span class="hljs-params">(Employee employee)</span></span>{
+        empRepository.insertEmployee(employee);
+    }
+
+    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title">updateEmployee</span><span class="hljs-params">(Employee employee)</span></span>{
+        empRepository.updateEmployee(employee);
+    }
+
+    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title">deleteEmployee</span><span class="hljs-params">(Employee employee)</span></span>{
+        empRepository.deleteEmployee(employee);
+    }
+
+    <span class="hljs-function"><span class="hljs-keyword">public</span> Employee <span class="hljs-title">getEmployee</span><span class="hljs-params">(Employee employee)</span></span>{
+        <span class="hljs-keyword">return</span> empRepository.getEmployee(employee);
+    }
+
+    <span class="hljs-comment">/// 생략..</span>
+}
+</div></code></pre>
+<h3 id="트랜젝션-설정-추가">트랜젝션 설정 추가</h3>
+<ul>
+<li>스프링과 비교되느 EJB는 모든 비즈니스 메소드에 대한 트랜젝션 관리를 EJB 컨테이너가 자동 관리
+<ul>
+<li>스프링도 가능</li>
+</ul>
+</li>
+<li>스프링 설정에 추가할 수 있습니다
+<ul>
+<li>business-layer.xml 파일에 aop와 tx라는 두개의 네임 스페이스를 추가</li>
+</ul>
+</li>
+</ul>
+<pre><code class="language-xml"><div><span class="hljs-comment">&lt;!--business-layer.xml 파일--&gt;</span>
+
+</div></code></pre>
+<h2 id="스프링-데이터-jpa">스프링 데이터 JPA</h2>
+<ul>
+<li>복잡한 JDBC 코드까지 제공한다는 점에서 JPA는 유용하지만 반복적인 Repository 코드의 중복이 발생
+<ul>
+<li>EntityManager의 메소드를 호출하는 코드는 거의 동일함</li>
+</ul>
+</li>
+</ul>
+<h3 id="스프링-jpa-데이터란">스프링 JPA 데이터란?</h3>
+<ul>
+<li>기존 JPA에서는 등록기능은 persist, 수정은 merge, 삭제는 remove, 상세 조회는 find, 목록 검색은 createQuery메서드 사용</li>
+<li>스프링 데이터 JPA는 스프링 프레임워크 확장 모듈입니다.
+<ul>
+<li>spring.data.jpa</li>
+</ul>
+</li>
+</ul>
+<h3 id="repository-인터페이스-작성">Repository 인터페이스 작성</h3>
+<ul>
+<li>스프링 데이터 JPA에서 제공하는 인터페이스중에 하나를 상속해서 작성합니다.
+<ul>
+<li>Repository<interface> -&gt; CrudRepository<interface> -&gt; PagingAndSortingRepository<interface> -&gt; JpaRepository<interface>
+<ul>
+<li>다른 인터페이스는 Spring Data 모듈에 제공하고 JpaRepository는 Spring Data JPA에서 추가로 제공</li>
+</ul>
+</li>
+<li>Repository는 거의 기능이 없습니다.</li>
+<li>CrudRepository는 기본적인 CRUD 기능을 제공하는 인터페이스 입니다.</li>
+<li>PagingAndSortingRepository는 페이징 처리와 정렬 기능을 추가되어 있습니다.</li>
+<li>JpaRepository는 스프링 데이터 JPA에서 추가한 기능을 사용하고 싶은 경우에 사용합니다.</li>
+</ul>
+</li>
+</ul>
+<pre><code class="language-java"><div><span class="hljs-comment">// CrudRepository&lt;T, ID&gt; T는 엔티티 클래스 타입, ID는 식별자 타입</span>
+<span class="hljs-comment">// JPA는 다음과 같이 변경 할 수 있습니다.</span>
+<span class="hljs-comment">// 다음과 같이 정의하면 CrudRepository로부터 CRUD 기능의 추상 메서드들이 상속됩니다. </span>
+<span class="hljs-keyword">public</span> <span class="hljs-class"><span class="hljs-keyword">interface</span> <span class="hljs-title">EmployeeRepository</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">CrudRepository</span>&lt;<span class="hljs-title">Employee</span>, <span class="hljs-title">Long</span>&gt;</span>{
+
+}
+</div></code></pre>
+<h4 id="crud가-제공하는-메서드-목록">CRUD가 제공하는 메서드 목록</h4>
+<pre><code class="language-java"><div><span class="hljs-function"><span class="hljs-keyword">long</span> <span class="hljs-title">count</span><span class="hljs-params">()</span></span>;                           <span class="hljs-comment">// 엔티티의 갯수 리턴</span>
+<span class="hljs-function"><span class="hljs-keyword">void</span> <span class="hljs-title">delete</span><span class="hljs-params">(Object entity)</span></span>;             <span class="hljs-comment">// 엔티티 삭제</span>
+<span class="hljs-function"><span class="hljs-keyword">void</span> <span class="hljs-title">deleteAll</span><span class="hljs-params">()</span></span>;                       <span class="hljs-comment">// 모든 엔티티 삭제</span>
+<span class="hljs-function"><span class="hljs-keyword">void</span> <span class="hljs-title">deleteById</span><span class="hljs-params">(Object id)</span></span>;             <span class="hljs-comment">// 식별 키를 이용한 객체 삭제 </span>
+<span class="hljs-function"><span class="hljs-keyword">boolean</span> <span class="hljs-title">existsById</span><span class="hljs-params">(Object id)</span>           <span class="hljs-comment">// 식별 키를 가진 엔티티가 존재하는 확인</span>
+Iterable <span class="hljs-title">findAll</span><span class="hljs-params">()</span></span>;                     <span class="hljs-comment">// 모든 엔티티 목록 리턴</span>
+<span class="hljs-function">Iterable <span class="hljs-title">findAllById</span><span class="hljs-params">(Iterable ids)</span></span>;     <span class="hljs-comment">// 해당 식별키를 가진 엔티티 목록 리턴</span>
+<span class="hljs-function">Optional <span class="hljs-title">findById</span><span class="hljs-params">(Object id)</span></span>;           <span class="hljs-comment">// 해당 식별 키에 해당하는 하나의 엔티티 리턴</span>
+<span class="hljs-function">Object <span class="hljs-title">save</span><span class="hljs-params">(Object entity)</span></span>;             <span class="hljs-comment">// 하나의 엔티티를 등록하거나 수정</span>
+<span class="hljs-function">Iterable <span class="hljs-title">saveAll</span><span class="hljs-params">(Iterable entities)</span>     <span class="hljs-comment">// 여러 엔티티를 한번에 등록하거나 수정 </span>
+</span></div></code></pre>
+<h3 id="스프릴-설정-클래스-수정">스프릴 설정 클래스 수정</h3>
+<ul>
+<li>스프링 컨테이너가 데이터 JPA를 수정할 수 있도록 다음과 같이 수정합니다.</li>
+</ul>
+<pre><code class="language-java"><div><span class="hljs-meta">@Configuration</span>
+<span class="hljs-meta">@ComponentScan(basePackages = &quot;com.rubypaper.biz&quot;)</span>
+<span class="hljs-meta">@EnableTransactionManagement</span>
+<span class="hljs-meta">@EnableJpaRepositories(basePackages = &quot;com.rubypaper.biz.repository&quot;)</span>
+<span class="hljs-keyword">public</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">SpringConfiguration</span> </span>{
+    <span class="hljs-meta">@Bean</span>
+    <span class="hljs-function"><span class="hljs-keyword">public</span> HibernateJpaVendorAdapter <span class="hljs-title">vendorAdapter</span><span class="hljs-params">()</span> </span>{
+        HibernateJpaVendorAdapter adapter = <span class="hljs-keyword">new</span> HibernateJpaVendorAdapter();
+        <span class="hljs-keyword">return</span> adapter;
+    }
+
+    <span class="hljs-meta">@Bean</span>
+    <span class="hljs-function"><span class="hljs-keyword">public</span> DataSource <span class="hljs-title">dataSource</span><span class="hljs-params">()</span> </span>{
+        DriverManagerDataSource dataSource = <span class="hljs-keyword">new</span> DriverManagerDataSource();
+        <span class="hljs-comment">// .. 생략</span>
+    }
+
+    <span class="hljs-comment">// entityManagerFactory 고정된 Bean이름을 사용해야 합니다.</span>
+    <span class="hljs-comment">// 스프링 컨테이너가 정해진 이름을 사용합니다.</span>
+    <span class="hljs-meta">@Bean(name = &quot;entityManagerFactory&quot;)</span>
+    <span class="hljs-function"><span class="hljs-keyword">public</span> LocalContainerEntityManagerFactoryBean <span class="hljs-title">factoryBean</span><span class="hljs-params">()</span> </span>{
+        LocalContainerEntityManagerFactoryBean factoryBean =
+            <span class="hljs-keyword">new</span> LocalContainerEntityManagerFactoryBean();
+        factoryBean.setJpaVendorAdapter(vendorAdapter());
+        factoryBean.setDataSource(dataSource());
+
+        Map&lt;String, Object&gt; properties = <span class="hljs-keyword">new</span> HashMap&lt;String, Object&gt;();
+        properties.put(<span class="hljs-string">&quot;hibernate.dialect&quot;</span>, <span class="hljs-string">&quot;org.hibernate.dialect.H2Dialect&quot;</span>);
+        properties.put(<span class="hljs-string">&quot;hibernate.show_sql&quot;</span>, <span class="hljs-string">&quot;true&quot;</span>);
+        properties.put(<span class="hljs-string">&quot;hibernate.format_sql&quot;</span>, <span class="hljs-string">&quot;true&quot;</span>);
+        properties.put(<span class="hljs-string">&quot;hibernate.id.new_generator_mappings&quot;</span>, <span class="hljs-string">&quot;true&quot;</span>);
+        properties.put(<span class="hljs-string">&quot;hibernate.hbm2ddl.auto&quot;</span>, <span class="hljs-string">&quot;create&quot;</span>);
+
+        factoryBean.setJpaPropertyMap(properties);
+        <span class="hljs-keyword">return</span> factoryBean;
+    }
+
+    <span class="hljs-comment">// transactionManager 고정된 Bean이름을 사용해야 합니다.</span>
+    <span class="hljs-comment">// 스프링 컨테이너가 정해진 이름을 사용합니다.</span>
+    <span class="hljs-meta">@Bean(name = &quot;transactionManager&quot;)</span>
+    <span class="hljs-function"><span class="hljs-keyword">public</span> JpaTransactionManger <span class="hljs-title">txManager</span><span class="hljs-params">(EntityManagerFactory factory)</span></span>{
+        JpaTransactionManager txManager = <span class="hljs-keyword">new</span> JpaTransactionManager();
+        txManager.setEntityManagerFactory(factory);
+        <span class="hljs-keyword">return</span> txManagerl
+    }
+}
+
+<span class="hljs-comment">// 또는 다음과 같이 선언 할 수 있습니다.</span>
+<span class="hljs-meta">@EnableJpaRepositories(basePackages = &quot;com.rubypaper.biz.repository&quot;
+                        entityManagerFactoryRef = &quot;factoryBean&quot;
+                        transactionManagerRef = &quot;txManager&quot;)</span>
+<span class="hljs-keyword">public</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">SpringConfiguration</span> </span>{
+    <span class="hljs-comment">// .. 생략</span>
+
+    <span class="hljs-comment">// entityManagerFactory 고정된 Bean이름을 사용해야 합니다.</span>
+    <span class="hljs-comment">// 스프링 컨테이너가 정해진 이름을 사용합니다.</span>
+    <span class="hljs-meta">@Bean</span>
+    <span class="hljs-function"><span class="hljs-keyword">public</span> LocalContainerEntityManagerFactoryBean <span class="hljs-title">factoryBean</span><span class="hljs-params">()</span> </span>{
+        <span class="hljs-comment">// .. 생략 </span>
+    }
+
+    <span class="hljs-comment">// transactionManager 고정된 Bean이름을 사용해야 합니다.</span>
+    <span class="hljs-comment">// 스프링 컨테이너가 정해진 이름을 사용합니다.</span>
+    <span class="hljs-meta">@Bean</span>
+    <span class="hljs-function"><span class="hljs-keyword">public</span> JpaTransactionManger <span class="hljs-title">txManager</span><span class="hljs-params">(EntityManagerFactory factory)</span></span>{
+        <span class="hljs-comment">// .. 생략 </span>
+    }
+}
+</div></code></pre>
+<h2 id="쿼리-메소드-사용하기">쿼리 메소드 사용하기</h2>
+<ul>
+<li>위의 기능으로도 간단한 기능을 구현 할 수 있지만 복잡한 검색을 위해서 JPQL을 사용합니다.</li>
+</ul>
+<h3 id="쿼리-메서드-기본">쿼리 메서드 기본</h3>
+<ul>
+<li>쿼리 메소드에서 가장 많이 사용하는 문법은 엔티티에서 특정 변수 값을 필터링 하는 것입니다.</li>
+<li>쿼리의 리턴 타입으로 List,Page,Slice를 사용 할 수 있으며, 주로 List, Page를 사용합니다.</li>
+</ul>
+<pre><code class="language-java"><div><span class="hljs-comment">// find + 엔티티이름 + By + 변수이름</span>
+<span class="hljs-comment">// 예) findEmployeeByName(String searchKeyword) : Employee 객체중에 Name으로 검색</span>
+<span class="hljs-comment">// 엔티티 이름을 생략할 수 있습니다. </span>
+</div></code></pre>
+<h3 id="쿼리-메소드-유형">쿼리 메소드 유형</h3>
+<ul>
+<li>일반적으로 자주 사용하는 메서드입니다.</li>
+</ul>
+<pre><code class="language-java"><div><span class="hljs-comment">// And</span>
+findByLastnameAndFirstname()    <span class="hljs-comment">// where x.lastname = ?1 and x.firstname = ?2</span>
+
+<span class="hljs-comment">// Or</span>
+findByLastnameOrFirstname()     <span class="hljs-comment">// where x.lastname = ?1 or x.firstname = ?2</span>
+
+<span class="hljs-comment">// Between</span>
+findByStartDataBetween()        <span class="hljs-comment">// where x.startDate between ?1 and ?2</span>
+
+<span class="hljs-comment">// LessThan</span>
+findByAgeLessThan()             <span class="hljs-comment">// where x.age &lt; ?1</span>
+
+<span class="hljs-comment">// LessThanEqual</span>
+findByAgeLessThanEqual()        <span class="hljs-comment">// where x.age &lt;= ?1</span>
+
+<span class="hljs-comment">// GreaterThan</span>
+findByAgeGreaterThan()          <span class="hljs-comment">// where x.age &gt; ?1</span>
+
+<span class="hljs-comment">// GreaterThanEqaul</span>
+findByAgeGreaterThanEqual()     <span class="hljs-comment">// where x.age &gt;= ?1</span>
+
+<span class="hljs-comment">// After </span>
+findByStartDateAfter()          <span class="hljs-comment">// where x.startDate &gt; ?1</span>
+
+<span class="hljs-comment">// Before</span>
+findByStartDateBefore()         <span class="hljs-comment">// where x.startDate &lt; ?1</span>
+
+<span class="hljs-comment">// IsNull</span>
+findByAgeIsNull()               <span class="hljs-comment">// where x.age is null</span>
+
+<span class="hljs-comment">// IsNotNull, NotNull</span>
+findByAgeNotNull()              <span class="hljs-comment">// where x.age is not null</span>
+
+<span class="hljs-comment">// Like</span>
+findByFirstnameLike()           <span class="hljs-comment">// where x.firstname like ?1</span>
+
+<span class="hljs-comment">// Not Like</span>
+findByFirstnameNotLike()        <span class="hljs-comment">// where x.firstname not like ?1</span>
+
+<span class="hljs-comment">// StartingWith</span>
+findByFirstnameStartingWith()   <span class="hljs-comment">// where x.firstname like ?1 || &#x27;%&#x27;</span>
+
+<span class="hljs-comment">// EndingWith</span>
+findByFirstnameEndingWith()     <span class="hljs-comment">// where x.firstname like &#x27;%&#x27; || ?1</span>
+
+<span class="hljs-comment">// Containing</span>
+findByFirstnameContaining()     <span class="hljs-comment">// where x.firstname like &#x27;%&#x27; || ?1 || &#x27;%&#x27;</span>
+
+<span class="hljs-comment">// OrderBy</span>
+findByAgeOrderByLastnameDesc()  <span class="hljs-comment">// where x.age = ?1 order by x.lastname desc</span>
+
+<span class="hljs-comment">// Not</span>
+findByLastnameNot()             <span class="hljs-comment">// where x.lastname &lt;&gt; ?1</span>
+
+<span class="hljs-comment">// In</span>
+findByAgeIn(Collection&lt;Age&gt; ages) <span class="hljs-comment">// where x.age in ?1</span>
+</div></code></pre>
+<h3 id="여러-조건-사용하기">여러 조건 사용하기</h3>
+<ul>
+<li>데이터를 검색할 때 여러 컬럼을 이용하여 복합 제약 조건을 사용합니다.</li>
+</ul>
+<pre><code class="language-java"><div><span class="hljs-comment">// 예제 이름 혹은 메일 아이디에 특정 단어가 포함된 직원 목록 조회</span>
+<span class="hljs-function">List&lt;Employee&gt; <span class="hljs-title">findByNameContainingOrMailIdContaining</span><span class="hljs-params">(String name, String mailId)</span></span>;
+</div></code></pre>
+<h3 id="데이터-정렬하기">데이터 정렬하기</h3>
+<ul>
+<li>조회된 데이터를 정렬하기 위해서는 메소드 이름에 <code>OrderBy</code> + 변수이름 + <code>Asc혹은 Desc</code>를 추가합니다.</li>
+</ul>
+<pre><code class="language-java"><div><span class="hljs-comment">// 예제 메일에 특정 단어가 포함된 직원 목록을 조회 하되 이름 내림차순으로 정렬해서 조회</span>
+<span class="hljs-function">List&lt;Employee&gt; <span class="hljs-title">findByMailIdContainingOrderByNameDesc</span><span class="hljs-params">(String mailId)</span></span>;
+</div></code></pre>
+<h3 id="페이징-처리">페이징 처리</h3>
+<ul>
+<li>모든 쿼리 메소드는 마지막 파라미터로 페이징 처리를 위한 Pageable과 정렬를 처리하는 Sort인터페이스를 추가 할 수 있습니다.</li>
+</ul>
+<pre><code class="language-java"><div><span class="hljs-comment">// like를 사용해서 직원을 검색합니다. </span>
+<span class="hljs-comment">// 추가로 Pageable 타입의 객체를 추가로 받을 수 있습니다. </span>
+<span class="hljs-keyword">public</span> <span class="hljs-class"><span class="hljs-keyword">interface</span> <span class="hljs-title">EmployeeRepository</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">CrudRepository</span>&lt;<span class="hljs-title">Employee</span>, <span class="hljs-title">Long</span>&gt; </span>{
+    <span class="hljs-function">List&lt;Employee&gt; <span class="hljs-title">findByNameContaining</span><span class="hljs-params">(String name, Pageable paging)</span></span>;
+    <span class="hljs-comment">// 생략..</span>
+}
+
+<span class="hljs-comment">// Service 사용</span>
+<span class="hljs-meta">@Service(&quot;empService&quot;)</span>
+<span class="hljs-meta">@Transactional</span>
+<span class="hljs-keyword">public</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">EmployeeService</span> </span>{
+    <span class="hljs-meta">@Autowired</span>
+    <span class="hljs-keyword">private</span> EmployeeRepository empRepository;
+
+    <span class="hljs-function"><span class="hljs-keyword">public</span> List&lt;Employee&gt; <span class="hljs-title">getEmployeeList</span><span class="hljs-params">(Employee employee, <span class="hljs-keyword">int</span> pageNumber)</span></span>{
+        <span class="hljs-comment">// PageRequest의 첫번째 인자는 페이지 번호인데 0부터 시작하기 때문에 -1</span>
+        <span class="hljs-comment">// 두번째 인자는 검색할 데이터의 갯수 입니다. </span>
+        Pageable paging = PageRequest.of(pageNumber - <span class="hljs-number">1</span>, <span class="hljs-number">3</span>);
+        <span class="hljs-keyword">return</span> (List&lt;Employee&gt;)empRepository.findByNameContaining(employee.getName(), paging);
+    }
+}
+</div></code></pre>
+<h3 id="pageable-객체로-정렬-처리">Pageable 객체로 정렬 처리</h3>
+<ul>
+<li>Pageable 객체를 생성할 떄 Sort클래스를 이용해서 정렬을 추가합니다.</li>
+</ul>
+<pre><code class="language-java"><div><span class="hljs-function"><span class="hljs-keyword">public</span> List&lt;Employee&gt; <span class="hljs-title">getEmployeeList</span><span class="hljs-params">(Employee employee, <span class="hljs-keyword">int</span> pageNumber)</span></span>{
+    <span class="hljs-comment">// 세번째 인자는 Sort를 통해서 정렬 방햐을 선정</span>
+    <span class="hljs-comment">// 네번째 인자는 정렬할 변수를 지정합니다. </span>
+    Pageable paging = PageRequest.of(pageNumber - <span class="hljs-number">1</span>, <span class="hljs-number">3</span>, Sort.Direction.DESC, <span class="hljs-string">&quot;id&quot;</span>);
+    <span class="hljs-keyword">return</span> (List&lt;Employee&gt;)empRepository.findByNameContaining(employee.getName(), paging);
+
+    <span class="hljs-comment">// 여러 컬럼에 대한 다중 정렬을 하려면</span>
+    Pageable paging = PageRequest.of(pageNumber - <span class="hljs-number">1</span>, <span class="hljs-number">3</span>, 
+                        Sort.by(<span class="hljs-keyword">new</span> Order(Direction.DESC, <span class="hljs-string">&quot;mailId&quot;</span>),
+                        <span class="hljs-keyword">new</span> Order(Direction.ASC, <span class="hljs-string">&quot;salary&quot;</span>)));
+}
+</div></code></pre>
+<h3 id="검색-결과를-page타입으로-리턴받기">검색 결과를 Page타입으로 리턴받기</h3>
+<ul>
+<li>Page 객체가 제공하는 메서드</li>
+</ul>
+<pre><code class="language-java"><div><span class="hljs-function"><span class="hljs-keyword">int</span> <span class="hljs-title">getNumber</span><span class="hljs-params">()</span> : 현재 페이지 정보
+<span class="hljs-keyword">int</span> <span class="hljs-title">getSize</span><span class="hljs-params">()</span> : 한 페이지의 크기
+<span class="hljs-keyword">int</span> <span class="hljs-title">getTotalPages</span><span class="hljs-params">()</span> : 전체 페이지의 수
+<span class="hljs-keyword">int</span> <span class="hljs-title">getNumberOfElements</span><span class="hljs-params">()</span> : 결과 데이터 수
+<span class="hljs-keyword">boolean</span> <span class="hljs-title">hasPreviousPage</span><span class="hljs-params">()</span> : 이전 페이지 존재여부
+<span class="hljs-keyword">boolean</span> <span class="hljs-title">hasNextPage</span><span class="hljs-params">()</span> : 다음 페이지 존재여부
+<span class="hljs-keyword">boolean</span> <span class="hljs-title">isLastPage</span><span class="hljs-params">()</span> : 마지막 페이지 여부
+Pageable <span class="hljs-title">nextPageable</span><span class="hljs-params">()</span> : 다음 페이지 객체
+Pageable <span class="hljs-title">previousPageable</span><span class="hljs-params">()</span> : 다음 페이지 객체
+List&lt;T&gt; <span class="hljs-title">getContent</span><span class="hljs-params">()</span> : 조회된 데이터 목록
+Boolean <span class="hljs-title">hasContent</span><span class="hljs-params">()</span> : 결과 존재 여부
+Sort <span class="hljs-title">getSort</span><span class="hljs-params">()</span> : 검색시 사용된 Sort 정보
+
+<span class="hljs-keyword">public</span> interface EmployeeRepository extends CrudRepository&lt;Employee, Long&gt; </span>{
+    <span class="hljs-comment">// Page를 리턴하도록 수정 </span>
+    <span class="hljs-function">Page&lt;Employee&gt; <span class="hljs-title">findByNameContaining</span><span class="hljs-params">(String name, Pageable paging)</span></span>;
+}
+
+
+<span class="hljs-comment">// Service 사용</span>
+<span class="hljs-meta">@Service(&quot;empService&quot;)</span>
+<span class="hljs-meta">@Transactional</span>
+<span class="hljs-keyword">public</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">EmployeeService</span> </span>{
+    <span class="hljs-meta">@Autowired</span>
+    <span class="hljs-keyword">private</span> EmployeeRepository empRepository;
+
+    <span class="hljs-comment">// 생략...</span>
+
+    <span class="hljs-function"><span class="hljs-keyword">public</span> Page&lt;Employee&gt; <span class="hljs-title">getEmployeeList</span><span class="hljs-params">(Employee employee, <span class="hljs-keyword">int</span> pageNumber)</span></span>{
+        Pageable paging = PageRequest.of(PageNumber -<span class="hljs-number">1</span>, <span class="hljs-number">3</span>,
+            Sort.by(<span class="hljs-keyword">new</span> Order(Direction.DESC, <span class="hljs-string">&quot;mailId&quot;</span>),
+                    <span class="hljs-keyword">new</span> Order(Direction.ASC, <span class="hljs-string">&quot;salary&quot;</span>)));
+
+        <span class="hljs-keyword">return</span> empRepository.findByNameContaining(employee.getName(), paging);
+    }
+    
+}
+</div></code></pre>
+<h2 id="query-사용하기">@Query 사용하기</h2>
+<h3 id="jpql-사용하기">JPQL 사용하기</h3>
+<ul>
+<li>@Query를 사용해서 어플리케이션이 실행 될 때 미리 쿼리를 등록하고 사용합니다.</li>
+</ul>
+<pre><code class="language-java"><div><span class="hljs-keyword">public</span> <span class="hljs-class"><span class="hljs-keyword">interface</span> <span class="hljs-title">EmployeeRepository</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">CrudRepository</span>&lt;<span class="hljs-title">Employee</span>, <span class="hljs-title">Long</span>&gt; </span>{
+    <span class="hljs-comment">// 파라미터의 위치로 변수 지정</span>
+    <span class="hljs-meta">@Query(&quot;SELECT emp FROM Employee emp WHERE emp.name like %?1%&quot;)</span>
+    <span class="hljs-function">List&lt;Employee&gt; <span class="hljs-title">findByJPQL</span><span class="hljs-params">(String name)</span></span>;
+
+    <span class="hljs-comment">// @Param 어노테이션을 사용한 쿼리 지정</span>
+    <span class="hljs-meta">@Query(&quot;SELECT emp FROM Employee emp&quot;
+         + &quot;WHERE emp.name like %:name% &quot;
+         + &quot; OR emp.mailId like %:mailId%&quot;)</span>
+    <span class="hljs-function">List&lt;Employee&gt; <span class="hljs-title">findByJPQL2</span><span class="hljs-params">(<span class="hljs-meta">@Param(&quot;name&quot;)</span> String name,
+                                <span class="hljs-meta">@Param(&quot;mailId&quot;)</span>String email)</span></span>;
+}
+</div></code></pre>
+
+        
+        
+    </body>
+    </html>
