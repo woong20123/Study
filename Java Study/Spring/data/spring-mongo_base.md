@@ -263,7 +263,111 @@ public class MongoApp {
 * (다음 링크 참조)[https://github.com/spring-projects/spring-data-examples]
 
 ### Spring에서 MongoDB에 연결하기
-* 여기 부터 시작 : https://docs.spring.io/spring-data/mongodb/docs/3.2.10/reference/html/#introduction
+* MongoDB와 Spring을 사용할 때 첫번째 작업은 com.mongodb.client를 만드는 것입니다. 
+* Java기반 Bean 메타 데이터를 사용하거나 XML 기반 Bean 메타 데이터를 사용하는 두가지 주요 방법이 있습니다. 
+
+#### Registering a Mongo Instance by using Java-based Metadata
+* 다음 예는 com.mongodb.client.MongoClient의 인스턴스를 등록하기 위해서 java 기반 bean 메타 데이터를 사용하는 예를 보여줍니다.
+
+##### 자바 기반 Bean 메타 데이터를 사용해서 com.mongodb.client.MongoClient 등록
+```java
+@Configuration
+public class AppConfig {
+  /*
+   * Use the standard Mongo driver API to create a com.mongodb.client.MongoClient instance.
+   */
+  public @Bean MongoClient mongoClient() {
+    return MongoClients.create("mongodb://localhost:27017");
+  }
+}
+```
+
+##### Spring의 MongoClientFactoryBean을 사용해서 com.mongodb.client.MongoClient 객체 등록 및 Springd의 예외 번역 지원 활성화
+* 이 접근 방식을 사용하면 Spring의 MongoClientFactoryBean을 사용하는 컨테이너와 함께 표준 com.mongodb.client.MongoClient 인스턴스를 사용 할 수 있습니다.
+* com.mongodb.client.MongoClient 인스턴스를 직접 인스턴스화 하는 것보 비교 해서 FactoryBean은 @Repository로 주석 달린 데이터 액세스 클래스에 대한 Spring의 이식 가능한 DataAccessException 계층에서 MongoDB 예외를 예외로 변환하는 ExceptionTranslator 구현을 컨테이너에 제공하는 추가 이점이 있습니다. 
+* 이 계층 구조와 @Repository의 사용은 Spring의 DAO 지원 기능에 설명되어 있습니다. 
+```java
+@Configuration
+public class AppConfig {
+  /*
+   * Factory bean that creates the com.mongodb.client.MongoClient instance
+   */
+  public @Bean MongoClientFactoryBean mongo(){
+    MongoClientFactoryBean mongo = new MongoClientFactoryBean();
+    mongo.setHost("localhost");
+    return mongo;
+  }
+}
+```
+* 다른 `@Configuration`나 자신의 클래스 생성된 `com.mongodb.client.MongoClient`을 사용하려면 `private @Autowired MongoClient mongoClient` 필드를 사용해야 합니다. 
+
+####  Registering a Mongo Instance by Using XML-based Metadata
+* 생략
+
+#### The MongoDatabaseFactory Interface
+* `com.mongodb.client.MongoClient`는 MongoDB 드라이버 API의 진입점이지만 특정 MongoDB 데이터베이스 인스턴스에 연결하려면 데이터베이스 이름, 선택적 사용자 이름 및 비밀번호 같은 추가 정보가 필요합니다.
+* 이 정보로 `com.mongodb.client.MongoDatabase` 객체를 얻을 수 있고 특정 MongoDB 데이터 베이스 인스턴스의 모든 기능에 액세스 할 수 있습니다. 
+* Spring은 데이터 베이스에 대한 연결을 부트스트랩 하기 위해 다음 목록과 같이 `org.springframework.data.mongodb.core.MongoDatabaseFactory`인터페이스를 제공합니다.
+```java
+public interface MongoDatabaseFactory {
+  MongoDatabase getDatabase() throws DataAccessException;
+  MongoDatabase getDatabase(String dbName) throws DataAccessException;
+}
+```
+* MongoDatabaseFactory 인스턴스를 사용하여 MongoTemplate을 구성할 수 있습니다.
+* IoC 컨테이너를 사용해여 MongoTemplate의 인스턴스를 만드는 대신 다음과 같이 표준 java 코드에서 사용할 수 있습니다.
+```java
+public class MongoApp {
+  private static final Log log = LogFactory.getLog(MongoApp.class);
+
+  public static void main(String[] args) throws Exception {
+    MongoOperations mongoOps = new MongoTemplate(new SimpleMongoClientDatabaseFactory(MongoClients.create, "database"));
+    mongoOps.insert(new Person("Joe", 34));
+    log.info(mongoOps.findOne(new Query(where("name").is("Joe")), Person.class));
+    mongoOps.dropCollection("person");
+  }
+}
+```
+* `com.mongodb.client.MongoClient`를 진입점으로 선택할 때는 SimpleMongoClientDbFactory를 사용하세요
+
+#### Java 기반 메타 데이터를 사용해여 MongoDatabaseFactory 인스턴스 등록 
+* MongoDatabaseFactory 인스턴스를 컨테이너에 등록하려면 이전 코드 목록에서 강조 표시된 것과 유사한 코드를 작성합니다. 
+```java
+@Configuration
+public class MongoConfiguration {
+  public @Bean MongoDatabaseFactory mongoDatabaseFactory() {
+    return new SimpleMongoClientDatabaseFactory(MongoClients.create(), "database");
+  }
+}
+```
+* MongoDB 서버 3버전으로 접속시 인증 모델 변경되었습니다. 따라서 인증에 사용 할 수있는 일부 구성 옵션이 더 이상 유효하지 않습니다.
+* 다음 예외 같이 인증 데이터를 제공하기 위해서 MongoCredential을 통해 자격 증명을 설정하기 위해 MongoClient별 옵션을 사용해야 합니다.
+```java
+@Configuration
+public class ApplicationContextEventTestsAppConfig extends AbstractMongoClientConfiguration {
+  @Override
+  public String getDatabaseName(){
+    return "database";
+  }
+
+  @Override
+  protected void configureClientSettings(Builder builder){
+    builder.credential(MongoCredential.createCredential("name", "db", "pwd".getCharArray()))
+    .applyToClusterSettings(settings -> {
+      settings.hosts(singletonList(new ServerAddress("127.0.0.1", 27017)));
+    });
+  }
+}
+```
+* XML 기반 구성에 사용되는 사용자 이름 및 암호 자격 증명은 `:, %, @`또는 `,`와 같은 예약된 문자를 포함하는 경우 URL로 인코딩 되어야 합니다. 
+
+
+
+
+
+
+
+
 
 ## 컬렉션에서 finding 및 업데이트 하기 
 * `findAndModify` 메서드를 사용하면 단일 작업으로 문서를 업데이트하고 이전 또는 새로 업데이트된 문서를 반환할 수 있습니다. 
