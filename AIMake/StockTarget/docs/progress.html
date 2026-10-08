@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>StockTarget 작업 진행</title>
+<style>
+  :root {
+    --bg: #ffffff; --fg: #1f2328; --muted: #656d76; --line: #d8dee4; --panel: #f6f8fa;
+    --accent: #0969da; --ok: #1a7f37; --ok-bg: #dafbe1; --warn: #9a6700; --warn-bg: #fff8c5;
+    --bad: #cf222e; --bad-bg: #ffebe9; --info-bg: #ddf4ff; --code: #eff1f3;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0d1117; --fg: #e6edf3; --muted: #8d96a0; --line: #30363d; --panel: #161b22;
+      --accent: #4493f8; --ok: #3fb950; --ok-bg: #12261e; --warn: #d29922; --warn-bg: #272115;
+      --bad: #f85149; --bad-bg: #2d1416; --info-bg: #121d2f; --code: #1f242c;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0d1117; --fg: #e6edf3; --muted: #8d96a0; --line: #30363d; --panel: #161b22;
+    --accent: #4493f8; --ok: #3fb950; --ok-bg: #12261e; --warn: #d29922; --warn-bg: #272115;
+    --bad: #f85149; --bad-bg: #2d1416; --info-bg: #121d2f; --code: #1f242c;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg);
+         font: 15px/1.65 "Malgun Gothic", "Segoe UI", system-ui, sans-serif; }
+  main { max-width: 1080px; margin: 0 auto; padding: 32px 16px 64px; }
+  h1 { font-size: 26px; margin: 0 0 4px; }
+  h2 { font-size: 20px; margin: 40px 0 12px; padding-bottom: 6px; border-bottom: 1px solid var(--line); }
+  h3 { font-size: 16px; margin: 24px 0 8px; }
+  .meta { color: var(--muted); font-size: 13px; margin-bottom: 20px; }
+  .meta span + span::before { content: " · "; }
+  a { color: var(--accent); }
+  code, pre { font-family: Consolas, "D2Coding", monospace; font-size: 13px; }
+  code { background: var(--code); padding: 1px 5px; border-radius: 4px; }
+  pre { background: var(--code); padding: 12px 14px; border-radius: 6px; overflow-x: auto; line-height: 1.5; }
+  pre code { background: none; padding: 0; }
+  .panel { border: 1px solid var(--line); border-left-width: 4px; border-radius: 6px; padding: 12px 16px; margin: 14px 0; }
+  .panel.info { background: var(--info-bg); border-left-color: var(--accent); }
+  .panel.ok   { background: var(--ok-bg);   border-left-color: var(--ok); }
+  .panel.warn { background: var(--warn-bg); border-left-color: var(--warn); }
+  .panel p:first-child { margin-top: 0; } .panel p:last-child { margin-bottom: 0; }
+  .table-wrap { overflow-x: auto; margin: 12px 0; }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; }
+  th, td { border: 1px solid var(--line); padding: 7px 10px; text-align: left; vertical-align: top; }
+  th { background: var(--panel); white-space: nowrap; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  caption { caption-side: bottom; text-align: left; color: var(--muted); font-size: 12px; padding-top: 6px; }
+  .tag { display: inline-block; font-size: 12px; padding: 1px 8px; border-radius: 10px; white-space: nowrap; }
+  .tag.ok { background: var(--ok-bg); color: var(--ok); }
+  .tag.warn { background: var(--warn-bg); color: var(--warn); }
+  .tag.bad { background: var(--bad-bg); color: var(--bad); }
+  nav.toc { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 12px 20px; }
+  nav.toc ol { margin: 4px 0; padding-left: 20px; }
+  figure { margin: 16px 0; }
+  figure img { max-width: 100%; height: auto; border: 1px solid var(--line); border-radius: 6px; }
+  figcaption { color: var(--muted); font-size: 12px; margin-top: 4px; }
+  .flow { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 12px 0; }
+  .flow .box { border: 1px solid var(--line); background: var(--panel); border-radius: 6px; padding: 8px 12px; font-size: 13px; }
+  .flow .arrow { color: var(--muted); }
+  .theme-toggle { position: fixed; top: 12px; right: 12px; border: 1px solid var(--line); background: var(--panel);
+                  color: var(--fg); border-radius: 6px; padding: 4px 10px; cursor: pointer; font-size: 12px; }
+</style>
+</head>
+<body>
+<button class="theme-toggle" type="button" onclick="toggleTheme()">테마</button>
+<main>
+  <h1>StockTarget 작업 진행</h1>
+  <div class="meta">
+    <span>위치: <code>E:\work\tools\StockTarget</code></span>
+    <span>.NET 9 · WPF · SQLite</span>
+    <span>작성일: 2026-10-08</span>
+    <span>재구성: <a href="rebuild-guide.html">rebuild-guide.html</a></span>
+  </div>
+
+  <div class="panel ok">
+    <p><strong>결론</strong> — 목표 EPS·PER·수익률을 입력하면 분기별 매입 목표가를 역산해 보여 주는 기능을 Python 스크립트에서
+      <strong>C# WPF 데스크톱 앱 + SQLite 저장</strong>으로 옮겼고, 저장한 목표·분기 일정·5년 배당·확인 이력을 화면에서 볼 수 있다.</p>
+    <ul>
+      <li>계산 결과가 Python 버전과 일치한다 — KO 2026Q4 매입 목표가 <strong>141.52</strong>, AAPL 5년 평균 배당수익률 <strong>0.49%</strong>.</li>
+      <li>테스트: 단위 38개 + 실데이터 2개 통과, UI 자동화로 "입력 → 저장 → 조회 → 이력 기록" 흐름 확인.</li>
+      <li>판정은 5단계: <strong>강력매수</strong>(매입 목표가 −20% 이하, 파란색) / <strong>필수매수</strong>(−10% 이하, 하늘색) / <strong>매수</strong>(≤ 매입 목표가, 녹색) / <strong>매입 대기</strong>(+5% 이내, 연한 녹색) / <strong>대기</strong>(+5% 초과, 회색).</li>
+      <li>미결: 분할 당일 전일 종가 보정은 실제 분할 사례가 없어 단위 테스트로만 검증했다.</li>
+    </ul>
+  </div>
+
+  <nav class="toc">
+    <strong>목차</strong>
+    <ol>
+      <li><a href="#req">요구사항과 진행 경과</a></li>
+      <li><a href="#rule">계산 규칙</a></li>
+      <li><a href="#arch">구조</a></li>
+      <li><a href="#data">데이터 수집 · 저장 · 캐시</a></li>
+      <li><a href="#ui">화면</a></li>
+      <li><a href="#test">검증</a></li>
+      <li><a href="#issues">진행 중 발견·해결한 문제</a></li>
+      <li><a href="#run">빌드 · 실행</a></li>
+      <li><a href="#todo">한계와 다음 작업</a></li>
+    </ol>
+  </nav>
+
+  <!-- 1 -->
+  <h2 id="req">1. 요구사항과 진행 경과</h2>
+  <div class="table-wrap"><table>
+    <thead><tr><th>#</th><th>요청</th><th>구현</th><th>상태</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>티커를 입력하면 현재 주가를 가져오기</td><td>Python <code>stock_price.py</code>(yfinance) → C# <code>YahooChartClient</code></td><td><span class="tag ok">완료</span></td></tr>
+      <tr><td>2</td><td>최근 5년 배당/주가 평균(배당수익률)</td><td>1년 구간 5개의 (배당금 합계 ÷ 평균 주가) 평균</td><td><span class="tag ok">완료</span></td></tr>
+      <tr><td>3</td><td>조회 데이터 최대 1시간 캐시</td><td>SQLite <code>cache</code> 테이블, TTL 상한 3600초</td><td><span class="tag ok">완료</span></td></tr>
+      <tr><td>4</td><td>주식 분할 고려</td><td>분할 반영 데이터 사용 + 분할 이력 표시 + 분할 직후 전일 종가 보정</td><td><span class="tag ok">완료</span></td></tr>
+      <tr><td>5</td><td>목표 EPS·PER·수익률 → 분기별 매입 목표가 (배당률 차감)</td><td><code>TargetCalculator</code></td><td><span class="tag ok">완료</span></td></tr>
+      <tr><td>6</td><td>C#으로 작성, SQLite 저장, 저장 데이터를 보는 뷰</td><td>.NET 9 WPF 앱(사용자 선택), DB는 <code>%LOCALAPPDATA%\StockTarget\stocktarget.db</code></td><td><span class="tag ok">완료</span></td></tr>
+      <tr><td>7</td><td>작업 진행 문서를 HTML로 프로젝트에 추가</td><td>이 문서 (<code>docs/progress.html</code>, 솔루션 폴더 <code>docs</code>)</td><td><span class="tag ok">완료</span></td></tr>
+      <tr><td>8</td><td>다른 곳에서 재구성할 때 필요한 정보·코드 문서</td><td><a href="rebuild-guide.html"><code>docs/rebuild-guide.html</code></a> — 전체 소스 18개 + 복원 스크립트 생성 버튼. 생성기 <code>docs/tools/make_rebuild_guide.py</code></td><td><span class="tag ok">완료</span></td></tr>
+      <tr><td>9</td><td>현재가·분기 매입 목표가를 맨 앞으로, 매수(녹색)/매입 대기 5% 이내(연한 녹색)/대기(회색)</td><td><code>TargetCalculator.Classify</code> + <code>BuyStatus</code>, 목록·확인 이력 공용 행 스타일</td><td><span class="tag ok">완료</span></td></tr>
+      <tr><td>10</td><td>−10% 이하 필수매수(하늘색), −20% 이하 강력매수(파란색) 추가</td><td><code>BuyStatus.MustBuy</code>/<code>StrongBuy</code>, 상수 <code>MustBuyPct</code>=10, <code>StrongBuyPct</code>=20</td><td><span class="tag ok">완료</span></td></tr>
+      <tr><td>11</td><td>분기 일정 · 5년 배당 내역 · 확인 이력 영역을 작게</td><td>오른쪽 패널 고정 폭 440px(최소 360, 구분선으로 조절), 탭 표 열 폭 축소, 요약 문구를 짧은 줄로 정리</td><td><span class="tag ok">완료</span></td></tr>
+    </tbody>
+    <caption>Python 버전(<code>E:\work\tools\stock_price\</code>)은 CLI로 그대로 남아 있다. C# 앱은 별도 DB를 쓴다.</caption>
+  </table></div>
+
+  <!-- 2 -->
+  <h2 id="rule">2. 계산 규칙</h2>
+  <pre><code>목표 주가          = 목표 EPS × 목표 PER                      (목표 연도 12월 31일 기준)
+필요 주가 상승률 g = 목표 수익률 − 최근 5년 평균 배당수익률   (입력 시점 값으로 고정)
+분기별 매입 목표가 = 목표 주가 ÷ (1 + g) ^ (기준일 → 목표일 남은 년수)
+                     기준일: 첫 분기는 입력일, 이후는 각 분기 첫날 / 년수 = 남은 일수 ÷ 365.25</code></pre>
+  <p>매입 목표가 이하로 사면 "주가 상승 + 배당"으로 목표 수익률을 기대할 수 있다는 뜻이다. 시간이 지날수록 남은 기간이 줄어 허용 매입가는 올라간다.</p>
+
+  <h3>예시: KO (2030년 EPS 10.5, PER 18, 목표 수익률 10%)</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>단계</th><th>식</th><th class="num">값</th></tr></thead>
+    <tbody>
+      <tr><td>목표 주가</td><td>10.5 × 18</td><td class="num">189.00</td></tr>
+      <tr><td>5년 평균 배당수익률</td><td>1년 구간 2.69 / 2.97 / 3.08 / 3.00 / 2.87%의 평균</td><td class="num">2.92%</td></tr>
+      <tr><td>필요 주가 상승률</td><td>10% − 2.92%</td><td class="num">연 7.08%</td></tr>
+      <tr><td>2026Q4 매입 목표가</td><td>189 ÷ 1.0708^(1545/365.25)</td><td class="num">141.52</td></tr>
+      <tr><td>판정</td><td>매입 목표가 b 대비 현재가: ≤ b×0.80 <strong>강력매수</strong>(파란색) / ≤ b×0.90 <strong>필수매수</strong>(하늘색) / ≤ b <strong>매수</strong>(녹색) / ≤ b×1.05 <strong>매입 대기</strong>(연한 녹색) / 그 위 <strong>대기</strong>(회색)</td><td class="num">KO −39.4% 강력매수</td></tr>
+      <tr><td>2030Q4 매입 목표가</td><td>189 ÷ 1.0708^(91/365.25)</td><td class="num">185.81</td></tr>
+    </tbody>
+    <caption>근거: <code>CoreTests.cs</code> <code>TargetCalculatorTests</code>, 입력일 2026-10-08. 141.52는 반올림 전 배당률 2.92063…% 기준(정확히 2.92%면 141.51).</caption>
+  </table></div>
+
+  <h3>배당수익률 계산 기준</h3>
+  <ul>
+    <li><strong>구간</strong>: 마지막 거래일부터 1년씩 거슬러 올라간 5개 구간. 달력 연도를 쓰면 진행 중인 올해가 왜곡된다.</li>
+    <li><strong>주가</strong>: 분할만 반영한 종가(배당 미반영). 배당 반영 수정주가를 쓰면 과거 주가가 낮아져 수익률이 부풀려진다.</li>
+    <li><strong>분할</strong>: 종가·배당 모두 현재 주식 수 기준으로 환산된 값이라 같은 기준끼리 나눈다. 예: NVDA 2024-06-10 10:1 분할 전 배당 $0.04 → 0.004.</li>
+  </ul>
+
+  <!-- 3 -->
+  <h2 id="arch">3. 구조</h2>
+  <div class="flow">
+    <div class="box">WPF 화면<br><code>MainWindow</code></div><span class="arrow">→</span>
+    <div class="box"><code>MainViewModel</code></div><span class="arrow">→</span>
+    <div class="box"><code>StockService</code><br>캐시 판단 · 분할 보정</div><span class="arrow">→</span>
+    <div class="box"><code>YahooChartClient</code><br>Yahoo chart API</div>
+  </div>
+  <div class="flow">
+    <div class="box"><code>StockService</code> / <code>MainViewModel</code></div><span class="arrow">↔</span>
+    <div class="box"><code>StockDatabase</code><br>SQLite</div>
+    <span class="arrow">·</span>
+    <div class="box">순수 계산: <code>TargetCalculator</code>, <code>DividendYieldCalculator</code>, <code>SplitAdjuster</code></div>
+  </div>
+  <div class="table-wrap"><table>
+    <thead><tr><th>프로젝트</th><th>파일</th><th>역할</th></tr></thead>
+    <tbody>
+      <tr><td rowspan="5"><code>StockTarget.Core</code><br>(net9.0)</td><td><code>Models.cs</code></td><td>시세·배당·분할·목표·분기 행 레코드</td></tr>
+      <tr><td><code>Calculators.cs</code></td><td>목표가 역산, 5년 배당수익률, 분할 보정(네트워크·DB 없는 순수 함수)</td></tr>
+      <tr><td><code>YahooChartClient.cs</code></td><td>chart API 한 번으로 현재가·일별 종가·배당·분할 수신, JSON 파싱</td></tr>
+      <tr><td><code>StockDatabase.cs</code></td><td>SQLite 스키마·목표 CRUD·확인 이력·캐시(TTL)</td></tr>
+      <tr><td><code>StockService.cs</code></td><td>캐시 우선 조회, 분할 직후 보정 후 캐시 무효화, 확인 이력 기록</td></tr>
+      <tr><td rowspan="2"><code>StockTarget.App</code><br>(net9.0-windows, WPF)</td><td><code>MainWindow.xaml</code></td><td>목표 목록·입력 폼 / 요약·분기 일정·5년 배당·확인 이력 탭</td></tr>
+      <tr><td><code>ViewModels/*.cs</code></td><td>MVVM(외부 라이브러리 없음), 비동기 명령</td></tr>
+      <tr><td><code>StockTarget.Tests</code><br>(xUnit)</td><td><code>CoreTests.cs</code></td><td>계산·파싱·DB·캐시 단위 테스트 + 실데이터 테스트</td></tr>
+    </tbody>
+    <caption>C# 코드·XAML 합계 약 1,700줄. 패키지는 <code>Microsoft.Data.Sqlite</code> 하나만 추가했다.</caption>
+  </table></div>
+
+  <!-- 4 -->
+  <h2 id="data">4. 데이터 수집 · 저장 · 캐시</h2>
+  <h3>수집: Yahoo Finance chart API (v8)</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>용도</th><th>요청</th><th>받는 값</th></tr></thead>
+    <tbody>
+      <tr><td>현재가</td><td><code>range=1d</code></td><td>현재가, 전일 종가, 통화, 거래소, 종목명</td></tr>
+      <tr><td>5년 배당수익률</td><td><code>range=6y&amp;events=div,split</code></td><td>일별 종가(분할 반영), 배당, 분할</td></tr>
+      <tr><td>분할 보정(필요할 때만)</td><td><code>range=1mo&amp;events=split</code></td><td>최근 분할</td></tr>
+    </tbody>
+  </table></div>
+  <div class="panel info"><p>.NET <code>HttpClient</code>는 Windows 인증서 저장소를 사용하므로 회사망 SSL 검사 환경에서도 추가 설정 없이 접속된다.
+    (Python yfinance는 curl_cffi 자체 CA만 믿어 실패했고, Windows 인증서를 묶은 CA 파일로 해결했었다.)
+    기본 User-Agent로는 Yahoo가 429를 돌려줘 브라우저 UA를 지정한다.</p></div>
+
+  <h3>저장: SQLite</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>테이블</th><th>키</th><th>내용</th></tr></thead>
+    <tbody>
+      <tr><td><code>targets</code></td><td>symbol</td><td>입력일, 목표 연도, EPS, PER, 목표 수익률, 고정 배당수익률, 메모. 같은 티커로 저장하면 갱신</td></tr>
+      <tr><td><code>price_checks</code></td><td>symbol + check_date</td><td>조회한 날의 분기·현재가·매입 목표가(같은 날 다시 조회하면 갱신). 목표를 지우면 함께 삭제</td></tr>
+      <tr><td><code>cache</code></td><td>quote:SYM / dividend:SYM</td><td>조회 결과 JSON과 조회 시각. 저장할 때 1시간 넘은 항목 정리</td></tr>
+    </tbody>
+    <caption>DB 경로: <code>%LOCALAPPDATA%\StockTarget\stocktarget.db</code> (빌드로 bin 폴더가 지워져도 유지). <code>--db &lt;경로&gt;</code>로 바꿀 수 있다.</caption>
+  </table></div>
+
+  <h3>캐시 · 분할 처리</h3>
+  <ul>
+    <li>시세·배당 모두 <strong>최대 1시간</strong> 재사용한다. 화면에 "캐시 N분 전"으로 표시하고, "시세 새로고침(캐시 무시)" 버튼으로 강제 갱신한다.</li>
+    <li>실패 결과(없는 티커 등)는 캐시하지 않는다. 형식이 바뀐 옛 캐시는 무시한다.</li>
+    <li>변동률이 30% 이상이면 최근 5일 안의 분할을 확인하고, 전일 종가가 분할 전 값이면 분할 비율로 나눠 보정한다. 이미 보정된 값은 건드리지 않는다. 보정이 일어나면 그 티커의 캐시를 버린다.</li>
+  </ul>
+
+  <!-- 5 -->
+  <h2 id="ui">5. 화면</h2>
+  <figure>
+    <img src="images/main_status.png" alt="판정 3단계 색 표시">
+    <figcaption>(오른쪽 패널 축소 후) 판정 5단계: KO −39.4% 강력매수(파란색), GOOGL −15.2% 필수매수(하늘색), AMZN −3.9% 매수(녹색), MSFT +0.8% 매입 대기(연한 녹색), AAPL · NVDA 대기(회색). 티커 뒤에 현재가 · 매입 목표가 · 괴리 · 판정. 확인 이력 탭도 같은 색 규칙.</figcaption>
+  </figure>
+  <figure>
+    <img src="images/main_schedule.png" alt="목표 목록과 NVDA 분기 일정">
+    <figcaption>(판정 3단계 적용 전 화면) 왼쪽: 목표 목록 + 입력 폼. 오른쪽: 선택한 목표의 계산 요약과 분기 일정(이번 분기 강조). UI 자동화로 NVDA를 입력·저장한 직후 화면.</figcaption>
+  </figure>
+  <figure>
+    <img src="images/main_dividend.png" alt="AAPL 5년 배당 내역">
+    <figcaption>5년 배당 내역 탭: 1년 구간별 배당횟수·배당금·평균 주가·수익률과 5년 평균, 캐시 여부.</figcaption>
+  </figure>
+
+  <!-- 6 -->
+  <h2 id="test">6. 검증</h2>
+  <div class="table-wrap"><table>
+    <thead><tr><th>구분</th><th>내용</th><th class="num">결과</th></tr></thead>
+    <tbody>
+      <tr><td>판정</td><td>5단계 경계(−20%, −10%, 같음, +5% 각각 포함/초과), 값 없음, 문구, 확인 이력 동일 규칙</td><td class="num">13 통과</td></tr>
+      <tr><td>계산</td><td>목표가·필요 상승률, 분기 범위(17개), 손계산 대조, 분기마다 매입가 상승, 배당 &gt; 목표 수익률, 잘못된 입력 3종</td><td class="num">9 통과</td></tr>
+      <tr><td>배당수익률</td><td>1년 구간 경계, 구간 밖 분할 제외, 분할 비율 표기</td><td class="num">3 통과</td></tr>
+      <tr><td>분할 보정</td><td>정분할 미보정 / 이미 보정 / 역분할 / 오래된 분할 / 검사 조건</td><td class="num">5 통과</td></tr>
+      <tr><td>API 파싱</td><td>가격·배당·분할·현지 날짜, 오류 응답, JSON 아닌 응답(429)</td><td class="num">3 통과</td></tr>
+      <tr><td>DB · 캐시</td><td>목표 갱신·삭제(이력 동반 삭제), 하루 1행, 59분 적중/60분 만료, TTL 상한, 무효화, JSON 왕복</td><td class="num">5 통과</td></tr>
+      <tr><td>실데이터</td><td>KO 5년 평균이 Python 결과(2.92%)와 일치, NVDA 분할 전 배당이 0.004로 환산</td><td class="num">2 통과</td></tr>
+      <tr><td>UI 자동화</td><td>임시 DB로 앱 실행 → 목록·요약·탭 표시, 입력 폼으로 NVDA 저장(배당률 자동 조회 0.0902%) → DB에 목표·확인 이력 기록</td><td class="num">확인</td></tr>
+    </tbody>
+    <caption>실행: <code>dotnet test</code> (실데이터는 <code>STOCKTARGET_LIVE=1</code>일 때만 실제 조회). UI 확인은 PowerShell UI Automation + PrintWindow 캡처.</caption>
+  </table></div>
+
+  <h3>Python 버전과 결과 대조</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>항목</th><th class="num">Python</th><th class="num">C#</th><th class="num">차이</th></tr></thead>
+    <tbody>
+      <tr><td>KO 2026Q4 매입 목표가</td><td class="num">141.52</td><td class="num">141.52</td><td class="num">0</td></tr>
+      <tr><td>KO 5년 평균 배당수익률</td><td class="num">2.92%</td><td class="num">2.92%</td><td class="num">0</td></tr>
+      <tr><td>AAPL 5년 평균 배당수익률</td><td class="num">0.49%</td><td class="num">0.49%</td><td class="num">0</td></tr>
+      <tr><td>NVDA 5년 평균 배당수익률</td><td class="num">0.09%</td><td class="num">0.09%</td><td class="num">0</td></tr>
+    </tbody>
+    <caption>2026-10-08 조회 기준.</caption>
+  </table></div>
+
+  <!-- 7 -->
+  <h2 id="issues">7. 진행 중 발견·해결한 문제</h2>
+  <div class="table-wrap"><table>
+    <thead><tr><th>문제</th><th>원인</th><th>조치</th></tr></thead>
+    <tbody>
+      <tr><td>Python: 모든 티커가 "시세 없음"</td><td>① 회사망 SSL 검사로 인증서 검증 실패 ② <code>fast_info.get('last_price')</code>는 camelCase 키만 받음</td><td>Windows 인증서를 묶은 CA로 검증, 속성 접근으로 변경</td></tr>
+      <tr><td>NVDA 배당수익률이 Yahoo 값(0.03%)의 3배</td><td>오류 아님. 2026-06 분기 배당 $0.01 → $0.25 인상으로 최근 1년 수익률 0.26%</td><td>분할 반영 여부를 원자료로 확인 후 계산 유지</td></tr>
+      <tr><td>C# 테스트 1건 실패(141.51 vs 141.52)</td><td>테스트 기대값 오류. Python은 반올림 전 배당률(2.92063…)로 계산</td><td>기대값과 주석 수정, 두 경우 모두 검증</td></tr>
+      <tr><td>목록 열이 잘려 판정·시세가 안 보임</td><td>고정 열 너비 합이 패널보다 큼</td><td>열을 내용 맞춤(Auto)으로, 좌우 비율 13:8</td></tr>
+      <tr><td>WPF 빌드 오류 CS0103</td><td>WPF 프로젝트는 <code>System.Net.Http</code>가 암시적 using에 없음</td><td>using 추가</td></tr>
+      <tr><td>UI 자동화 스크립트 구문 오류</td><td>한글이 든 .ps1을 BOM 없이 저장 → Windows PowerShell 5.1이 CP949로 읽음</td><td>UTF-8 BOM 추가</td></tr>
+    </tbody>
+  </table></div>
+
+  <!-- 8 -->
+  <h2 id="run">8. 빌드 · 실행</h2>
+  <pre><code>cd E:\work\tools\StockTarget
+dotnet build                                   # 전체 빌드
+dotnet test                                    # 단위 테스트
+set STOCKTARGET_LIVE=1 &amp;&amp; dotnet test          # 실데이터 테스트 포함
+dotnet run --project src\StockTarget.App       # 앱 실행
+src\StockTarget.App\bin\Debug\net9.0-windows\StockTarget.App.exe --db D:\temp\test.db   # 다른 DB로 실행</code></pre>
+  <p>사용 순서: 입력 폼에 티커·목표 연도·EPS·PER·목표 수익률 입력 → 배당수익률을 비우면 5년 평균을 자동 조회해 고정 → <strong>저장</strong>.
+    이후에는 앱을 열 때마다(분기마다) 이번 분기 매입 목표가와 현재가가 비교되고 확인 이력이 쌓인다.</p>
+
+  <!-- 9 -->
+  <h2 id="todo">9. 한계와 다음 작업</h2>
+  <div class="panel warn">
+    <p><strong>입력값의 무게</strong> — 결과는 목표 EPS 가정에 크게 좌우된다. 예: KO 최근 4분기 EPS는 3.33인데 2030년 10.5는 약 3배 성장을 가정한다.
+      현재 EPS와 "목표 달성에 필요한 EPS 연 성장률"을 함께 보여 주면 가정을 점검하기 쉽다.</p>
+  </div>
+  <ul>
+    <li>Yahoo chart API는 비공식이라 형식 변경·일시 차단 가능. 실패는 화면에 사유로 표시되고 캐시에 남지 않는다.</li>
+    <li>분할 당일 보정은 실제 사례 없이 단위 테스트로만 검증(<span class="tag warn">미결</span>).</li>
+    <li>필요 주가 상승률은 요청대로 단순 차감(10% − 2.92%). 배당 재투자 복리식((1.10 ÷ 1.0292) − 1 = 6.88%)은 옵션으로 추가 가능.</li>
+    <li>Python 버전 <code>targets.json</code>의 목표는 C# DB로 옮기지 않았다(필요하면 가져오기 기능 추가).</li>
+    <li>후보: 현재 EPS·필요 성장률 표시, 목표 이력(버전) 보관, 매수 조건 충족 시 Teams 알림, 단일 exe 배포(<code>dotnet publish -r win-x64 --self-contained</code>).</li>
+  </ul>
+</main>
+<script>
+  function toggleTheme() {
+    var root = document.documentElement;
+    var dark = root.dataset.theme ? root.dataset.theme === 'dark'
+      : window.matchMedia('(prefers-color-scheme: dark)').matches;
+    root.dataset.theme = dark ? 'light' : 'dark';
+    try { localStorage.setItem('stocktarget-theme', root.dataset.theme); } catch (e) {}
+  }
+  try { var t = localStorage.getItem('stocktarget-theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+</script>
+</body>
+</html>

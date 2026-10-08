@@ -1,0 +1,36 @@
+# ===== .NET / Visual Studio (StockTarget) =====
+.vs/
+[Bb]in/
+[Oo]bj/
+*.user
+*.suo
+*.userprefs
+*.rsuser
+TestResults/
+*.trx
+*.coverage
+*.coveragexml
+coverage*.json
+coverage*.xml
+publish/
+*.nupkg
+*.snupkg
+
+# ===== Python (stock_price, docs/tools) =====
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+.env
+
+# 실행 시 자동 생성되는 파일
+stock_price/cache.json
+stock_price/ca_bundle.pem
+
+# ===== IDE / OS =====
+.vscode/
+.idea/
+Thumbs.db
+Desktop.ini
+.DS_Store

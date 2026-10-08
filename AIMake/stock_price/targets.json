@@ -1,0 +1,14 @@
+{
+  "KO": {
+    "symbol": "KO",
+    "input_date": "2026-10-08",
+    "target_year": 2030,
+    "target_date": "2030-12-31",
+    "eps": 10.5,
+    "per": 18.0,
+    "target_price": 189.0,
+    "return_pct": 10.0,
+    "dividend_yield_pct": 2.920630977086624,
+    "growth_pct": 7.079369022913376
+  }
+}

@@ -1,0 +1,81 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{827E0CD3-B72D-47B6-A68D-7590B98EB39B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StockTarget.Core", "src\StockTarget.Core\StockTarget.Core.csproj", "{E2E1274F-2223-4176-A3AB-AA6985BB27E5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StockTarget.App", "src\StockTarget.App\StockTarget.App.csproj", "{31ADFB83-7307-4E67-B97C-17E611833D8A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StockTarget.Tests", "tests\StockTarget.Tests\StockTarget.Tests.csproj", "{701DD9F3-0A58-4DD7-8127-6CCDCF61D494}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{537E3FB3-5A8F-4CD3-88E8-1DB6676EC840}"
+	ProjectSection(SolutionItems) = preProject
+		docs\progress.html = docs\progress.html
+		docs\rebuild-guide.html = docs\rebuild-guide.html
+		docs\tools\make_rebuild_guide.py = docs\tools\make_rebuild_guide.py
+		docsebuild-guide.html = docsebuild-guide.html
+		docs	ools\make_rebuild_guide.py = docs	ools\make_rebuild_guide.py
+		docs\images\main_dividend.png = docs\images\main_dividend.png
+		docs\images\main_status.png = docs\images\main_status.png
+		docs\images\main_schedule.png = docs\images\main_schedule.png
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|Any CPU = Release|Any CPU
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{E2E1274F-2223-4176-A3AB-AA6985BB27E5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E2E1274F-2223-4176-A3AB-AA6985BB27E5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E2E1274F-2223-4176-A3AB-AA6985BB27E5}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{E2E1274F-2223-4176-A3AB-AA6985BB27E5}.Debug|x64.Build.0 = Debug|Any CPU
+		{E2E1274F-2223-4176-A3AB-AA6985BB27E5}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{E2E1274F-2223-4176-A3AB-AA6985BB27E5}.Debug|x86.Build.0 = Debug|Any CPU
+		{E2E1274F-2223-4176-A3AB-AA6985BB27E5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E2E1274F-2223-4176-A3AB-AA6985BB27E5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E2E1274F-2223-4176-A3AB-AA6985BB27E5}.Release|x64.ActiveCfg = Release|Any CPU
+		{E2E1274F-2223-4176-A3AB-AA6985BB27E5}.Release|x64.Build.0 = Release|Any CPU
+		{E2E1274F-2223-4176-A3AB-AA6985BB27E5}.Release|x86.ActiveCfg = Release|Any CPU
+		{E2E1274F-2223-4176-A3AB-AA6985BB27E5}.Release|x86.Build.0 = Release|Any CPU
+		{31ADFB83-7307-4E67-B97C-17E611833D8A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{31ADFB83-7307-4E67-B97C-17E611833D8A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{31ADFB83-7307-4E67-B97C-17E611833D8A}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{31ADFB83-7307-4E67-B97C-17E611833D8A}.Debug|x64.Build.0 = Debug|Any CPU
+		{31ADFB83-7307-4E67-B97C-17E611833D8A}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{31ADFB83-7307-4E67-B97C-17E611833D8A}.Debug|x86.Build.0 = Debug|Any CPU
+		{31ADFB83-7307-4E67-B97C-17E611833D8A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{31ADFB83-7307-4E67-B97C-17E611833D8A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{31ADFB83-7307-4E67-B97C-17E611833D8A}.Release|x64.ActiveCfg = Release|Any CPU
+		{31ADFB83-7307-4E67-B97C-17E611833D8A}.Release|x64.Build.0 = Release|Any CPU
+		{31ADFB83-7307-4E67-B97C-17E611833D8A}.Release|x86.ActiveCfg = Release|Any CPU
+		{31ADFB83-7307-4E67-B97C-17E611833D8A}.Release|x86.Build.0 = Release|Any CPU
+		{701DD9F3-0A58-4DD7-8127-6CCDCF61D494}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{701DD9F3-0A58-4DD7-8127-6CCDCF61D494}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{701DD9F3-0A58-4DD7-8127-6CCDCF61D494}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{701DD9F3-0A58-4DD7-8127-6CCDCF61D494}.Debug|x64.Build.0 = Debug|Any CPU
+		{701DD9F3-0A58-4DD7-8127-6CCDCF61D494}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{701DD9F3-0A58-4DD7-8127-6CCDCF61D494}.Debug|x86.Build.0 = Debug|Any CPU
+		{701DD9F3-0A58-4DD7-8127-6CCDCF61D494}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{701DD9F3-0A58-4DD7-8127-6CCDCF61D494}.Release|Any CPU.Build.0 = Release|Any CPU
+		{701DD9F3-0A58-4DD7-8127-6CCDCF61D494}.Release|x64.ActiveCfg = Release|Any CPU
+		{701DD9F3-0A58-4DD7-8127-6CCDCF61D494}.Release|x64.Build.0 = Release|Any CPU
+		{701DD9F3-0A58-4DD7-8127-6CCDCF61D494}.Release|x86.ActiveCfg = Release|Any CPU
+		{701DD9F3-0A58-4DD7-8127-6CCDCF61D494}.Release|x86.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{E2E1274F-2223-4176-A3AB-AA6985BB27E5} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
+		{31ADFB83-7307-4E67-B97C-17E611833D8A} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
+		{701DD9F3-0A58-4DD7-8127-6CCDCF61D494} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
+	EndGlobalSection
+EndGlobal
