@@ -1,3 +1,5 @@
+using System.Globalization;
+
 namespace StockTarget.Core;
 
 /// <summary>
@@ -50,7 +52,7 @@ public static class TargetCalculator
         Schedule(plan).FirstOrDefault(r => r.Quarter == QuarterLabel(today));
 
     /// <summary>매입 대기로 보는 범위: 매입 목표가 위로 이 비율(%)까지.</summary>
-    public const double NearPct = 5.0;
+    public const double NearPct = 3.0;
 
     /// <summary>필수매수: 매입 목표가보다 이 비율(%) 이상 낮을 때.</summary>
     public const double MustBuyPct = 10.0;
@@ -64,7 +66,7 @@ public static class TargetCalculator
     /// 현재가 ≤ b × 0.80  → 강력매수
     /// 현재가 ≤ b × 0.90  → 필수매수
     /// 현재가 ≤ b         → 매수
-    /// 현재가 ≤ b × 1.05  → 매입 대기
+    /// 현재가 ≤ b × 1.03  → 매입 대기
     /// 그 위              → 대기
     /// </code>
     /// </summary>
@@ -84,8 +86,15 @@ public static class TargetCalculator
     public static void Validate(TargetPlan plan)
     {
         if (string.IsNullOrWhiteSpace(plan.Symbol)) throw new ArgumentException("티커를 입력하세요");
-        if (plan.Eps <= 0) throw new ArgumentException("EPS는 0보다 커야 합니다");
-        if (plan.Per <= 0) throw new ArgumentException("PER은 0보다 커야 합니다");
+        if (plan.IsDirectTargetPrice)
+        {
+            if (plan.TargetPrice <= 0) throw new ArgumentException("목표 주가는 0보다 커야 합니다");
+        }
+        else
+        {
+            if (plan.Eps <= 0) throw new ArgumentException("EPS는 0보다 커야 합니다");
+            if (plan.Per <= 0) throw new ArgumentException("PER은 0보다 커야 합니다");
+        }
         if (plan.TargetDate <= plan.InputDate) throw new ArgumentException($"목표 연도({plan.TargetYear})는 입력일 이후여야 합니다");
     }
 }
@@ -151,4 +160,44 @@ public static class SplitAdjuster
             ? (adjusted, recent)
             : (prevClose, null);
     }
+}
+
+/// <summary>
+/// 원화 매수금액 입력·환산.
+/// 환율은 Yahoo의 <see cref="UsdKrwSymbol"/>(1달러당 원) 현재가를 쓴다.
+/// </summary>
+public static class Money
+{
+    /// <summary>USD/KRW 환율 티커(1달러당 원).</summary>
+    public const string UsdKrwSymbol = "KRW=X";
+
+    /// <summary>"1,000,000", "₩1000000", "100만원" 같은 입력을 원 단위 금액으로 바꾼다. 비어 있으면 null.</summary>
+    public static double? ParseKrw(string? text, string name)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+            return null;
+
+        var s = text.Replace(",", "").Replace(" ", "").Replace("₩", "").Replace("원", "").Trim();
+        double unit = 1;
+        if (s.EndsWith("억", StringComparison.Ordinal))
+            (s, unit) = (s[..^1], 100_000_000);
+        else if (s.EndsWith("만", StringComparison.Ordinal))
+            (s, unit) = (s[..^1], 10_000);
+
+        if (!double.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out var v) || v < 0 || double.IsInfinity(v))
+            throw new ArgumentException($"{name} 금액이 올바르지 않습니다: '{text}'");
+        return Math.Round(v * unit);
+    }
+
+    /// <summary>원 → 달러. 금액이나 환율이 없으면 null.</summary>
+    public static double? KrwToUsd(double? krw, double? usdKrw) =>
+        krw is { } k && usdKrw is { } r && r > 0 ? k / r : null;
+
+    public static string KrwText(double krw) => "₩" + krw.ToString("#,0", CultureInfo.InvariantCulture);
+
+    public static string UsdText(double usd) => "$" + usd.ToString("#,0.00", CultureInfo.InvariantCulture);
+
+    /// <summary>"₩1,000,000 ($747.12)". 환율이 없으면 원화만.</summary>
+    public static string Text(double krw, double? usdKrw) =>
+        KrwToUsd(krw, usdKrw) is { } usd ? $"{KrwText(krw)} ({UsdText(usd)})" : KrwText(krw);
 }

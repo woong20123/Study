@@ -69,6 +69,10 @@ public sealed class StockService(StockDatabase db, YahooChartClient client, Func
         return new Fetched<DividendYieldResult>(result, null);
     }
 
+    /// <summary>USD/KRW 환율(1달러당 원). 시세와 같은 캐시를 쓴다.</summary>
+    public Task<Fetched<Quote>> GetUsdKrwAsync(bool force = false, CancellationToken ct = default) =>
+        GetQuoteAsync(Money.UsdKrwSymbol, force, ct);
+
     /// <summary>현재가로 이번 분기 매입 목표가와 비교하고 확인 이력에 남긴다. 이번 분기가 일정 밖이면 null.</summary>
     public PriceCheck? RecordCheck(TargetPlan plan, Quote quote)
     {

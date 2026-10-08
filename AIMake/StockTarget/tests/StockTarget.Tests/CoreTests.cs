@@ -71,6 +71,34 @@ public class TargetCalculatorTests
     }
 }
 
+public class DirectTargetPriceTests
+{
+    [Fact]
+    public void DirectPriceOverridesEpsPer()
+    {
+        var t = new TargetPlan("KO", new DateOnly(2026, 10, 8), 2030, 0, 0, 10, 3, TargetPriceInput: 150);
+        Assert.True(t.IsDirectTargetPrice);
+        Assert.Equal(150, t.TargetPrice);
+        TargetCalculator.Validate(t); // EPS·PER이 0이어도 통과
+        var last = TargetCalculator.Schedule(t)[^1];
+        Assert.Equal(TargetCalculator.BuyPrice(150, t.GrowthPct, last.BaseDate, t.TargetDate), last.BuyPrice);
+
+        var calc = new TargetPlan("KO", new DateOnly(2026, 10, 8), 2030, 6, 25, 10, 3);
+        Assert.False(calc.IsDirectTargetPrice);
+        Assert.Equal(150, calc.TargetPrice);
+        Assert.Equal(TargetCalculator.Schedule(calc), TargetCalculator.Schedule(t)); // 같은 목표 주가면 같은 일정
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-10)]
+    public void DirectPriceMustBePositive(double price)
+    {
+        var t = new TargetPlan("KO", new DateOnly(2026, 10, 8), 2030, 0, 0, 10, 3, TargetPriceInput: price);
+        Assert.Throws<ArgumentException>(() => TargetCalculator.Validate(t));
+    }
+}
+
 public class BuyStatusTests
 {
     [Theory]
@@ -80,9 +108,10 @@ public class BuyStatusTests
     [InlineData(90.0, 100.0, BuyStatus.MustBuy)]    // 정확히 -10% → 필수매수
     [InlineData(90.01, 100.0, BuyStatus.Buy)]
     [InlineData(100.0, 100.0, BuyStatus.Buy)]       // 같으면 매수
-    [InlineData(103.0, 100.0, BuyStatus.Near)]    // 5% 이내
-    [InlineData(105.0, 100.0, BuyStatus.Near)]    // 정확히 5%까지 매입 대기
-    [InlineData(105.01, 100.0, BuyStatus.Wait)]   // 5% 초과
+    [InlineData(102.0, 100.0, BuyStatus.Near)]    // 3% 이내
+    [InlineData(103.0, 100.0, BuyStatus.Near)]    // 정확히 3%까지 매입 대기
+    [InlineData(103.01, 100.0, BuyStatus.Wait)]   // 3% 초과
+    [InlineData(105.0, 100.0, BuyStatus.Wait)]    // 이전 기준(5%)이면 매입 대기였던 값
     [InlineData(150.0, 100.0, BuyStatus.Wait)]
     public void Classify(double price, double buy, BuyStatus expected) =>
         Assert.Equal(expected, TargetCalculator.Classify(price, buy));
@@ -112,7 +141,8 @@ public class BuyStatusTests
         // KO 2026-10-08: 현재가 85.82 / 매입 목표가 141.52 (-39.4%) → 강력매수, AAPL 336.67 / 245.14 → 대기
         Assert.Equal(BuyStatus.StrongBuy, new PriceCheck("KO", new DateOnly(2026, 10, 8), "2026Q4", 85.82, 141.52).Status);
         Assert.Equal(BuyStatus.MustBuy, new PriceCheck("X", new DateOnly(2026, 10, 8), "2026Q4", 85, 100).Status);
-        Assert.Equal(BuyStatus.Near, new PriceCheck("X", new DateOnly(2026, 10, 8), "2026Q4", 104, 100).Status);
+        Assert.Equal(BuyStatus.Near, new PriceCheck("X", new DateOnly(2026, 10, 8), "2026Q4", 102, 100).Status); // +2% → 매입 대기(3% 이내)
+        Assert.Equal(BuyStatus.Wait, new PriceCheck("X", new DateOnly(2026, 10, 8), "2026Q4", 104, 100).Status); // +4% → 대기
         Assert.Equal("대기", new PriceCheck("AAPL", new DateOnly(2026, 10, 8), "2026Q4", 336.67, 245.14).StatusText);
     }
 }
@@ -236,6 +266,53 @@ public class YahooParseTests
         Assert.Throws<StockDataException>(() => YahooChartClient.Parse("X", "<html>Too Many Requests</html>", 429));
 }
 
+public class MoneyTests
+{
+    [Theory]
+    [InlineData("1,000,000", 1_000_000)]
+    [InlineData("₩1000000", 1_000_000)]
+    [InlineData("100만", 1_000_000)]
+    [InlineData("150만원", 1_500_000)]
+    [InlineData("1.5억", 150_000_000)]
+    [InlineData(" 0 ", 0)]
+    public void ParseKrw(string text, double expected) => Assert.Equal(expected, Money.ParseKrw(text, "매수"));
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void ParseKrwBlankIsNull(string? text) => Assert.Null(Money.ParseKrw(text, "매수"));
+
+    [Theory]
+    [InlineData("abc")]
+    [InlineData("-1000")]
+    [InlineData("만")]
+    public void ParseKrwInvalidThrows(string text) => Assert.Throws<ArgumentException>(() => Money.ParseKrw(text, "매수"));
+
+    [Fact]
+    public void KrwToUsdAndText()
+    {
+        Assert.Equal(1000, Money.KrwToUsd(1_350_000, 1350));
+        Assert.Null(Money.KrwToUsd(1_350_000, null));
+        Assert.Null(Money.KrwToUsd(null, 1350));
+        Assert.Equal("₩1,350,000 ($1,000.00)", Money.Text(1_350_000, 1350));
+        Assert.Equal("₩1,350,000", Money.Text(1_350_000, null)); // 환율 없으면 원화만
+    }
+
+    [Fact]
+    public void AmountForStatus()
+    {
+        var a = new BuyAmounts(BuyKrw: 1_000_000, StrongBuyKrw: 3_000_000);
+        Assert.Equal(1_000_000, a.For(BuyStatus.Buy));
+        Assert.Null(a.For(BuyStatus.MustBuy)); // 비운 단계
+        Assert.Equal(3_000_000, a.For(BuyStatus.StrongBuy));
+        Assert.Null(a.For(BuyStatus.Near));
+        Assert.Null(a.For(BuyStatus.Wait));
+        Assert.True(BuyAmounts.Empty.IsEmpty);
+        Assert.Same(BuyAmounts.Empty, new TargetPlan("KO", new DateOnly(2026, 10, 8), 2030, 1, 1, 10, 3).BuyAmounts);
+    }
+}
+
 public sealed class StockDatabaseTests : IDisposable
 {
     private readonly string _path = Path.Combine(Path.GetTempPath(), $"stocktarget_test_{Guid.NewGuid():N}.db");
@@ -264,6 +341,61 @@ public sealed class StockDatabaseTests : IDisposable
         Assert.Empty(db.GetTargets());
         Assert.Empty(db.GetChecks("KO")); // 이력도 함께 삭제
         Assert.False(db.DeleteTarget("KO"));
+    }
+
+    [Fact]
+    public void BuyAmountsRoundTrip()
+    {
+        var db = Db();
+        var amounts = new BuyAmounts(1_000_000, null, 3_000_000);
+        db.SaveTarget(new TargetPlan("KO", new DateOnly(2026, 10, 8), 2030, 10.5, 18, 10, 2.92, null, amounts));
+        db.SaveTarget(new TargetPlan("NVDA", new DateOnly(2026, 10, 8), 2030, 10, 30, 15, 0.03));
+        var all = Db().GetTargets();
+        Assert.Equal(amounts, all.Single(t => t.Symbol == "KO").Amounts);
+        Assert.Null(all.Single(t => t.Symbol == "NVDA").Amounts);
+
+        db.SaveTarget(new TargetPlan("KO", new DateOnly(2026, 10, 8), 2030, 10.5, 18, 10, 2.92)); // 금액 비우고 갱신
+        Assert.True(Db().GetTargets().Single(t => t.Symbol == "KO").BuyAmounts.IsEmpty);
+    }
+
+    [Fact]
+    public void OldDatabaseGetsAmountColumns()
+    {
+        // 매수금액 컬럼이 없던 이전 버전 스키마
+        using (var c = new Microsoft.Data.Sqlite.SqliteConnection($"Data Source={_path};Pooling=False"))
+        {
+            c.Open();
+            using var cmd = c.CreateCommand();
+            cmd.CommandText = """
+                CREATE TABLE targets (symbol TEXT PRIMARY KEY, input_date TEXT NOT NULL, target_year INTEGER NOT NULL,
+                    eps REAL NOT NULL, per REAL NOT NULL, return_pct REAL NOT NULL, dividend_yield_pct REAL NOT NULL,
+                    memo TEXT, updated_at TEXT NOT NULL);
+                INSERT INTO targets VALUES ('KO', '2026-10-08', 2030, 10.5, 18, 10, 2.92, NULL, '2026-10-08');
+                """;
+            cmd.ExecuteNonQuery();
+        }
+
+        var db = Db();
+        var ko = Assert.Single(db.GetTargets());
+        Assert.Null(ko.Amounts); // 기존 행은 금액 없음
+        db.SaveTarget(ko with { Amounts = new BuyAmounts(2_000_000) });
+        Assert.Equal(2_000_000, Db().GetTargets()[0].BuyAmounts.BuyKrw);
+        Assert.False(Db().GetTargets()[0].IsDirectTargetPrice);
+    }
+
+    [Fact]
+    public void DirectTargetPriceRoundTrips()
+    {
+        var db = Db();
+        db.SaveTarget(new TargetPlan("KO", new DateOnly(2026, 10, 8), 2030, 0, 0, 10, 2.92, TargetPriceInput: 150.5));
+        var ko = Assert.Single(Db().GetTargets());
+        Assert.Equal(150.5, ko.TargetPriceInput);
+        Assert.Equal(150.5, ko.TargetPrice);
+
+        db.SaveTarget(ko with { Eps = 6, Per = 25, TargetPriceInput = null }); // EPS × PER로 되돌리기
+        ko = Assert.Single(Db().GetTargets());
+        Assert.False(ko.IsDirectTargetPrice);
+        Assert.Equal(150, ko.TargetPrice);
     }
 
     [Fact]

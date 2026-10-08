@@ -8,6 +8,7 @@ public sealed class TargetRowViewModel(TargetPlan plan) : ObservableObject
     private Quote? _quote;
     private double? _cacheAge;
     private string? _error;
+    private double? _usdKrw;
 
     public TargetPlan Plan { get; private set; } = plan;
 
@@ -52,7 +53,19 @@ public sealed class TargetRowViewModel(TargetPlan plan) : ObservableObject
             {
                 OnPropertyChanged(nameof(Status));
                 OnPropertyChanged(nameof(Verdict));
+                OnPropertyChanged(nameof(BuyAmountText));
             }
+        }
+    }
+
+    /// <summary>USD/KRW 환율(1달러당 원). 매수금액 달러 환산에 쓴다.</summary>
+    public double? UsdKrw
+    {
+        get => _usdKrw;
+        set
+        {
+            if (Set(ref _usdKrw, value))
+                OnPropertyChanged(nameof(BuyAmountText));
         }
     }
 
@@ -63,10 +76,14 @@ public sealed class TargetRowViewModel(TargetPlan plan) : ObservableObject
 
     public bool? BuyCondition => Price is { } p && CurrentBuyPrice is { } b ? p <= b : null;
 
-    /// <summary>매수(≤ 매입 목표가) / 매입 대기(5% 이내) / 대기(5% 초과).</summary>
+    /// <summary>매수(≤ 매입 목표가) / 매입 대기(3% 이내) / 대기(3% 초과).</summary>
     public BuyStatus Status => Error is not null ? BuyStatus.None : TargetCalculator.Classify(Price, CurrentBuyPrice);
 
     public string Verdict => Error is not null ? "조회 실패" : Status.ToText();
+
+    /// <summary>현재 판정 단계의 매수금액 "₩1,000,000 ($747.12)". 매수 단계가 아니거나 입력하지 않았으면 빈 문자열.</summary>
+    public string BuyAmountText =>
+        Error is null && Plan.BuyAmounts.For(Status) is { } krw ? Money.Text(krw, UsdKrw) : "";
 
     public string CacheText => CacheAge is { } a ? $"캐시 {Format.Age(a)}" : "실시간";
 
@@ -83,6 +100,7 @@ public sealed class TargetRowViewModel(TargetPlan plan) : ObservableObject
         OnPropertyChanged(nameof(BuyCondition));
         OnPropertyChanged(nameof(Status));
         OnPropertyChanged(nameof(Verdict));
+        OnPropertyChanged(nameof(BuyAmountText));
     }
 }
 

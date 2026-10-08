@@ -67,7 +67,10 @@ public sealed record DividendYieldResult(
     public double AvgPrice => Periods.Count == 0 ? 0 : Periods.Average(p => p.AvgPrice);
 }
 
-/// <summary>저장되는 목표. 배당수익률·필요 상승률은 입력 시점 값으로 고정한다.</summary>
+/// <summary>
+/// 저장되는 목표. 배당수익률·필요 상승률은 입력 시점 값으로 고정한다.
+/// 목표 주가는 EPS × PER로 계산하거나, TargetPriceInput으로 직접 입력한다(이때 EPS·PER은 0).
+/// </summary>
 public sealed record TargetPlan(
     string Symbol,
     DateOnly InputDate,
@@ -76,16 +79,41 @@ public sealed record TargetPlan(
     double Per,
     double ReturnPct,
     double DividendYieldPct,
-    string? Memo = null)
+    string? Memo = null,
+    BuyAmounts? Amounts = null,
+    double? TargetPriceInput = null)
 {
+    /// <summary>목표 주가를 EPS × PER 대신 직접 입력했는지.</summary>
+    public bool IsDirectTargetPrice => TargetPriceInput.HasValue;
+
+    /// <summary>매수 단계별 매수금액(원). 입력하지 않았으면 모든 단계가 비어 있다.</summary>
+    public BuyAmounts BuyAmounts => Amounts ?? BuyAmounts.Empty;
+
     /// <summary>목표일 = 목표 연도 12월 31일.</summary>
     public DateOnly TargetDate => new(TargetYear, 12, 31);
 
-    /// <summary>목표 주가 = EPS × PER.</summary>
-    public double TargetPrice => Eps * Per;
+    /// <summary>목표 주가 = 직접 입력값, 없으면 EPS × PER.</summary>
+    public double TargetPrice => TargetPriceInput ?? Eps * Per;
 
     /// <summary>필요 주가 상승률(연 %) = 목표 수익률 − 5년 평균 배당수익률.</summary>
     public double GrowthPct => ReturnPct - DividendYieldPct;
+}
+
+/// <summary>매수 단계(매수 · 필수매수 · 강력매수)별 매수금액(원). 비운 단계는 null.</summary>
+public sealed record BuyAmounts(double? BuyKrw = null, double? MustBuyKrw = null, double? StrongBuyKrw = null)
+{
+    public static readonly BuyAmounts Empty = new();
+
+    public bool IsEmpty => BuyKrw is null && MustBuyKrw is null && StrongBuyKrw is null;
+
+    /// <summary>판정 단계에 해당하는 매수금액. 매수 단계가 아니거나(매입 대기·대기) 비어 있으면 null.</summary>
+    public double? For(BuyStatus s) => s switch
+    {
+        BuyStatus.StrongBuy => StrongBuyKrw,
+        BuyStatus.MustBuy => MustBuyKrw,
+        BuyStatus.Buy => BuyKrw,
+        _ => null,
+    };
 }
 
 /// <summary>분기별 매입 목표가 한 행.</summary>
@@ -102,9 +130,9 @@ public enum BuyStatus
     MustBuy,
     /// <summary>현재가 ≤ 매입 목표가.</summary>
     Buy,
-    /// <summary>매입 목표가 &lt; 현재가 ≤ 매입 목표가 × (1 + 5%).</summary>
+    /// <summary>매입 목표가 &lt; 현재가 ≤ 매입 목표가 × (1 + 3%).</summary>
     Near,
-    /// <summary>현재가 &gt; 매입 목표가 × (1 + 5%).</summary>
+    /// <summary>현재가 &gt; 매입 목표가 × (1 + 3%).</summary>
     Wait,
 }
 

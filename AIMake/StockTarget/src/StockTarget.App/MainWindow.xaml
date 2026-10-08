@@ -4,92 +4,6 @@
         Title="StockTarget — 분기별 매입 목표가" Height="760" Width="1380"
         MinHeight="560" MinWidth="1000" WindowStartupLocation="CenterScreen"
         FontFamily="Malgun Gothic" FontSize="13">
-    <Window.Resources>
-        <Style TargetType="DataGrid">
-            <Setter Property="AutoGenerateColumns" Value="False"/>
-            <Setter Property="IsReadOnly" Value="True"/>
-            <Setter Property="CanUserAddRows" Value="False"/>
-            <Setter Property="HeadersVisibility" Value="Column"/>
-            <Setter Property="GridLinesVisibility" Value="Horizontal"/>
-            <Setter Property="HorizontalGridLinesBrush" Value="#E3E6EA"/>
-            <Setter Property="RowHeight" Value="26"/>
-            <Setter Property="SelectionMode" Value="Single"/>
-        </Style>
-        <Style x:Key="Num" TargetType="TextBlock">
-            <Setter Property="HorizontalAlignment" Value="Right"/>
-            <Setter Property="Margin" Value="0,0,6,0"/>
-        </Style>
-        <Style x:Key="Label" TargetType="TextBlock">
-            <Setter Property="VerticalAlignment" Value="Center"/>
-            <Setter Property="Margin" Value="0,0,8,0"/>
-            <Setter Property="Foreground" Value="#444"/>
-        </Style>
-        <Style TargetType="TextBox">
-            <Setter Property="Margin" Value="0,3"/>
-            <Setter Property="Padding" Value="4,2"/>
-            <Setter Property="VerticalContentAlignment" Value="Center"/>
-        </Style>
-        <Style TargetType="Button">
-            <Setter Property="Padding" Value="14,5"/>
-            <Setter Property="Margin" Value="0,0,6,0"/>
-        </Style>
-
-        <!-- 판정 색 (Status = Core.BuyStatus)
-             강력매수(파란색, -20% 이하) / 필수매수(하늘색, -10% 이하) / 매수(녹색) / 매입 대기(연한 녹색, +5% 이내) / 대기(회색) -->
-        <SolidColorBrush x:Key="StrongBuyBg" Color="#90CAF9"/>
-        <SolidColorBrush x:Key="StrongBuyFg" Color="#0D47A1"/>
-        <SolidColorBrush x:Key="MustBuyBg" Color="#D9F0FC"/>
-        <SolidColorBrush x:Key="MustBuyFg" Color="#0277BD"/>
-        <SolidColorBrush x:Key="BuyBg" Color="#C8E6C9"/>
-        <SolidColorBrush x:Key="BuyFg" Color="#1B5E20"/>
-        <SolidColorBrush x:Key="NearBg" Color="#EDF7EE"/>
-        <SolidColorBrush x:Key="NearFg" Color="#388E3C"/>
-        <SolidColorBrush x:Key="WaitBg" Color="#F1F2F4"/>
-        <SolidColorBrush x:Key="WaitFg" Color="#6B7280"/>
-
-        <Style x:Key="StatusRow" TargetType="DataGridRow">
-            <Style.Triggers>
-                <DataTrigger Binding="{Binding Status}" Value="StrongBuy">
-                    <Setter Property="Background" Value="{StaticResource StrongBuyBg}"/>
-                </DataTrigger>
-                <DataTrigger Binding="{Binding Status}" Value="MustBuy">
-                    <Setter Property="Background" Value="{StaticResource MustBuyBg}"/>
-                </DataTrigger>
-                <DataTrigger Binding="{Binding Status}" Value="Buy">
-                    <Setter Property="Background" Value="{StaticResource BuyBg}"/>
-                </DataTrigger>
-                <DataTrigger Binding="{Binding Status}" Value="Near">
-                    <Setter Property="Background" Value="{StaticResource NearBg}"/>
-                </DataTrigger>
-                <DataTrigger Binding="{Binding Status}" Value="Wait">
-                    <Setter Property="Background" Value="{StaticResource WaitBg}"/>
-                </DataTrigger>
-            </Style.Triggers>
-        </Style>
-
-        <Style x:Key="StatusText" TargetType="TextBlock">
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Margin" Value="4,0"/>
-            <Style.Triggers>
-                <DataTrigger Binding="{Binding Status}" Value="StrongBuy">
-                    <Setter Property="Foreground" Value="{StaticResource StrongBuyFg}"/>
-                    <Setter Property="FontWeight" Value="Bold"/>
-                </DataTrigger>
-                <DataTrigger Binding="{Binding Status}" Value="MustBuy">
-                    <Setter Property="Foreground" Value="{StaticResource MustBuyFg}"/>
-                </DataTrigger>
-                <DataTrigger Binding="{Binding Status}" Value="Buy">
-                    <Setter Property="Foreground" Value="{StaticResource BuyFg}"/>
-                </DataTrigger>
-                <DataTrigger Binding="{Binding Status}" Value="Near">
-                    <Setter Property="Foreground" Value="{StaticResource NearFg}"/>
-                </DataTrigger>
-                <DataTrigger Binding="{Binding Status}" Value="Wait">
-                    <Setter Property="Foreground" Value="{StaticResource WaitFg}"/>
-                </DataTrigger>
-            </Style.Triggers>
-        </Style>
-    </Window.Resources>
 
     <DockPanel>
         <!-- 상태 표시줄 -->
@@ -98,9 +12,27 @@
                 <TextBlock Text="{Binding Status}"/>
             </StatusBarItem>
             <StatusBarItem HorizontalAlignment="Right">
-                <TextBlock Foreground="#777" Text="{Binding DbPath, StringFormat=DB: {0}}"/>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="{Binding CloudStatus}" Margin="0,0,16,0"/>
+                    <TextBlock Text="{Binding UsdKrwText}" Margin="0,0,16,0"/>
+                    <TextBlock Foreground="#777" Text="{Binding DbPath, StringFormat=DB: {0}}"/>
+                </StackPanel>
             </StatusBarItem>
         </StatusBar>
+
+        <!-- 백업 · 동기화 메뉴 -->
+        <Menu DockPanel.Dock="Top" Padding="4,2" Background="#F3F4F6">
+            <MenuItem Header="데이터(_D)">
+                <MenuItem Header="JSON으로 내보내기..." Command="{Binding ExportJsonCommand}"/>
+                <MenuItem Header="JSON에서 복원..." Command="{Binding ImportJsonCommand}"/>
+                <Separator/>
+                <MenuItem Header="Firebase에 저장" Command="{Binding CloudSaveCommand}"/>
+                <MenuItem Header="Firebase에서 복원" Command="{Binding CloudRestoreCommand}"/>
+                <Separator/>
+                <MenuItem Header="Google 로그인" Command="{Binding CloudLoginCommand}"/>
+                <MenuItem Header="Google 로그아웃" Command="{Binding CloudLogoutCommand}"/>
+            </MenuItem>
+        </Menu>
 
         <Grid Margin="10">
             <Grid.ColumnDefinitions>
@@ -128,6 +60,9 @@
                             <RowDefinition/>
                             <RowDefinition/>
                             <RowDefinition/>
+                            <RowDefinition/>
+                            <RowDefinition/>
+                            <RowDefinition/>
                         </Grid.RowDefinitions>
 
                         <TextBlock Grid.Row="0" Grid.Column="0" Style="{StaticResource Label}" Text="티커"/>
@@ -137,22 +72,53 @@
                         <TextBlock Grid.Row="0" Grid.Column="6" Style="{StaticResource Label}" Text="목표 수익률(%)"/>
                         <TextBox AutomationProperties.AutomationId="FormReturn" Grid.Row="0" Grid.Column="7" Text="{Binding FormReturn, UpdateSourceTrigger=PropertyChanged}"/>
 
-                        <TextBlock Grid.Row="1" Grid.Column="0" Style="{StaticResource Label}" Text="목표 EPS"/>
-                        <TextBox AutomationProperties.AutomationId="FormEps" Grid.Row="1" Grid.Column="1" Text="{Binding FormEps, UpdateSourceTrigger=PropertyChanged}"/>
-                        <TextBlock Grid.Row="1" Grid.Column="3" Style="{StaticResource Label}" Text="목표 PER"/>
-                        <TextBox AutomationProperties.AutomationId="FormPer" Grid.Row="1" Grid.Column="4" Text="{Binding FormPer, UpdateSourceTrigger=PropertyChanged}"/>
+                        <!-- 목표 주가: EPS × PER로 계산하거나 직접 입력 -->
+                        <TextBlock Grid.Row="1" Grid.Column="0" Style="{StaticResource Label}" Text="목표 주가"/>
+                        <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                            <RadioButton AutomationProperties.AutomationId="FormEpsPerMode" GroupName="TargetPriceMode" Content="EPS × PER" Margin="0,0,12,0"
+                                         IsChecked="{Binding FormEpsPerMode}"/>
+                            <RadioButton AutomationProperties.AutomationId="FormDirectPrice" GroupName="TargetPriceMode" Content="직접 입력"
+                                         IsChecked="{Binding FormDirectPrice}"/>
+                        </StackPanel>
+                        <TextBlock Grid.Row="1" Grid.Column="3" Style="{StaticResource Label}" Text="목표 주가"/>
+                        <TextBox AutomationProperties.AutomationId="FormTargetPrice" Grid.Row="1" Grid.Column="4" Text="{Binding FormTargetPrice, UpdateSourceTrigger=PropertyChanged}"
+                                 IsEnabled="{Binding FormDirectPrice}" ToolTip="'직접 입력'을 선택하면 EPS × PER 대신 이 값을 목표 주가로 쓴다"/>
                         <TextBlock Grid.Row="1" Grid.Column="6" Style="{StaticResource Label}" Text="배당수익률(%)"/>
                         <TextBox AutomationProperties.AutomationId="FormDividend" Grid.Row="1" Grid.Column="7" Text="{Binding FormDividend, UpdateSourceTrigger=PropertyChanged}"
                                  ToolTip="비워 두면 최근 5년 평균 배당수익률을 조회해 고정한다"/>
 
-                        <TextBlock Grid.Row="2" Grid.Column="0" Style="{StaticResource Label}" Text="메모"/>
-                        <TextBox AutomationProperties.AutomationId="FormMemo" Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="7" Text="{Binding FormMemo, UpdateSourceTrigger=PropertyChanged}"/>
+                        <TextBlock Grid.Row="2" Grid.Column="0" Style="{StaticResource Label}" Text="목표 EPS"/>
+                        <TextBox AutomationProperties.AutomationId="FormEps" Grid.Row="2" Grid.Column="1" Text="{Binding FormEps, UpdateSourceTrigger=PropertyChanged}"
+                                 IsEnabled="{Binding FormEpsPerMode}"/>
+                        <TextBlock Grid.Row="2" Grid.Column="3" Style="{StaticResource Label}" Text="목표 PER"/>
+                        <TextBox AutomationProperties.AutomationId="FormPer" Grid.Row="2" Grid.Column="4" Text="{Binding FormPer, UpdateSourceTrigger=PropertyChanged}"
+                                 IsEnabled="{Binding FormEpsPerMode}"/>
+                        <TextBlock Grid.Row="2" Grid.Column="6" Grid.ColumnSpan="2" VerticalAlignment="Center" Foreground="#777" Text="{Binding FormEpsPerPreview}"/>
 
-                        <StackPanel Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="8" Orientation="Horizontal" Margin="0,8,0,0">
+                        <TextBlock Grid.Row="3" Grid.Column="0" Style="{StaticResource Label}" Text="메모"/>
+                        <TextBox AutomationProperties.AutomationId="FormMemo" Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="7" Text="{Binding FormMemo, UpdateSourceTrigger=PropertyChanged}"/>
+
+                        <!-- 매수 단계별 매수금액(원). 입력하면 아래 줄에 달러 환산을 보여 준다 -->
+                        <TextBlock Grid.Row="4" Grid.Column="0" Style="{StaticResource Label}" Text="매수(원)"/>
+                        <TextBox AutomationProperties.AutomationId="FormBuyKrw" Grid.Row="4" Grid.Column="1" Text="{Binding FormBuyKrw, UpdateSourceTrigger=PropertyChanged}"
+                                 TextAlignment="Right" ToolTip="판정이 '매수'일 때 살 금액. 1,000,000 / 100만 처럼 입력"/>
+                        <TextBlock Grid.Row="4" Grid.Column="3" Style="{StaticResource Label}" Text="필수매수(원)"/>
+                        <TextBox AutomationProperties.AutomationId="FormMustBuyKrw" Grid.Row="4" Grid.Column="4" Text="{Binding FormMustBuyKrw, UpdateSourceTrigger=PropertyChanged}"
+                                 TextAlignment="Right" ToolTip="판정이 '필수매수'(매입 목표가 -10% 이하)일 때 살 금액"/>
+                        <TextBlock Grid.Row="4" Grid.Column="6" Style="{StaticResource Label}" Text="강력매수(원)"/>
+                        <TextBox AutomationProperties.AutomationId="FormStrongBuyKrw" Grid.Row="4" Grid.Column="7" Text="{Binding FormStrongBuyKrw, UpdateSourceTrigger=PropertyChanged}"
+                                 TextAlignment="Right" ToolTip="판정이 '강력매수'(매입 목표가 -20% 이하)일 때 살 금액"/>
+                        <TextBlock Grid.Row="5" Grid.Column="1" Style="{StaticResource Num}" Foreground="#777" Text="{Binding FormBuyUsd}"/>
+                        <TextBlock Grid.Row="5" Grid.Column="4" Style="{StaticResource Num}" Foreground="#777" Text="{Binding FormMustBuyUsd}"/>
+                        <TextBlock Grid.Row="5" Grid.Column="7" Style="{StaticResource Num}" Foreground="#777" Text="{Binding FormStrongBuyUsd}"/>
+
+                        <StackPanel Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="8" Orientation="Horizontal" Margin="0,8,0,0">
                             <Button Content="저장" Command="{Binding SaveCommand}" IsDefault="True"/>
                             <Button Content="삭제" Command="{Binding DeleteCommand}"/>
                             <Button Content="새로 입력" Command="{Binding NewCommand}"/>
                             <Button Content="시세 새로고침(캐시 무시)" Command="{Binding RefreshCommand}"/>
+                            <Button AutomationProperties.AutomationId="OpenReservation" Content="다음 주 LOC 예약..." Command="{Binding ReserveCommand}"
+                                    ToolTip="등록된 목표의 단계별 매수금액으로 다음 주(월~금) 키움 LOC 예약 매수 주문표를 만든다"/>
                             <TextBlock VerticalAlignment="Center" Foreground="#888" Margin="6,0,0,0"
                                        Text="배당수익률을 비우면 5년 평균을 자동 조회"/>
                         </StackPanel>
@@ -167,6 +133,7 @@
                         <DataGridTextColumn Header="매입목표가" Binding="{Binding CurrentBuyPrice, StringFormat=N2}" Width="Auto" ElementStyle="{StaticResource Num}" FontWeight="SemiBold"/>
                         <DataGridTextColumn Header="괴리" Binding="{Binding GapPct, StringFormat={}{0:+0.0;-0.0}%}" Width="Auto" ElementStyle="{StaticResource Num}"/>
                         <DataGridTextColumn Header="판정" Binding="{Binding Verdict}" Width="Auto" MinWidth="72" ElementStyle="{StaticResource StatusText}"/>
+                        <DataGridTextColumn Header="매수금액" Binding="{Binding BuyAmountText}" Width="Auto" ElementStyle="{StaticResource Num}"/>
                         <DataGridTextColumn Header="분기" Binding="{Binding CurrentQuarter}" Width="Auto"/>
                         <DataGridTextColumn Header="목표연도" Binding="{Binding TargetYear}" Width="Auto"/>
                         <DataGridTextColumn Header="목표주가" Binding="{Binding TargetPrice, StringFormat=N2}" Width="Auto" ElementStyle="{StaticResource Num}"/>

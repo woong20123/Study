@@ -2,6 +2,91 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              ShutdownMode="OnMainWindowClose">
+    <!-- 두 창(MainWindow, ReservationWindow)이 함께 쓰는 스타일 -->
     <Application.Resources>
+        <Style TargetType="DataGrid">
+            <Setter Property="AutoGenerateColumns" Value="False"/>
+            <Setter Property="IsReadOnly" Value="True"/>
+            <Setter Property="CanUserAddRows" Value="False"/>
+            <Setter Property="HeadersVisibility" Value="Column"/>
+            <Setter Property="GridLinesVisibility" Value="Horizontal"/>
+            <Setter Property="HorizontalGridLinesBrush" Value="#E3E6EA"/>
+            <Setter Property="RowHeight" Value="26"/>
+            <Setter Property="SelectionMode" Value="Single"/>
+        </Style>
+        <Style x:Key="Num" TargetType="TextBlock">
+            <Setter Property="HorizontalAlignment" Value="Right"/>
+            <Setter Property="Margin" Value="0,0,6,0"/>
+        </Style>
+        <Style x:Key="Label" TargetType="TextBlock">
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="0,0,8,0"/>
+            <Setter Property="Foreground" Value="#444"/>
+        </Style>
+        <Style TargetType="TextBox">
+            <Setter Property="Margin" Value="0,3"/>
+            <Setter Property="Padding" Value="4,2"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+        <Style TargetType="Button">
+            <Setter Property="Padding" Value="14,5"/>
+            <Setter Property="Margin" Value="0,0,6,0"/>
+        </Style>
+
+        <!-- 판정 색 (Status = Core.BuyStatus)
+             강력매수(파란색, -20% 이하) / 필수매수(하늘색, -10% 이하) / 매수(녹색) / 매입 대기(연한 녹색, +3% 이내) / 대기(회색) -->
+        <SolidColorBrush x:Key="StrongBuyBg" Color="#90CAF9"/>
+        <SolidColorBrush x:Key="StrongBuyFg" Color="#0D47A1"/>
+        <SolidColorBrush x:Key="MustBuyBg" Color="#D9F0FC"/>
+        <SolidColorBrush x:Key="MustBuyFg" Color="#0277BD"/>
+        <SolidColorBrush x:Key="BuyBg" Color="#C8E6C9"/>
+        <SolidColorBrush x:Key="BuyFg" Color="#1B5E20"/>
+        <SolidColorBrush x:Key="NearBg" Color="#EDF7EE"/>
+        <SolidColorBrush x:Key="NearFg" Color="#388E3C"/>
+        <SolidColorBrush x:Key="WaitBg" Color="#F1F2F4"/>
+        <SolidColorBrush x:Key="WaitFg" Color="#6B7280"/>
+
+        <Style x:Key="StatusRow" TargetType="DataGridRow">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Status}" Value="StrongBuy">
+                    <Setter Property="Background" Value="{StaticResource StrongBuyBg}"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Status}" Value="MustBuy">
+                    <Setter Property="Background" Value="{StaticResource MustBuyBg}"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Status}" Value="Buy">
+                    <Setter Property="Background" Value="{StaticResource BuyBg}"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Status}" Value="Near">
+                    <Setter Property="Background" Value="{StaticResource NearBg}"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Status}" Value="Wait">
+                    <Setter Property="Background" Value="{StaticResource WaitBg}"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="StatusText" TargetType="TextBlock">
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Margin" Value="4,0"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Status}" Value="StrongBuy">
+                    <Setter Property="Foreground" Value="{StaticResource StrongBuyFg}"/>
+                    <Setter Property="FontWeight" Value="Bold"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Status}" Value="MustBuy">
+                    <Setter Property="Foreground" Value="{StaticResource MustBuyFg}"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Status}" Value="Buy">
+                    <Setter Property="Foreground" Value="{StaticResource BuyFg}"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Status}" Value="Near">
+                    <Setter Property="Foreground" Value="{StaticResource NearFg}"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Status}" Value="Wait">
+                    <Setter Property="Foreground" Value="{StaticResource WaitFg}"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
     </Application.Resources>
 </Application>

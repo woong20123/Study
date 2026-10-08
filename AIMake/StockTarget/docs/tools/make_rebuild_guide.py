@@ -19,22 +19,33 @@ OUT = os.path.join(ROOT, 'docs', 'rebuild-guide.html')
 FILES = [
     ('StockTarget.sln', '솔루션. docs 솔루션 폴더 포함'),
     ('src/StockTarget.Core/StockTarget.Core.csproj', 'Core 라이브러리 프로젝트 (net9.0, Microsoft.Data.Sqlite)'),
-    ('src/StockTarget.Core/Models.cs', '레코드: 시세·배당·분할·목표·분기 행'),
-    ('src/StockTarget.Core/Calculators.cs', '순수 계산: 목표가 역산, 5년 배당수익률, 분할 보정'),
+    ('src/StockTarget.Core/Models.cs', '레코드: 시세·배당·분할·목표·매수금액·분기 행'),
+    ('src/StockTarget.Core/Calculators.cs', '순수 계산: 목표가 역산, 5년 배당수익률, 분할 보정, 원화 매수금액 환산'),
     ('src/StockTarget.Core/YahooChartClient.cs', 'Yahoo chart API 호출과 JSON 파싱'),
     ('src/StockTarget.Core/StockDatabase.cs', 'SQLite 스키마·목표·확인 이력·캐시'),
-    ('src/StockTarget.Core/StockService.cs', '캐시 우선 조회, 분할 보정, 확인 이력 기록'),
-    ('src/StockTarget.App/StockTarget.App.csproj', 'WPF 앱 프로젝트 (net9.0-windows)'),
+    ('src/StockTarget.Core/StockService.cs', '캐시 우선 조회, 분할 보정, USD/KRW 환율, 확인 이력 기록'),
+    ('src/StockTarget.Core/Reservations.cs', '다음 주 계단식 LOC 예약 주문표, 접수·중복 방지'),
+    ('src/StockTarget.Core/KiwoomClient.cs', '키움 REST API: 토큰, 거래소구분, 미국주식 예약 매수'),
+    ('src/StockTarget.Core/Backup.cs', '기기 간 백업 JSON 형식(v1)과 검증'),
+    ('src/StockTarget.Core/Cloud.cs', 'Google OAuth(PKCE) · Firebase 로그인 · Realtime Database 저장/읽기'),
+    ('src/StockTarget.App/StockTarget.App.csproj', 'WPF 앱 프로젝트 (net9.0-windows, DPAPI 패키지)'),
     ('src/StockTarget.App/AssemblyInfo.cs', 'WPF 템플릿 기본 파일'),
-    ('src/StockTarget.App/App.xaml', '앱 리소스'),
+    ('src/StockTarget.App/App.xaml', '앱 리소스: 두 창이 함께 쓰는 표·판정 색 스타일'),
     ('src/StockTarget.App/App.xaml.cs', '시작: DB·서비스·뷰모델 구성, --db 인자'),
     ('src/StockTarget.App/MainWindow.xaml', '화면 레이아웃'),
     ('src/StockTarget.App/MainWindow.xaml.cs', '화면 코드 비하인드'),
+    ('src/StockTarget.App/ReservationWindow.xaml', 'LOC 예약 매수 주문표 창'),
+    ('src/StockTarget.App/ReservationWindow.xaml.cs', '예약 창 코드 비하인드'),
     ('src/StockTarget.App/ViewModels/Mvvm.cs', 'ObservableObject, AsyncCommand, RelayCommand'),
     ('src/StockTarget.App/ViewModels/TargetRowViewModel.cs', '목표 목록 한 행'),
     ('src/StockTarget.App/ViewModels/MainViewModel.cs', '메인 화면 뷰모델'),
+    ('src/StockTarget.App/ViewModels/MainViewModel.Backup.cs', '데이터 메뉴: JSON 백업·복원, Firebase 저장·복원'),
+    ('src/StockTarget.App/Services/CloudAuth.cs', '브라우저 Google 로그인(루프백), 로그인 정보 DPAPI 저장'),
+    ('src/StockTarget.App/ViewModels/ReservationViewModel.cs', '예약 창 뷰모델: 주문표 계산·접수 확인'),
     ('tests/StockTarget.Tests/StockTarget.Tests.csproj', 'xUnit 테스트 프로젝트'),
-    ('tests/StockTarget.Tests/CoreTests.cs', '단위 테스트 38개 + 실데이터 테스트 2개'),
+    ('tests/StockTarget.Tests/CoreTests.cs', '단위 테스트 59개 + 실데이터 테스트 2개'),
+    ('tests/StockTarget.Tests/ReservationTests.cs', '예약 주문표 · 키움 요청(가짜 서버) 테스트 15개'),
+    ('tests/StockTarget.Tests/BackupTests.cs', '백업 왕복 · Google/Firebase 요청(가짜 서버) 테스트 16개'),
 ]
 
 LANG = {'.cs': 'C#', '.xaml': 'XAML', '.csproj': 'XML', '.sln': 'sln'}
@@ -234,7 +245,8 @@ dotnet run --project src/StockTarget.App</code></pre>
 
   <h2 id="spec">4. 핵심 명세</h2>
   <h3>4-1. 계산 규칙</h3>
-  <pre><code>목표 주가          = 목표 EPS × 목표 PER                       (목표 연도 12월 31일)
+  <pre><code>목표 주가          = 목표 EPS × 목표 PER, 또는 직접 입력값     (목표 연도 12월 31일, 직접 입력이 우선)
+  - 직접 입력이면 EPS·PER은 0으로 저장하고 목표 주가 &gt; 0 만 검사 (TargetPlan.TargetPriceInput)
 필요 주가 상승률 g = 목표 수익률 − 최근 5년 평균 배당수익률    (입력 시점 값으로 고정해 저장)
 분기별 매입 목표가 = 목표 주가 ÷ (1 + g) ^ (기준일 → 목표일 일수 ÷ 365.25)
   - 분기 범위: 입력일이 속한 분기 ~ 목표일이 속한 분기
@@ -244,7 +256,7 @@ dotnet run --project src/StockTarget.App</code></pre>
   - 현재가 ≤ b × 0.80   → 강력매수  (파란색)     StrongBuyPct = 20
   - 현재가 ≤ b × 0.90   → 필수매수  (하늘색)     MustBuyPct   = 10
   - 현재가 ≤ b          → 매수      (녹색)
-  - 현재가 ≤ b × 1.05   → 매입 대기 (연한 녹색)  NearPct      = 5
+  - 현재가 ≤ b × 1.03   → 매입 대기 (연한 녹색)  NearPct      = 3
   - 그 위               → 대기      (회색)
 
 5년 평균 배당수익률 = 1년 구간 5개 각각의 (구간 배당금 합계 ÷ 구간 일별 종가 평균) 의 평균
@@ -255,7 +267,30 @@ dotnet run --project src/StockTarget.App</code></pre>
 분할 직후 전일 종가 보정
   - |현재가 ÷ 전일 종가 − 1| ≥ 30% 일 때만 최근 1개월 분할 조회
   - 최근 5일 안의 분할이 있고, 전일 종가 ÷ 분할비율 로 바꾸면 변동률이 0에 더 가까울 때만 보정
-  - 분할비율 = numerator ÷ denominator (10:1 → 10, 1:10 역분할 → 0.1)</code></pre>
+  - 분할비율 = numerator ÷ denominator (10:1 → 10, 1:10 역분할 → 0.1)
+
+매수 단계별 매수금액 (원화 입력 → 달러 표시)  — BuyAmounts, Money
+  - 단계: 매수 BuyKrw / 필수매수 MustBuyKrw / 강력매수 StrongBuyKrw (비우면 null)
+  - 입력 해석: 쉼표·₩·원·공백 제거, 끝의 만(×10,000)·억(×100,000,000), 음수·문자는 ArgumentException
+  - 환율: Yahoo KRW=X 현재가(1달러당 원), 시세 캐시와 동일. 달러 = 원화 ÷ 환율
+  - 목록 '매수금액' 열: 현재 판정 단계 금액 "₩1,000,000 ($747.67)", 매입 대기·대기면 빈칸
+
+다음 주 LOC 예약 매수  — ReservationPlanner, ReservationService, KiwoomClient
+  - 기간: 실행일 기준 다음 주 월~금 (월요일에 실행해도 그다음 주), 분기 경계를 넘으면 분기별로 나눔
+  - 주문가: 매수 b / 필수매수 b × 0.90 / 강력매수 b × 0.80, 센트 단위 내림
+  - 금액: 매수 / 필수매수 − 매수 / 강력매수 − 필수매수 (계단식, 비운 단계는 건너뜀)
+  - 수량: 금액 ÷ 환율 ÷ 주문가, 1주 단위 내림. 0주면 제외
+  - 키움: au10001 토큰 → usa10098 거래소(ND/NY/NA) → ust21200 (rsrv_ord_tp=2 기간예약 잔량주문, trde_tp=30 LOC)
+  - 키: 환경변수 KIWOOM_APPKEY, KIWOOM_SECRETKEY, KIWOOM_ENV(real이면 실전, 기본 모의투자)
+  - 중복 방지: reservations 테이블에 (티커, 단계, 시작일, 종료일, 환경)이 있으면 다시 보내지 않음
+
+백업 · Firebase 동기화  — BackupData, FirebaseClient, GoogleLoopbackSignIn
+  - JSON v1: format "stocktarget-backup", targets / priceChecks / reservations (캐시 제외, null 생략, camelCase)
+  - 복원: 현재 데이터를 backups\before-restore-*.json 으로 자동 백업 → 한 트랜잭션으로 통째로 교체
+  - Google 로그인: 데스크톱 OAuth 클라이언트 + PKCE + http://127.0.0.1:{{임시포트}}/ 리디렉션 → Google ID 토큰
+  - Firebase: accounts:signInWithIdp(providerId=google.com) → uid · idToken · refreshToken, securetoken으로 갱신
+  - 저장 위치: {{DatabaseUrl}}/users/{{uid}}/stocktarget.json?auth={{idToken}} (PUT 저장, GET 읽기, null이면 없음)
+  - 설정 %LOCALAPPDATA%\StockTarget\firebase.json, 로그인 정보 firebase-session.dat (DPAPI 현재 사용자)</code></pre>
 
   <h3>4-2. Yahoo Finance chart API</h3>
   <div class="table-wrap"><table>
@@ -264,6 +299,7 @@ dotnet run --project src/StockTarget.App</code></pre>
       <tr><td>현재가</td><td><code>GET https://query2.finance.yahoo.com/v8/finance/chart/{{SYMBOL}}?range=1d&amp;interval=1d</code></td></tr>
       <tr><td>5년 배당</td><td><code>...?range=6y&amp;interval=1d&amp;events=div,split</code></td></tr>
       <tr><td>최근 분할</td><td><code>...?range=1mo&amp;interval=1d&amp;events=div,split</code></td></tr>
+      <tr><td>USD/KRW 환율</td><td><code>.../chart/KRW=X?range=1d&amp;interval=1d</code></td></tr>
     </tbody>
     <caption>헤더: 브라우저 User-Agent 필수(없으면 429). 비공식 API라 형식이 바뀔 수 있다.</caption>
   </table></div>
@@ -284,7 +320,13 @@ dotnet run --project src/StockTarget.App</code></pre>
   <pre><code>CREATE TABLE IF NOT EXISTS targets (
     symbol TEXT PRIMARY KEY, input_date TEXT NOT NULL, target_year INTEGER NOT NULL,
     eps REAL NOT NULL, per REAL NOT NULL, return_pct REAL NOT NULL,
-    dividend_yield_pct REAL NOT NULL, memo TEXT, updated_at TEXT NOT NULL);
+    dividend_yield_pct REAL NOT NULL, memo TEXT, updated_at TEXT NOT NULL,
+    buy_krw REAL, must_buy_krw REAL, strong_buy_krw REAL, target_price REAL);
+CREATE TABLE IF NOT EXISTS reservations (
+    symbol TEXT NOT NULL, stage TEXT NOT NULL, start_date TEXT NOT NULL, end_date TEXT NOT NULL,
+    price REAL NOT NULL, quantity INTEGER NOT NULL, amount_krw REAL NOT NULL, env TEXT NOT NULL,
+    reservation_no TEXT NOT NULL, scheduled_date TEXT NOT NULL, created_at TEXT NOT NULL,
+    PRIMARY KEY (symbol, stage, start_date, end_date, env));
 CREATE TABLE IF NOT EXISTS price_checks (
     symbol TEXT NOT NULL, check_date TEXT NOT NULL, quarter TEXT NOT NULL,
     price REAL NOT NULL, buy_price REAL NOT NULL, PRIMARY KEY (symbol, check_date));
@@ -292,6 +334,7 @@ CREATE TABLE IF NOT EXISTS cache (
     key TEXT PRIMARY KEY, fetched_at INTEGER NOT NULL, payload TEXT NOT NULL);</code></pre>
   <ul>
     <li>DB 기본 경로 <code>%LOCALAPPDATA%\StockTarget\stocktarget.db</code>, 앱 인자 <code>--db &lt;경로&gt;</code>로 변경.</li>
+    <li>매수금액·<code>target_price</code> 컬럼이 없는 이전 DB는 앱 시작 시 <code>ALTER TABLE ... ADD COLUMN</code>으로 추가(<code>pragma_table_info</code> 확인).</li>
     <li>캐시 키 <code>quote:SYMBOL</code>, <code>dividend:SYMBOL</code>. TTL 상한 3600초. 실패 결과는 저장하지 않는다.</li>
     <li>목표 삭제 시 해당 티커의 <code>price_checks</code>도 함께 삭제. 확인 이력은 티커·날짜당 1행.</li>
   </ul>
@@ -304,7 +347,12 @@ CREATE TABLE IF NOT EXISTS cache (
       <tr><td>목표 주가</td><td>KO, EPS 10.5, PER 18</td><td class="num">189.00</td></tr>
       <tr><td>2026Q4 매입 목표가</td><td>목표 수익률 10%, 배당 2.92% (g = 7.08%)</td><td class="num">141.51 (배당 2.92063…%면 141.52)</td></tr>
       <tr><td>2030Q4 매입 목표가</td><td>같음</td><td class="num">185.81</td></tr>
-      <tr><td>판정 경계</td><td>매입 목표가 100</td><td class="num">80 강력매수 · 80.01/90 필수매수 · 90.01/100 매수 · 105 매입 대기 · 105.01 대기</td></tr>
+      <tr><td>판정 경계</td><td>매입 목표가 100</td><td class="num">80 강력매수 · 80.01/90 필수매수 · 90.01/100 매수 · 103 매입 대기 · 103.01 대기</td></tr>
+      <tr><td>매수금액 환산</td><td>₩1,350,000, 환율 1,350</td><td class="num">₩1,350,000 ($1,000.00)</td></tr>
+      <tr><td>매수금액 입력</td><td><code>100만</code> / <code>150만원</code> / <code>1.5억</code></td><td class="num">1,000,000 / 1,500,000 / 150,000,000</td></tr>
+      <tr><td>목표 주가 직접 입력</td><td>직접 입력 150 vs EPS 6 × PER 25</td><td class="num">같은 분기 일정</td></tr>
+      <tr><td>다음 주</td><td>2026-10-08(목) 실행</td><td class="num">2026-10-12 ~ 2026-10-16</td></tr>
+      <tr><td>LOC 주문표</td><td>KO 목표 주가 120, 배당 2.92%, 100만/200만/300만, 환율 1,350</td><td class="num">89.84×8 · 80.86×9 · 71.87×10</td></tr>
       <tr><td>분기 수</td><td>2026-10-08 ~ 2030-12-31</td><td class="num">17 (2026Q4 ~ 2030Q4)</td></tr>
       <tr><td>KO 5년 평균 배당수익률</td><td>2026-10-08 조회</td><td class="num">2.92% (2.69/2.97/3.08/3.00/2.87)</td></tr>
       <tr><td>AAPL 5년 평균 배당수익률</td><td>2026-10-08 조회</td><td class="num">0.49%</td></tr>

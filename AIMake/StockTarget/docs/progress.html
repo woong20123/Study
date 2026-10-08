@@ -70,7 +70,7 @@
   <div class="meta">
     <span>위치: <code>E:\work\tools\StockTarget</code></span>
     <span>.NET 9 · WPF · SQLite</span>
-    <span>작성일: 2026-10-08</span>
+    <span>작성일: 2026-10-08 (매수금액 · 목표 주가 직접 입력 · 매입 대기 3% · 키움 LOC 예약 매수 · 백업/Firebase 동기화 반영)</span>
     <span>재구성: <a href="rebuild-guide.html">rebuild-guide.html</a></span>
   </div>
 
@@ -79,8 +79,14 @@
       <strong>C# WPF 데스크톱 앱 + SQLite 저장</strong>으로 옮겼고, 저장한 목표·분기 일정·5년 배당·확인 이력을 화면에서 볼 수 있다.</p>
     <ul>
       <li>계산 결과가 Python 버전과 일치한다 — KO 2026Q4 매입 목표가 <strong>141.52</strong>, AAPL 5년 평균 배당수익률 <strong>0.49%</strong>.</li>
-      <li>테스트: 단위 38개 + 실데이터 2개 통과, UI 자동화로 "입력 → 저장 → 조회 → 이력 기록" 흐름 확인.</li>
-      <li>판정은 5단계: <strong>강력매수</strong>(매입 목표가 −20% 이하, 파란색) / <strong>필수매수</strong>(−10% 이하, 하늘색) / <strong>매수</strong>(≤ 매입 목표가, 녹색) / <strong>매입 대기</strong>(+5% 이내, 연한 녹색) / <strong>대기</strong>(+5% 초과, 회색).</li>
+      <li>테스트: 단위 90개 + 실데이터 2개 통과, UI 자동화로 "입력 → 저장 → 조회 → 이력 기록" 흐름 확인.</li>
+      <li>판정은 5단계: <strong>강력매수</strong>(매입 목표가 −20% 이하, 파란색) / <strong>필수매수</strong>(−10% 이하, 하늘색) / <strong>매수</strong>(≤ 매입 목표가, 녹색) / <strong>매입 대기</strong>(+3% 이내, 연한 녹색) / <strong>대기</strong>(+3% 초과, 회색).</li>
+      <li>매수 단계별 매수금액을 <strong>원화로 입력</strong>하면 USD/KRW 환율(Yahoo <code>KRW=X</code>)로 환산해 <strong>원화·달러</strong>로 표시한다.</li>
+      <li>목표 주가는 <strong>EPS × PER</strong> 계산 또는 <strong>직접 입력</strong> 중에서 선택한다.</li>
+      <li><strong>다음 주 LOC 예약 매수</strong>: 등록 목표의 단계별 매수금액으로 계단식 LOC 주문표를 만들고, 확인 후 키움 REST API <code>ust21200</code>(기간예약 · 잔량주문)으로 접수한다(10장).
+        <span class="tag warn">미결</span> 실제 키움 서버 접수는 아직 해 보지 않았다(API 키 미설정, 요청 형식은 가짜 서버로 검증).</li>
+      <li><strong>백업 · 동기화</strong>: 사용자 데이터를 JSON으로 내보내고 복원한다. Google 로그인 후 <strong>본인 Firebase 프로젝트</strong>의 <code>users/{uid}</code>에 저장 · 복원해 기기 간에 옮긴다(11장).
+        <span class="tag warn">미결</span> 실제 Firebase 프로젝트 연결은 미확인(설정값 필요, 요청 형식은 가짜 서버로 검증).</li>
       <li>미결: 분할 당일 전일 종가 보정은 실제 분할 사례가 없어 단위 테스트로만 검증했다.</li>
     </ul>
   </div>
@@ -97,6 +103,8 @@
       <li><a href="#issues">진행 중 발견·해결한 문제</a></li>
       <li><a href="#run">빌드 · 실행</a></li>
       <li><a href="#todo">한계와 다음 작업</a></li>
+      <li><a href="#kiwoom">키움 LOC 예약 매수</a></li>
+      <li><a href="#backup">백업 · Firebase 동기화</a></li>
     </ol>
   </nav>
 
@@ -113,20 +121,38 @@
       <tr><td>6</td><td>C#으로 작성, SQLite 저장, 저장 데이터를 보는 뷰</td><td>.NET 9 WPF 앱(사용자 선택), DB는 <code>%LOCALAPPDATA%\StockTarget\stocktarget.db</code></td><td><span class="tag ok">완료</span></td></tr>
       <tr><td>7</td><td>작업 진행 문서를 HTML로 프로젝트에 추가</td><td>이 문서 (<code>docs/progress.html</code>, 솔루션 폴더 <code>docs</code>)</td><td><span class="tag ok">완료</span></td></tr>
       <tr><td>8</td><td>다른 곳에서 재구성할 때 필요한 정보·코드 문서</td><td><a href="rebuild-guide.html"><code>docs/rebuild-guide.html</code></a> — 전체 소스 18개 + 복원 스크립트 생성 버튼. 생성기 <code>docs/tools/make_rebuild_guide.py</code></td><td><span class="tag ok">완료</span></td></tr>
-      <tr><td>9</td><td>현재가·분기 매입 목표가를 맨 앞으로, 매수(녹색)/매입 대기 5% 이내(연한 녹색)/대기(회색)</td><td><code>TargetCalculator.Classify</code> + <code>BuyStatus</code>, 목록·확인 이력 공용 행 스타일</td><td><span class="tag ok">완료</span></td></tr>
+      <tr><td>9</td><td>현재가·분기 매입 목표가를 맨 앞으로, 매수(녹색)/매입 대기 5% 이내(연한 녹색, #14에서 3%로 변경)/대기(회색)</td><td><code>TargetCalculator.Classify</code> + <code>BuyStatus</code>, 목록·확인 이력 공용 행 스타일</td><td><span class="tag ok">완료</span></td></tr>
       <tr><td>10</td><td>−10% 이하 필수매수(하늘색), −20% 이하 강력매수(파란색) 추가</td><td><code>BuyStatus.MustBuy</code>/<code>StrongBuy</code>, 상수 <code>MustBuyPct</code>=10, <code>StrongBuyPct</code>=20</td><td><span class="tag ok">완료</span></td></tr>
       <tr><td>11</td><td>분기 일정 · 5년 배당 내역 · 확인 이력 영역을 작게</td><td>오른쪽 패널 고정 폭 440px(최소 360, 구분선으로 조절), 탭 표 열 폭 축소, 요약 문구를 짧은 줄로 정리</td><td><span class="tag ok">완료</span></td></tr>
+      <tr><td>12</td><td>매수 단계별 매수금액을 원화로 입력, 원화·달러로 표시</td><td><code>BuyAmounts</code>(매수·필수매수·강력매수), <code>Money</code>(입력 해석·환산), 환율 <code>StockService.GetUsdKrwAsync</code>(<code>KRW=X</code>, 1시간 캐시). 입력칸 아래 달러 미리보기, 목록 <strong>매수금액</strong> 열, 요약에 단계별 금액·주식 수</td><td><span class="tag ok">완료</span></td></tr>
+      <tr><td>13</td><td>목표 주가를 EPS × PER 대신 직접 입력하는 선택 조건</td><td><code>TargetPlan.TargetPriceInput</code>(있으면 우선), 입력 폼 라디오 버튼 <code>EPS × PER</code> / <code>직접 입력</code></td><td><span class="tag ok">완료</span></td></tr>
+      <tr><td>14</td><td>매입 대기 범위를 5% → 3% 이내로</td><td><code>TargetCalculator.NearPct</code> = 3</td><td><span class="tag ok">완료</span></td></tr>
+      <tr><td>15</td><td>등록 목록 기준 다음 주(월~금) 키움증권 API로 미국주식 LOC 예약 매수</td><td><code>ReservationPlanner</code>(주문표) · <code>KiwoomClient</code>(<code>au10001</code> · <code>usa10098</code> · <code>ust21200</code>) · <code>ReservationService</code>(중복 방지) · <code>ReservationWindow</code>. 기간예약(잔량주문) · LOC · 계단식(총액 맞춤)</td><td><span class="tag ok">구현</span> <span class="tag warn">실접수 미확인</span></td></tr>
+      <tr><td>16</td><td>데이터를 JSON으로 추출 · 복원, 기기 간 호환을 위해 Firebase에 저장, Google 로그인으로 고유 키</td><td><code>BackupData</code>/<code>BackupSerializer</code>(형식 v1), <code>StockDatabase.ExportBackup</code>/<code>ReplaceWithBackup</code>, <code>FirebaseClient</code>(Auth · Realtime Database REST), <code>GoogleLoopbackSignIn</code>(PKCE), <code>CloudSessionStore</code>(DPAPI). 메뉴 <strong>데이터</strong></td><td><span class="tag ok">구현</span> <span class="tag warn">실연결 미확인</span></td></tr>
     </tbody>
     <caption>Python 버전(<code>E:\work\tools\stock_price\</code>)은 CLI로 그대로 남아 있다. C# 앱은 별도 DB를 쓴다.</caption>
   </table></div>
 
   <!-- 2 -->
   <h2 id="rule">2. 계산 규칙</h2>
-  <pre><code>목표 주가          = 목표 EPS × 목표 PER                      (목표 연도 12월 31일 기준)
+  <pre><code>목표 주가          = 목표 EPS × 목표 PER  또는  직접 입력값   (목표 연도 12월 31일 기준, 직접 입력이 우선)
 필요 주가 상승률 g = 목표 수익률 − 최근 5년 평균 배당수익률   (입력 시점 값으로 고정)
 분기별 매입 목표가 = 목표 주가 ÷ (1 + g) ^ (기준일 → 목표일 남은 년수)
                      기준일: 첫 분기는 입력일, 이후는 각 분기 첫날 / 년수 = 남은 일수 ÷ 365.25</code></pre>
   <p>매입 목표가 이하로 사면 "주가 상승 + 배당"으로 목표 수익률을 기대할 수 있다는 뜻이다. 시간이 지날수록 남은 기간이 줄어 허용 매입가는 올라간다.</p>
+
+  <h3>매수금액 (원화 입력 → 달러 환산)</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>항목</th><th>규칙</th><th>예</th></tr></thead>
+    <tbody>
+      <tr><td>입력</td><td>단계(매수 · 필수매수 · 강력매수)마다 원 단위 금액. 쉼표·<code>₩</code>·<code>원</code> 무시, <code>만</code>/<code>억</code> 단위 허용, 비우면 해당 단계 없음, 음수·문자는 저장 거부</td><td><code>100만</code> → 1,000,000 · <code>1.5억</code> → 150,000,000</td></tr>
+      <tr><td>환율</td><td>Yahoo <code>KRW=X</code> 현재가(1달러당 원), 시세와 같은 캐시(최대 1시간). 조회 실패 시 원화만 표시</td><td>USD/KRW 1,337.48</td></tr>
+      <tr><td>달러 환산</td><td>원화 ÷ 환율</td><td>₩1,000,000 → $747.67</td></tr>
+      <tr><td>목록 <strong>매수금액</strong> 열</td><td>현재 판정 단계의 금액만 표시(매입 대기 · 대기 · 조회 실패면 빈칸)</td><td>매수 → <code>₩1,000,000 ($747.67)</code></td></tr>
+      <tr><td>요약 패널</td><td>입력한 단계 전부를 원화·달러로, 달러 종목이면 살 수 있는 주식 수(달러 ÷ 현재가), 현재 판정 단계에 <code>◀</code></td><td><code>매수 ₩1,000,000 ($747.67) ≈ 8.7주 ◀</code></td></tr>
+    </tbody>
+    <caption>근거: <code>Calculators.cs</code> <code>Money</code>, <code>Models.cs</code> <code>BuyAmounts</code>, <code>CoreTests.cs</code> <code>MoneyTests</code>(14개). 예시 환율은 2026-10-08 조회값.</caption>
+  </table></div>
 
   <h3>예시: KO (2030년 EPS 10.5, PER 18, 목표 수익률 10%)</h3>
   <div class="table-wrap"><table>
@@ -136,7 +162,7 @@
       <tr><td>5년 평균 배당수익률</td><td>1년 구간 2.69 / 2.97 / 3.08 / 3.00 / 2.87%의 평균</td><td class="num">2.92%</td></tr>
       <tr><td>필요 주가 상승률</td><td>10% − 2.92%</td><td class="num">연 7.08%</td></tr>
       <tr><td>2026Q4 매입 목표가</td><td>189 ÷ 1.0708^(1545/365.25)</td><td class="num">141.52</td></tr>
-      <tr><td>판정</td><td>매입 목표가 b 대비 현재가: ≤ b×0.80 <strong>강력매수</strong>(파란색) / ≤ b×0.90 <strong>필수매수</strong>(하늘색) / ≤ b <strong>매수</strong>(녹색) / ≤ b×1.05 <strong>매입 대기</strong>(연한 녹색) / 그 위 <strong>대기</strong>(회색)</td><td class="num">KO −39.4% 강력매수</td></tr>
+      <tr><td>판정</td><td>매입 목표가 b 대비 현재가: ≤ b×0.80 <strong>강력매수</strong>(파란색) / ≤ b×0.90 <strong>필수매수</strong>(하늘색) / ≤ b <strong>매수</strong>(녹색) / ≤ b×1.03 <strong>매입 대기</strong>(연한 녹색) / 그 위 <strong>대기</strong>(회색)</td><td class="num">KO −39.4% 강력매수</td></tr>
       <tr><td>2030Q4 매입 목표가</td><td>189 ÷ 1.0708^(91/365.25)</td><td class="num">185.81</td></tr>
     </tbody>
     <caption>근거: <code>CoreTests.cs</code> <code>TargetCalculatorTests</code>, 입력일 2026-10-08. 141.52는 반올림 전 배당률 2.92063…% 기준(정확히 2.92%면 141.51).</caption>
@@ -166,12 +192,18 @@
   <div class="table-wrap"><table>
     <thead><tr><th>프로젝트</th><th>파일</th><th>역할</th></tr></thead>
     <tbody>
-      <tr><td rowspan="5"><code>StockTarget.Core</code><br>(net9.0)</td><td><code>Models.cs</code></td><td>시세·배당·분할·목표·분기 행 레코드</td></tr>
+      <tr><td rowspan="9"><code>StockTarget.Core</code><br>(net9.0)</td><td><code>Models.cs</code></td><td>시세·배당·분할·목표·분기 행 레코드</td></tr>
       <tr><td><code>Calculators.cs</code></td><td>목표가 역산, 5년 배당수익률, 분할 보정(네트워크·DB 없는 순수 함수)</td></tr>
       <tr><td><code>YahooChartClient.cs</code></td><td>chart API 한 번으로 현재가·일별 종가·배당·분할 수신, JSON 파싱</td></tr>
       <tr><td><code>StockDatabase.cs</code></td><td>SQLite 스키마·목표 CRUD·확인 이력·캐시(TTL)</td></tr>
-      <tr><td><code>StockService.cs</code></td><td>캐시 우선 조회, 분할 직후 보정 후 캐시 무효화, 확인 이력 기록</td></tr>
-      <tr><td rowspan="2"><code>StockTarget.App</code><br>(net9.0-windows, WPF)</td><td><code>MainWindow.xaml</code></td><td>목표 목록·입력 폼 / 요약·분기 일정·5년 배당·확인 이력 탭</td></tr>
+      <tr><td><code>StockService.cs</code></td><td>캐시 우선 조회, 분할 직후 보정 후 캐시 무효화, USD/KRW 환율, 확인 이력 기록</td></tr>
+      <tr><td><code>Reservations.cs</code></td><td>다음 주 계단식 LOC 주문표(<code>ReservationPlanner</code>), 접수 · 중복 방지(<code>ReservationService</code>)</td></tr>
+      <tr><td><code>KiwoomClient.cs</code></td><td>키움 REST API: 토큰, 거래소구분 조회, 미국주식 예약 매수. 키는 환경변수에서만 읽음</td></tr>
+      <tr><td><code>Backup.cs</code></td><td>기기 간 백업 형식(JSON v1)과 검증</td></tr>
+      <tr><td><code>Cloud.cs</code></td><td>Google OAuth(PKCE) 토큰 교환, Firebase 로그인 · 토큰 갱신 · Realtime Database 저장/읽기</td></tr>
+      <tr><td rowspan="4"><code>StockTarget.App</code><br>(net9.0-windows, WPF)</td><td><code>MainWindow.xaml</code></td><td>목표 목록·입력 폼 / 요약·분기 일정·5년 배당·확인 이력 탭</td></tr>
+      <tr><td><code>ReservationWindow.xaml</code></td><td>다음 주 LOC 예약 매수 주문표 · 접수 · 접수 이력</td></tr>
+      <tr><td><code>Services/CloudAuth.cs</code>, <code>MainViewModel.Backup.cs</code></td><td>브라우저 Google 로그인(127.0.0.1 루프백), 로그인 정보 DPAPI 암호화 저장, 데이터 메뉴 동작</td></tr>
       <tr><td><code>ViewModels/*.cs</code></td><td>MVVM(외부 라이브러리 없음), 비동기 명령</td></tr>
       <tr><td><code>StockTarget.Tests</code><br>(xUnit)</td><td><code>CoreTests.cs</code></td><td>계산·파싱·DB·캐시 단위 테스트 + 실데이터 테스트</td></tr>
     </tbody>
@@ -187,6 +219,7 @@
       <tr><td>현재가</td><td><code>range=1d</code></td><td>현재가, 전일 종가, 통화, 거래소, 종목명</td></tr>
       <tr><td>5년 배당수익률</td><td><code>range=6y&amp;events=div,split</code></td><td>일별 종가(분할 반영), 배당, 분할</td></tr>
       <tr><td>분할 보정(필요할 때만)</td><td><code>range=1mo&amp;events=split</code></td><td>최근 분할</td></tr>
+      <tr><td>USD/KRW 환율</td><td><code>KRW=X</code>, <code>range=1d</code></td><td>1달러당 원(매수금액 달러 환산용)</td></tr>
     </tbody>
   </table></div>
   <div class="panel info"><p>.NET <code>HttpClient</code>는 Windows 인증서 저장소를 사용하므로 회사망 SSL 검사 환경에서도 추가 설정 없이 접속된다.
@@ -197,9 +230,10 @@
   <div class="table-wrap"><table>
     <thead><tr><th>테이블</th><th>키</th><th>내용</th></tr></thead>
     <tbody>
-      <tr><td><code>targets</code></td><td>symbol</td><td>입력일, 목표 연도, EPS, PER, 목표 수익률, 고정 배당수익률, 메모. 같은 티커로 저장하면 갱신</td></tr>
+      <tr><td><code>targets</code></td><td>symbol</td><td>입력일, 목표 연도, EPS, PER, 목표 수익률, 고정 배당수익률, 메모, 단계별 매수금액(<code>buy_krw</code> · <code>must_buy_krw</code> · <code>strong_buy_krw</code>), 직접 입력 목표 주가(<code>target_price</code>, 비면 EPS × PER). 같은 티커로 저장하면 갱신. 새 컬럼은 이전 DB에 앱 시작 시 자동 추가</td></tr>
       <tr><td><code>price_checks</code></td><td>symbol + check_date</td><td>조회한 날의 분기·현재가·매입 목표가(같은 날 다시 조회하면 갱신). 목표를 지우면 함께 삭제</td></tr>
       <tr><td><code>cache</code></td><td>quote:SYM / dividend:SYM</td><td>조회 결과 JSON과 조회 시각. 저장할 때 1시간 넘은 항목 정리</td></tr>
+      <tr><td><code>reservations</code></td><td>symbol + stage + start_date + end_date + env</td><td>키움에 접수한 LOC 예약(주문가 · 수량 · 금액 · 예약번호 · 주문예정일). 같은 키로는 다시 접수하지 않는다</td></tr>
     </tbody>
     <caption>DB 경로: <code>%LOCALAPPDATA%\StockTarget\stocktarget.db</code> (빌드로 bin 폴더가 지워져도 유지). <code>--db &lt;경로&gt;</code>로 바꿀 수 있다.</caption>
   </table></div>
@@ -214,8 +248,13 @@
   <!-- 5 -->
   <h2 id="ui">5. 화면</h2>
   <figure>
+    <img src="images/main_amounts.png" alt="매수금액 원화·달러 표시와 목표 주가 직접 입력">
+    <figcaption>매수금액 · 목표 주가 직접 입력: 입력 폼에서 목표 주가 <strong>직접 입력</strong>(120) 선택, 단계별 매수금액(원) 아래에 달러 미리보기.
+      목록 <strong>매수금액</strong> 열에 현재 판정(매수) 단계 금액 <code>₩1,000,000 ($747.67)</code>, 요약에 단계별 금액·주식 수와 <code>◀</code>, 상태 표시줄에 환율.</figcaption>
+  </figure>
+  <figure>
     <img src="images/main_status.png" alt="판정 3단계 색 표시">
-    <figcaption>(오른쪽 패널 축소 후) 판정 5단계: KO −39.4% 강력매수(파란색), GOOGL −15.2% 필수매수(하늘색), AMZN −3.9% 매수(녹색), MSFT +0.8% 매입 대기(연한 녹색), AAPL · NVDA 대기(회색). 티커 뒤에 현재가 · 매입 목표가 · 괴리 · 판정. 확인 이력 탭도 같은 색 규칙.</figcaption>
+    <figcaption>(오른쪽 패널 축소 후) 판정 5단계: KO −39.4% 강력매수(파란색), GOOGL −15.2% 필수매수(하늘색), AMZN −3.9% 매수(녹색), MSFT +0.8% 매입 대기(연한 녹색, 당시 기준 5%), AAPL · NVDA 대기(회색). 티커 뒤에 현재가 · 매입 목표가 · 괴리 · 판정. 확인 이력 탭도 같은 색 규칙.</figcaption>
   </figure>
   <figure>
     <img src="images/main_schedule.png" alt="목표 목록과 NVDA 분기 일정">
@@ -231,14 +270,22 @@
   <div class="table-wrap"><table>
     <thead><tr><th>구분</th><th>내용</th><th class="num">결과</th></tr></thead>
     <tbody>
-      <tr><td>판정</td><td>5단계 경계(−20%, −10%, 같음, +5% 각각 포함/초과), 값 없음, 문구, 확인 이력 동일 규칙</td><td class="num">13 통과</td></tr>
+      <tr><td>판정</td><td>5단계 경계(−20%, −10%, 같음, +3% 각각 포함/초과, 이전 기준 +5%는 대기), 값 없음, 문구, 확인 이력 동일 규칙</td><td class="num">14 통과</td></tr>
       <tr><td>계산</td><td>목표가·필요 상승률, 분기 범위(17개), 손계산 대조, 분기마다 매입가 상승, 배당 &gt; 목표 수익률, 잘못된 입력 3종</td><td class="num">9 통과</td></tr>
+      <tr><td>목표 주가 직접 입력</td><td>직접 입력값 우선(EPS·PER 0 허용), 같은 목표 주가면 EPS × PER과 같은 일정, 0·음수 거부</td><td class="num">3 통과</td></tr>
+      <tr><td>매수금액</td><td>입력 해석 6종(쉼표·₩·만·만원·억·0), 빈 값 3종, 잘못된 값 3종, 달러 환산·표기, 판정 단계별 금액</td><td class="num">14 통과</td></tr>
       <tr><td>배당수익률</td><td>1년 구간 경계, 구간 밖 분할 제외, 분할 비율 표기</td><td class="num">3 통과</td></tr>
       <tr><td>분할 보정</td><td>정분할 미보정 / 이미 보정 / 역분할 / 오래된 분할 / 검사 조건</td><td class="num">5 통과</td></tr>
       <tr><td>API 파싱</td><td>가격·배당·분할·현지 날짜, 오류 응답, JSON 아닌 응답(429)</td><td class="num">3 통과</td></tr>
-      <tr><td>DB · 캐시</td><td>목표 갱신·삭제(이력 동반 삭제), 하루 1행, 59분 적중/60분 만료, TTL 상한, 무효화, JSON 왕복</td><td class="num">5 통과</td></tr>
+      <tr><td>LOC 예약 주문표</td><td>다음 주 월~금(목·월·일·토 기준), 센트 단위 내림, 계단식 차액 3종, 3건 주문 · 수량 내림, 매수금액 없음 · 1주 미만 제외, 분기 경계 분할, 주말 제외</td><td class="num">10 통과</td></tr>
+      <tr><td>키움 API</td><td>가짜 서버로 요청 확인: 토큰 → <code>ust21200</code> 본문(기간예약 2 · 기간 · 거래소 · LOC 30 · 주문가), 토큰 재사용 · 실전 도메인, 오류 코드 예외, 키 비노출, 중복 접수 방지 · 실패 후 계속</td><td class="num">5 통과</td></tr>
+      <tr><td>백업</td><td>다른 DB로 왕복 시 목표 · 이력 · 예약 동일, 형식(format · version · 날짜 문자열 · null 생략 · 캐시 제외), 교체 시 백업에 없는 데이터 삭제, Realtime Database의 빈 배열 누락, 다른 파일 · 새 버전 거부 3종, 잘못된 백업이면 DB 그대로</td><td class="num">8 통과</td></tr>
+      <tr><td>Google · Firebase</td><td>PKCE(SHA-256), 인증 URL, 코드 교환, 로그인(uid · Google 번호), 본인 uid 경로 저장 · 읽기, 만료 토큰 자동 갱신, 권한 거부 오류, 설정값 비노출 (가짜 서버)</td><td class="num">8 통과</td></tr>
+      <tr><td>DB · 캐시</td><td>목표 갱신·삭제(이력 동반 삭제), 하루 1행, 59분 적중/60분 만료, TTL 상한, 무효화, JSON 왕복, 매수금액 저장·비우기, 직접 입력 목표 주가 왕복, <strong>이전 스키마 DB에 컬럼 자동 추가</strong></td><td class="num">8 통과</td></tr>
       <tr><td>실데이터</td><td>KO 5년 평균이 Python 결과(2.92%)와 일치, NVDA 분할 전 배당이 0.004로 환산</td><td class="num">2 통과</td></tr>
       <tr><td>UI 자동화</td><td>임시 DB로 앱 실행 → 목록·요약·탭 표시, 입력 폼으로 NVDA 저장(배당률 자동 조회 0.0902%) → DB에 목표·확인 이력 기록</td><td class="num">확인</td></tr>
+      <tr><td>UI 자동화(추가)</td><td>KO를 매수금액 <code>100만</code> / <code>2,000,000</code> / <code>3000000</code>으로 저장 → 달러 미리보기·목록 열·요약 표시. EPS 6 × PER 25(−23.6% 강력매수) 및 목표 주가 직접 입력 120(−4.5% 매수) 두 경우 확인</td><td class="num">확인</td></tr>
+      <tr><td>UI 자동화(예약)</td><td><strong>다음 주 LOC 예약...</strong> → KO 3건(89.85×8 · 80.86×9 · 71.88×10), 키 미설정이라 접수 버튼 비활성</td><td class="num">확인</td></tr>
     </tbody>
     <caption>실행: <code>dotnet test</code> (실데이터는 <code>STOCKTARGET_LIVE=1</code>일 때만 실제 조회). UI 확인은 PowerShell UI Automation + PrintWindow 캡처.</caption>
   </table></div>
@@ -266,6 +313,11 @@
       <tr><td>목록 열이 잘려 판정·시세가 안 보임</td><td>고정 열 너비 합이 패널보다 큼</td><td>열을 내용 맞춤(Auto)으로, 좌우 비율 13:8</td></tr>
       <tr><td>WPF 빌드 오류 CS0103</td><td>WPF 프로젝트는 <code>System.Net.Http</code>가 암시적 using에 없음</td><td>using 추가</td></tr>
       <tr><td>UI 자동화 스크립트 구문 오류</td><td>한글이 든 .ps1을 BOM 없이 저장 → Windows PowerShell 5.1이 CP949로 읽음</td><td>UTF-8 BOM 추가</td></tr>
+      <tr><td>요약의 단계명 정렬이 어긋남</td><td>고정폭 글꼴에서 한글은 2칸 폭인데 문자 수로 채움</td><td>표시 폭(한글 2칸) 기준으로 공백 계산</td></tr>
+      <tr><td>테스트 기대값 오류(직접 입력 마지막 분기 = 목표 주가)</td><td>마지막 분기 기준일이 10/1이라 목표일까지 3개월이 남음</td><td><code>BuyPrice</code> 식으로 기대값 계산</td></tr>
+      <tr><td>키움 공식 저장소에 예약 TR 없음</td><td>저장소 스펙(2026-09-15 커밋)이 가이드 사이트보다 늦음. 사이트 목록에는 <code>ust21200</code> 등이 있음</td><td>가이드 사이트에서 받은 JSON 명세(<code>kiwoom-rest-api-spec.json</code>)로 확인</td></tr>
+      <tr><td>주문표 테스트 기대값 오류(80.85 vs 80.86)</td><td>b ≈ 89.849를 손으로 반올림해 계산</td><td>기대값을 b로부터 계산</td></tr>
+      <tr><td>매입목표가 89.86인데 LOC 주문가 89.85</td><td>표시는 반올림, 주문가는 센트 단위 내림(b = 89.855)</td><td>예약 창 매입목표가를 소수 3자리로 표시</td></tr>
     </tbody>
   </table></div>
 
@@ -279,6 +331,8 @@ dotnet run --project src\StockTarget.App       # 앱 실행
 src\StockTarget.App\bin\Debug\net9.0-windows\StockTarget.App.exe --db D:\temp\test.db   # 다른 DB로 실행</code></pre>
   <p>사용 순서: 입력 폼에 티커·목표 연도·EPS·PER·목표 수익률 입력 → 배당수익률을 비우면 5년 평균을 자동 조회해 고정 → <strong>저장</strong>.
     이후에는 앱을 열 때마다(분기마다) 이번 분기 매입 목표가와 현재가가 비교되고 확인 이력이 쌓인다.</p>
+  <p>목표 주가를 따로 정했다면 <strong>목표 주가 → 직접 입력</strong>을 고르고 값을 넣는다(EPS·PER 칸은 비활성화).
+    단계별 <strong>매수금액(원)</strong>을 넣으면 바로 아래에 달러 금액이 보이고, 저장 후 목록·요약에 원화·달러로 표시된다.</p>
 
   <!-- 9 -->
   <h2 id="todo">9. 한계와 다음 작업</h2>
@@ -291,8 +345,110 @@ src\StockTarget.App\bin\Debug\net9.0-windows\StockTarget.App.exe --db D:\temp\te
     <li>분할 당일 보정은 실제 사례 없이 단위 테스트로만 검증(<span class="tag warn">미결</span>).</li>
     <li>필요 주가 상승률은 요청대로 단순 차감(10% − 2.92%). 배당 재투자 복리식((1.10 ÷ 1.0292) − 1 = 6.88%)은 옵션으로 추가 가능.</li>
     <li>Python 버전 <code>targets.json</code>의 목표는 C# DB로 옮기지 않았다(필요하면 가져오기 기능 추가).</li>
+    <li>키움 예약: 실제 서버 접수 미확인(<span class="tag warn">미결</span>), 예약 조회(<code>ust21205</code>) · 취소(<code>ust21203</code>)는 앱에 없음(키움 HTS/MTS에서 확인 · 취소).</li>
     <li>후보: 현재 EPS·필요 성장률 표시, 목표 이력(버전) 보관, 매수 조건 충족 시 Teams 알림, 단일 exe 배포(<code>dotnet publish -r win-x64 --self-contained</code>).</li>
   </ul>
+
+  <!-- 10 -->
+  <h2 id="kiwoom">10. 키움 LOC 예약 매수</h2>
+  <div class="flow">
+    <div class="box">등록 목표<br>단계별 매수금액(원)</div><span class="arrow">→</span>
+    <div class="box"><code>ReservationPlanner</code><br>계단식 LOC 주문표</div><span class="arrow">→</span>
+    <div class="box">예약 창에서 확인<br>(접수 확인 대화상자)</div><span class="arrow">→</span>
+    <div class="box"><code>ReservationService</code><br>중복 확인 · DB 기록</div><span class="arrow">→</span>
+    <div class="box"><code>KiwoomClient</code><br>au10001 → usa10098 → ust21200</div>
+  </div>
+  <div class="table-wrap"><table>
+    <thead><tr><th>단계</th><th>LOC 주문가</th><th>주문 금액(원)</th><th>종가가 이 구간이면 총 체결</th></tr></thead>
+    <tbody>
+      <tr><td>매수</td><td>b (센트 내림)</td><td>매수 금액</td><td>매수 금액</td></tr>
+      <tr><td>필수매수</td><td>b × 0.90</td><td>필수매수 − 매수</td><td>필수매수 금액</td></tr>
+      <tr><td>강력매수</td><td>b × 0.80</td><td>강력매수 − 필수매수</td><td>강력매수 금액</td></tr>
+    </tbody>
+    <caption>b = 예약 기간이 속한 분기의 매입 목표가. 수량 = 금액 ÷ 환율 ÷ 주문가, 1주 단위 내림(실제 체결액은 금액 이하). 기간이 분기 경계를 넘으면 분기별로 나눠 주문. 근거: <code>Reservations.cs</code>, <code>ReservationTests.cs</code>.</caption>
+  </table></div>
+  <div class="table-wrap"><table>
+    <thead><tr><th>API</th><th>TR</th><th>사용 값</th></tr></thead>
+    <tbody>
+      <tr><td>접근토큰 발급</td><td><code>au10001</code> <code>/oauth2/token</code></td><td><code>grant_type=client_credentials</code>, 앱키 · 시크릿키 → <code>token</code>, <code>expires_dt</code>(만료 5분 전까지 재사용)</td></tr>
+      <tr><td>거래소구분 조회</td><td><code>usa10098</code> <code>/api/us/stkinfo</code></td><td><code>stk_cd</code> → <code>stex_tp</code>(ND NASDAQ · NY NYSE · NA AMEX)</td></tr>
+      <tr><td>예약 매수주문</td><td><code>ust21200</code> <code>/api/us/ordr</code></td><td><code>rsrv_ord_tp=2</code>(기간예약 · 잔량주문), <code>rsrv_strt_dt</code>/<code>rsrv_end_dt</code>(YYYYMMDD), <code>stex_tp</code>, <code>stk_cd</code>, <code>ord_qty</code>, <code>ord_uv</code>(USD), <code>trde_tp=30</code>(LOC) → <code>rsrv_ord_no</code>, <code>frcs_dt</code></td></tr>
+    </tbody>
+    <caption>근거: 키움 REST API 가이드에서 받은 JSON 명세(2026-10-08). 실전 <code>https://api.kiwoom.com</code>, 모의 <code>https://mockapi.kiwoom.com</code>. 모든 요청 POST, 기능은 헤더 <code>api-id</code>로 지정, <code>return_code</code> ≠ 0이면 오류.</caption>
+  </table></div>
+  <div class="panel warn"><p><strong>접속 정보</strong> — 앱키 · 시크릿키는 코드 · DB · 문서에 두지 않고 사용자 환경변수에서만 읽는다:
+    <code>KIWOOM_APPKEY</code>, <code>KIWOOM_SECRETKEY</code>, <code>KIWOOM_ENV</code>(<code>real</code>이면 실전, 없으면 <strong>모의투자</strong>).
+    키가 없으면 주문표 계산만 되고 접수 버튼이 비활성화된다. 접수는 확인 대화상자에서 <strong>예</strong>를 눌러야만 하고, 실전이면 경고 표시를 한다.</p></div>
+  <figure>
+    <img src="images/reservation.png" alt="다음 주 LOC 예약 매수 주문표">
+    <figcaption>예약 창(키 미설정 상태): 2026-10-12 ~ 10-16, KO 매수금액 100만/200만/300만 → LOC 89.85×8 · 80.86×9 · 71.88×10. 행 색은 판정 색과 같다.</figcaption>
+  </figure>
+  <div class="table-wrap"><table>
+    <thead><tr><th>확인 항목</th><th>결과</th></tr></thead>
+    <tbody>
+      <tr><td>HTS 예약주문 화면 [2120] 도움말</td><td>입력 07:00 ~ 20:30, 미국 정규장에 자동 주문. 입력 시 증거금 · 잔고를 확인하지 않아 실제 처리 때 거부될 수 있음</td></tr>
+      <tr><td>공식 GitHub 저장소(2026-09-15)</td><td>예약 TR 없음 — 가이드 사이트가 더 최신</td></tr>
+      <tr><td>실제 등록 목표(2026-10-08)</td><td>MSFT 1건, 매수금액 미입력 → 주문표에서 "매수금액 미입력"으로 제외</td></tr>
+      <tr><td>실서버 접수</td><td><span class="tag warn">미결</span> 키 설정 후 모의투자로 먼저 확인 필요(기간예약에 LOC가 실제로 허용되는지 포함)</td></tr>
+    </tbody>
+  </table></div>
+
+  <!-- 11 -->
+  <h2 id="backup">11. 백업 · Firebase 동기화</h2>
+  <div class="flow">
+    <div class="box">SQLite<br>(캐시 제외)</div><span class="arrow">↔</span>
+    <div class="box"><code>BackupData</code><br>JSON v1</div><span class="arrow">↔</span>
+    <div class="box">파일 <code>*.json</code><br>또는</div>
+    <div class="box">본인 Firebase 프로젝트<br><code>users/{uid}/stocktarget</code></div>
+  </div>
+  <div class="table-wrap"><table>
+    <thead><tr><th>메뉴 <strong>데이터</strong></th><th>동작</th></tr></thead>
+    <tbody>
+      <tr><td>JSON으로 내보내기</td><td>목표 · 확인 이력 · 예약 접수 이력을 JSON 파일로 저장(시세 캐시 제외)</td></tr>
+      <tr><td>JSON에서 복원</td><td>파일 검사 → 확인 → <strong>현재 데이터를 <code>%LOCALAPPDATA%\StockTarget\backups\before-restore-*.json</code>에 자동 백업</strong> → 백업 내용으로 통째로 교체(한 트랜잭션)</td></tr>
+      <tr><td>Firebase에 저장</td><td>Firebase에 있는 백업 시각 · 건수를 보여 주고 확인 후 덮어씀(마지막 저장이 이김)</td></tr>
+      <tr><td>Firebase에서 복원</td><td>Firebase 백업으로 JSON 복원과 같은 절차</td></tr>
+      <tr><td>Google 로그인 / 로그아웃</td><td>브라우저로 Google 로그인 → Firebase uid 발급. 로그인 정보는 DPAPI로 암호화해 <code>firebase-session.dat</code>에 보관, 이후 토큰은 자동 갱신</td></tr>
+    </tbody>
+  </table></div>
+  <h3>고유 키</h3>
+  <p>Google 로그인 결과로 받는 값은 둘이다. <strong>Google 계정 번호</strong>(<code>sub</code>, 예: 110248495921238986420)와 Firebase가 그 계정에 발급하는 <strong>uid</strong>.
+    같은 Google 계정이면 어느 기기에서 로그인해도 둘 다 같다. 저장 경로는 <strong>uid</strong>를 쓴다 — Firebase 보안 규칙이 <code>auth.uid</code>로 "본인 경로만" 검사하기 때문이다.</p>
+  <h3>Firebase 준비 (한 번)</h3>
+  <ol>
+    <li><a href="https://console.firebase.google.com">Firebase 콘솔</a> → 프로젝트 추가.</li>
+    <li><strong>Authentication</strong> → 시작하기 → 로그인 방법 → <strong>Google</strong> 사용 설정.</li>
+    <li><strong>Realtime Database</strong> → 데이터베이스 만들기(지역 선택, 잠금 모드) → <strong>규칙</strong> 탭에 아래 규칙 게시.</li>
+    <li>프로젝트 설정 → 일반 → <strong>웹 API 키</strong> 확인.</li>
+    <li><a href="https://console.cloud.google.com/apis/credentials">Google Cloud 콘솔</a>(같은 프로젝트) → OAuth 동의 화면 구성(외부, 테스트 사용자에 본인 추가) → 사용자 인증 정보 → OAuth 클라이언트 ID → 유형 <strong>데스크톱 앱</strong> → 클라이언트 ID · 보안 비밀.</li>
+    <li>로그인 시 "invalid audience/허용되지 않은 클라이언트" 오류가 나면: Authentication → Google 제공업체 → <strong>외부 프로젝트의 클라이언트 ID 허용 목록</strong>에 데스크톱 클라이언트 ID 추가.</li>
+    <li><code>%LOCALAPPDATA%\StockTarget\firebase.json</code>(처음 메뉴를 쓰면 빈 양식이 생김)에 값 입력.</li>
+  </ol>
+  <pre><code>{ "ApiKey": "웹 API 키", "DatabaseUrl": "https://프로젝트-default-rtdb.지역.firebasedatabase.app",
+  "GoogleClientId": "....apps.googleusercontent.com", "GoogleClientSecret": "GOCSPX-..." }</code></pre>
+  <p>Realtime Database 보안 규칙 — 로그인한 사용자가 <strong>자기 uid 경로만</strong> 읽고 쓴다:</p>
+  <pre><code>{
+  "rules": {
+    "users": {
+      "$uid": {
+        ".read":  "auth != null &amp;&amp; auth.uid === $uid",
+        ".write": "auth != null &amp;&amp; auth.uid === $uid"
+      }
+    }
+  }
+}</code></pre>
+  <div class="panel info"><p>데이터는 <strong>사용자 본인의 Firebase 프로젝트</strong>(Google Cloud, 고른 지역)에만 저장되고, 앱은 <code>firebase.json</code>에 적힌 프로젝트와만 통신한다.
+    웹 API 키 · 데스크톱 클라이언트 보안 비밀은 공개돼도 보안 규칙이 막아 주는 값이지만, 저장소에 올리지는 않는다(<code>%LOCALAPPDATA%</code>에만 있음).</p></div>
+  <div class="table-wrap"><table>
+    <thead><tr><th>JSON 필드</th><th>내용</th></tr></thead>
+    <tbody>
+      <tr><td><code>format</code> · <code>version</code> · <code>exportedAt</code></td><td><code>stocktarget-backup</code> · 1 · 내보낸 시각. 다른 파일이나 더 새 버전은 거부</td></tr>
+      <tr><td><code>targets[]</code></td><td>symbol, inputDate, targetYear, eps, per, returnPct, dividendYieldPct, memo, targetPrice, buyKrw, mustBuyKrw, strongBuyKrw (null은 생략)</td></tr>
+      <tr><td><code>priceChecks[]</code></td><td>symbol, checkDate, quarter, price, buyPrice</td></tr>
+      <tr><td><code>reservations[]</code></td><td>symbol, stage, start, end, price, quantity, amountKrw, env, reservationNo, scheduledDate, createdAt</td></tr>
+    </tbody>
+    <caption>날짜는 <code>yyyy-MM-dd</code>, 시각은 ISO 8601. Realtime Database는 빈 배열을 저장하지 않으므로 읽을 때 없으면 빈 목록으로 본다. 근거: <code>Backup.cs</code>, <code>BackupTests.cs</code>.</caption>
+  </table></div>
 </main>
 <script>
   function toggleTheme() {

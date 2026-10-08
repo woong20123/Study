@@ -13,12 +13,27 @@ public sealed record PriceCheck(string Symbol, DateOnly CheckDate, string Quarte
     public string StatusText => Status.ToText();
 }
 
+/// <summary>키움에 접수한 LOC 예약 매수 한 건(같은 예약을 두 번 넣지 않기 위해 남긴다).</summary>
+public sealed record ReservationRecord(
+    string Symbol,
+    string Stage,
+    DateOnly Start,
+    DateOnly End,
+    double Price,
+    int Quantity,
+    double AmountKrw,
+    string Env,
+    string ReservationNo,
+    string ScheduledDate,
+    DateTimeOffset CreatedAt);
+
 /// <summary>
 /// SQLite 저장소.
 /// <list type="bullet">
 /// <item>targets      : 목표(티커당 1개, 다시 저장하면 갱신)</item>
 /// <item>price_checks : 분기 확인 이력(티커·날짜당 1행, 같은 날 다시 조회하면 갱신)</item>
 /// <item>cache        : 시세·배당 조회 결과 캐시(최대 1시간)</item>
+/// <item>reservations : 키움에 접수한 LOC 예약 매수(티커·단계·기간·환경당 1건)</item>
 /// </list>
 /// </summary>
 public sealed class StockDatabase
@@ -63,7 +78,11 @@ public sealed class StockDatabase
                 return_pct         REAL NOT NULL,
                 dividend_yield_pct REAL NOT NULL,
                 memo               TEXT,
-                updated_at         TEXT NOT NULL
+                updated_at         TEXT NOT NULL,
+                buy_krw            REAL,
+                must_buy_krw       REAL,
+                strong_buy_krw     REAL,
+                target_price       REAL
             );
             CREATE TABLE IF NOT EXISTS price_checks (
                 symbol     TEXT NOT NULL,
@@ -78,22 +97,61 @@ public sealed class StockDatabase
                 fetched_at INTEGER NOT NULL,
                 payload    TEXT NOT NULL
             );
+            CREATE TABLE IF NOT EXISTS reservations (
+                symbol         TEXT NOT NULL,
+                stage          TEXT NOT NULL,
+                start_date     TEXT NOT NULL,
+                end_date       TEXT NOT NULL,
+                price          REAL NOT NULL,
+                quantity       INTEGER NOT NULL,
+                amount_krw     REAL NOT NULL,
+                env            TEXT NOT NULL,
+                reservation_no TEXT NOT NULL,
+                scheduled_date TEXT NOT NULL,
+                created_at     TEXT NOT NULL,
+                PRIMARY KEY (symbol, stage, start_date, end_date, env)
+            );
             """;
         cmd.ExecuteNonQuery();
+
+        // 매수금액·목표 주가 직접 입력 컬럼이 없던 이전 버전 DB에 컬럼을 추가한다
+        cmd.CommandText = "SELECT name FROM pragma_table_info('targets')";
+        var columns = new HashSet<string>();
+        using (var r = cmd.ExecuteReader())
+        {
+            while (r.Read())
+                columns.Add(r.GetString(0));
+        }
+        foreach (var col in new[] { "buy_krw", "must_buy_krw", "strong_buy_krw", "target_price" })
+        {
+            if (columns.Contains(col))
+                continue;
+            cmd.CommandText = $"ALTER TABLE targets ADD COLUMN {col} REAL";
+            cmd.ExecuteNonQuery();
+        }
     }
 
     // ---------------------------------------------------------------- targets
     public void SaveTarget(TargetPlan t)
     {
         using var c = Open();
+        UpsertTarget(c, null, t, _now());
+    }
+
+    private static void UpsertTarget(SqliteConnection c, SqliteTransaction? tx, TargetPlan t, DateTimeOffset updatedAt)
+    {
         using var cmd = c.CreateCommand();
+        cmd.Transaction = tx;
         cmd.CommandText = """
-            INSERT INTO targets (symbol, input_date, target_year, eps, per, return_pct, dividend_yield_pct, memo, updated_at)
-            VALUES ($s, $d, $y, $eps, $per, $r, $div, $memo, $u)
+            INSERT INTO targets (symbol, input_date, target_year, eps, per, return_pct, dividend_yield_pct, memo, updated_at,
+                                 buy_krw, must_buy_krw, strong_buy_krw, target_price)
+            VALUES ($s, $d, $y, $eps, $per, $r, $div, $memo, $u, $buy, $must, $strong, $tp)
             ON CONFLICT(symbol) DO UPDATE SET
                 input_date = excluded.input_date, target_year = excluded.target_year, eps = excluded.eps,
                 per = excluded.per, return_pct = excluded.return_pct, dividend_yield_pct = excluded.dividend_yield_pct,
-                memo = excluded.memo, updated_at = excluded.updated_at
+                memo = excluded.memo, updated_at = excluded.updated_at,
+                buy_krw = excluded.buy_krw, must_buy_krw = excluded.must_buy_krw, strong_buy_krw = excluded.strong_buy_krw,
+                target_price = excluded.target_price
             """;
         cmd.Parameters.AddWithValue("$s", t.Symbol);
         cmd.Parameters.AddWithValue("$d", t.InputDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture));
@@ -103,7 +161,12 @@ public sealed class StockDatabase
         cmd.Parameters.AddWithValue("$r", t.ReturnPct);
         cmd.Parameters.AddWithValue("$div", t.DividendYieldPct);
         cmd.Parameters.AddWithValue("$memo", (object?)t.Memo ?? DBNull.Value);
-        cmd.Parameters.AddWithValue("$u", _now().ToString("o"));
+        cmd.Parameters.AddWithValue("$u", updatedAt.ToString("o"));
+        var a = t.BuyAmounts;
+        cmd.Parameters.AddWithValue("$buy", (object?)a.BuyKrw ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("$must", (object?)a.MustBuyKrw ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("$strong", (object?)a.StrongBuyKrw ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("$tp", (object?)t.TargetPriceInput ?? DBNull.Value);
         cmd.ExecuteNonQuery();
     }
 
@@ -111,7 +174,11 @@ public sealed class StockDatabase
     {
         using var c = Open();
         using var cmd = c.CreateCommand();
-        cmd.CommandText = "SELECT symbol, input_date, target_year, eps, per, return_pct, dividend_yield_pct, memo FROM targets ORDER BY symbol";
+        cmd.CommandText = """
+            SELECT symbol, input_date, target_year, eps, per, return_pct, dividend_yield_pct, memo,
+                   buy_krw, must_buy_krw, strong_buy_krw, target_price
+            FROM targets ORDER BY symbol
+            """;
         using var r = cmd.ExecuteReader();
         var list = new List<TargetPlan>();
         while (r.Read())
@@ -120,9 +187,19 @@ public sealed class StockDatabase
                 r.GetString(0),
                 DateOnly.ParseExact(r.GetString(1), "yyyy-MM-dd", CultureInfo.InvariantCulture),
                 r.GetInt32(2), r.GetDouble(3), r.GetDouble(4), r.GetDouble(5), r.GetDouble(6),
-                r.IsDBNull(7) ? null : r.GetString(7)));
+                r.IsDBNull(7) ? null : r.GetString(7),
+                ReadAmounts(r),
+                r.IsDBNull(11) ? null : r.GetDouble(11)));
         }
         return list;
+    }
+
+    /// <summary>buy_krw(8) · must_buy_krw(9) · strong_buy_krw(10). 모두 비어 있으면 null.</summary>
+    private static BuyAmounts? ReadAmounts(SqliteDataReader r)
+    {
+        double? Get(int i) => r.IsDBNull(i) ? null : r.GetDouble(i);
+        var a = new BuyAmounts(Get(8), Get(9), Get(10));
+        return a.IsEmpty ? null : a;
     }
 
     public bool DeleteTarget(string symbol)
@@ -144,7 +221,13 @@ public sealed class StockDatabase
     public void RecordCheck(PriceCheck p)
     {
         using var c = Open();
+        UpsertCheck(c, null, p);
+    }
+
+    private static void UpsertCheck(SqliteConnection c, SqliteTransaction? tx, PriceCheck p)
+    {
         using var cmd = c.CreateCommand();
+        cmd.Transaction = tx;
         cmd.CommandText = """
             INSERT INTO price_checks (symbol, check_date, quarter, price, buy_price) VALUES ($s, $d, $q, $p, $b)
             ON CONFLICT(symbol, check_date) DO UPDATE SET quarter = excluded.quarter, price = excluded.price, buy_price = excluded.buy_price
@@ -157,12 +240,16 @@ public sealed class StockDatabase
         cmd.ExecuteNonQuery();
     }
 
-    public IReadOnlyList<PriceCheck> GetChecks(string symbol)
+    /// <summary>티커의 확인 이력(최신 순). symbol이 null이면 전체(티커 · 날짜 순).</summary>
+    public IReadOnlyList<PriceCheck> GetChecks(string? symbol)
     {
         using var c = Open();
         using var cmd = c.CreateCommand();
-        cmd.CommandText = "SELECT symbol, check_date, quarter, price, buy_price FROM price_checks WHERE symbol = $s ORDER BY check_date DESC";
-        cmd.Parameters.AddWithValue("$s", symbol);
+        cmd.CommandText = symbol is null
+            ? "SELECT symbol, check_date, quarter, price, buy_price FROM price_checks ORDER BY symbol, check_date"
+            : "SELECT symbol, check_date, quarter, price, buy_price FROM price_checks WHERE symbol = $s ORDER BY check_date DESC";
+        if (symbol is not null)
+            cmd.Parameters.AddWithValue("$s", symbol);
         using var r = cmd.ExecuteReader();
         var list = new List<PriceCheck>();
         while (r.Read())
@@ -171,6 +258,104 @@ public sealed class StockDatabase
                 r.GetString(2), r.GetDouble(3), r.GetDouble(4)));
         }
         return list;
+    }
+
+    // ----------------------------------------------------------- reservations
+    public void SaveReservation(ReservationRecord r)
+    {
+        using var c = Open();
+        InsertReservation(c, null, r);
+    }
+
+    private static void InsertReservation(SqliteConnection c, SqliteTransaction? tx, ReservationRecord r)
+    {
+        using var cmd = c.CreateCommand();
+        cmd.Transaction = tx;
+        cmd.CommandText = """
+            INSERT INTO reservations (symbol, stage, start_date, end_date, price, quantity, amount_krw, env,
+                                      reservation_no, scheduled_date, created_at)
+            VALUES ($s, $st, $sd, $ed, $p, $q, $a, $env, $no, $sch, $c)
+            """;
+        cmd.Parameters.AddWithValue("$s", r.Symbol);
+        cmd.Parameters.AddWithValue("$st", r.Stage);
+        cmd.Parameters.AddWithValue("$sd", r.Start.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture));
+        cmd.Parameters.AddWithValue("$ed", r.End.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture));
+        cmd.Parameters.AddWithValue("$p", r.Price);
+        cmd.Parameters.AddWithValue("$q", r.Quantity);
+        cmd.Parameters.AddWithValue("$a", r.AmountKrw);
+        cmd.Parameters.AddWithValue("$env", r.Env);
+        cmd.Parameters.AddWithValue("$no", r.ReservationNo);
+        cmd.Parameters.AddWithValue("$sch", r.ScheduledDate);
+        cmd.Parameters.AddWithValue("$c", r.CreatedAt.ToString("o"));
+        cmd.ExecuteNonQuery();
+    }
+
+    /// <summary>같은 티커·단계·기간·환경으로 이미 접수한 예약.</summary>
+    public ReservationRecord? FindReservation(string symbol, string stage, DateOnly start, DateOnly end, string env) =>
+        QueryReservations(
+            "WHERE symbol = $s AND stage = $st AND start_date = $sd AND end_date = $ed AND env = $env",
+            ("$s", symbol), ("$st", stage),
+            ("$sd", start.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)),
+            ("$ed", end.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)), ("$env", env))
+        .FirstOrDefault();
+
+    /// <summary>접수 이력(최근 순).</summary>
+    public IReadOnlyList<ReservationRecord> GetReservations() => QueryReservations("");
+
+    private List<ReservationRecord> QueryReservations(string where, params (string Name, object Value)[] args)
+    {
+        using var c = Open();
+        using var cmd = c.CreateCommand();
+        cmd.CommandText = $"""
+            SELECT symbol, stage, start_date, end_date, price, quantity, amount_krw, env, reservation_no, scheduled_date, created_at
+            FROM reservations {where} ORDER BY created_at DESC, symbol
+            """;
+        foreach (var (name, value) in args)
+            cmd.Parameters.AddWithValue(name, value);
+        using var r = cmd.ExecuteReader();
+        var list = new List<ReservationRecord>();
+        while (r.Read())
+        {
+            list.Add(new ReservationRecord(
+                r.GetString(0), r.GetString(1),
+                DateOnly.ParseExact(r.GetString(2), "yyyy-MM-dd", CultureInfo.InvariantCulture),
+                DateOnly.ParseExact(r.GetString(3), "yyyy-MM-dd", CultureInfo.InvariantCulture),
+                r.GetDouble(4), r.GetInt32(5), r.GetDouble(6), r.GetString(7), r.GetString(8), r.GetString(9),
+                DateTimeOffset.Parse(r.GetString(10), CultureInfo.InvariantCulture)));
+        }
+        return list;
+    }
+
+    // ----------------------------------------------------------------- backup
+    /// <summary>캐시를 뺀 사용자 데이터 전체(목표 · 확인 이력 · 예약 접수 이력).</summary>
+    public BackupData ExportBackup() =>
+        BackupData.Create(GetTargets(), GetChecks(null), GetReservations(), _now());
+
+    /// <summary>
+    /// 백업으로 사용자 데이터를 통째로 바꾼다(캐시는 그대로). 한 트랜잭션이라 중간에 실패하면 아무것도 바뀌지 않는다.
+    /// </summary>
+    public void ReplaceWithBackup(BackupData backup)
+    {
+        var targets = backup.ToTargets();
+        var checks = backup.ToChecks();
+        var reservations = backup.ToReservations();
+
+        using var c = Open();
+        using var tx = c.BeginTransaction();
+        using (var cmd = c.CreateCommand())
+        {
+            cmd.Transaction = tx;
+            cmd.CommandText = "DELETE FROM targets; DELETE FROM price_checks; DELETE FROM reservations;";
+            cmd.ExecuteNonQuery();
+        }
+        var now = _now();
+        foreach (var t in targets)
+            UpsertTarget(c, tx, t, now);
+        foreach (var p in checks)
+            UpsertCheck(c, tx, p);
+        foreach (var r in reservations)
+            InsertReservation(c, tx, r);
+        tx.Commit();
     }
 
     // ------------------------------------------------------------------ cache
