@@ -13,6 +13,18 @@
             </StatusBarItem>
             <StatusBarItem HorizontalAlignment="Right">
                 <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="{Binding KiwoomStatus}" Margin="0,0,16,0">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsKiwoomReal}" Value="True">
+                                        <Setter Property="Foreground" Value="#C62828"/>
+                                        <Setter Property="FontWeight" Value="Bold"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
                     <TextBlock Text="{Binding CloudStatus}" Margin="0,0,16,0"/>
                     <TextBlock Text="{Binding UsdKrwText}" Margin="0,0,16,0"/>
                     <TextBlock Foreground="#777" Text="{Binding DbPath, StringFormat=DB: {0}}"/>
@@ -43,6 +55,47 @@
 
             <!-- 왼쪽: 목표 목록 + 입력 -->
             <DockPanel Grid.Column="0">
+                <!-- 기본 매수금액: 목표마다 따로 저장하지 않은 단계에 공통으로 쓴다 -->
+                <GroupBox DockPanel.Dock="Top" Header="기본 매수금액 (목표에서 따로 저장하지 않은 단계에 적용)" Padding="8,4" Margin="0,0,0,8">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="16"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="16"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="16"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition/>
+                            <RowDefinition/>
+                            <RowDefinition/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" Grid.Column="0" Style="{StaticResource Label}" Text="매수(원)"/>
+                        <TextBox AutomationProperties.AutomationId="DefaultBuyKrw" Grid.Row="0" Grid.Column="1" Text="{Binding DefaultBuyKrw, UpdateSourceTrigger=PropertyChanged}"
+                                 TextAlignment="Right" ToolTip="판정이 '매수'일 때 기본으로 살 금액. 1,000,000 / 100만 처럼 입력, 0이면 사지 않음"/>
+                        <TextBlock Grid.Row="0" Grid.Column="3" Style="{StaticResource Label}" Text="필수매수(원)"/>
+                        <TextBox AutomationProperties.AutomationId="DefaultMustBuyKrw" Grid.Row="0" Grid.Column="4" Text="{Binding DefaultMustBuyKrw, UpdateSourceTrigger=PropertyChanged}"
+                                 TextAlignment="Right" ToolTip="판정이 '필수매수'(매입 목표가 -10% 이하)일 때 기본으로 살 금액"/>
+                        <TextBlock Grid.Row="0" Grid.Column="6" Style="{StaticResource Label}" Text="강력매수(원)"/>
+                        <TextBox AutomationProperties.AutomationId="DefaultStrongBuyKrw" Grid.Row="0" Grid.Column="7" Text="{Binding DefaultStrongBuyKrw, UpdateSourceTrigger=PropertyChanged}"
+                                 TextAlignment="Right" ToolTip="판정이 '강력매수'(매입 목표가 -20% 이하)일 때 기본으로 살 금액"/>
+                        <StackPanel Grid.Row="0" Grid.Column="9" Orientation="Horizontal" VerticalAlignment="Center">
+                            <Button AutomationProperties.AutomationId="SaveDefaults" Content="기본값 저장" Command="{Binding SaveDefaultsCommand}"/>
+                            <Button Content="되돌리기" Command="{Binding RevertDefaultsCommand}" Margin="0"/>
+                        </StackPanel>
+                        <TextBlock Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Style="{StaticResource Num}" Foreground="#777" Text="{Binding DefaultBuyUsd}"/>
+                        <TextBlock Grid.Row="1" Grid.Column="3" Grid.ColumnSpan="2" Style="{StaticResource Num}" Foreground="#777" Text="{Binding DefaultMustBuyUsd}"/>
+                        <TextBlock Grid.Row="1" Grid.Column="6" Grid.ColumnSpan="2" Style="{StaticResource Num}" Foreground="#777" Text="{Binding DefaultStrongBuyUsd}"/>
+                        <TextBlock Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="10" Foreground="#888" Margin="0,2,0,0" Text="{Binding DefaultsSummary}"/>
+                    </Grid>
+                </GroupBox>
+
                 <GroupBox DockPanel.Dock="Bottom" Header="목표 입력 (같은 티커로 저장하면 갱신)" Padding="8" Margin="0,8,0,0">
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -98,19 +151,19 @@
                         <TextBlock Grid.Row="3" Grid.Column="0" Style="{StaticResource Label}" Text="메모"/>
                         <TextBox AutomationProperties.AutomationId="FormMemo" Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="7" Text="{Binding FormMemo, UpdateSourceTrigger=PropertyChanged}"/>
 
-                        <!-- 매수 단계별 매수금액(원). 입력하면 아래 줄에 달러 환산을 보여 준다 -->
+                        <!-- 매수 단계별 매수금액(원). 기본 매수금액으로 채워지고, 기본값과 다른 단계만 이 목표에 저장한다 -->
                         <TextBlock Grid.Row="4" Grid.Column="0" Style="{StaticResource Label}" Text="매수(원)"/>
                         <TextBox AutomationProperties.AutomationId="FormBuyKrw" Grid.Row="4" Grid.Column="1" Text="{Binding FormBuyKrw, UpdateSourceTrigger=PropertyChanged}"
-                                 TextAlignment="Right" ToolTip="판정이 '매수'일 때 살 금액. 1,000,000 / 100만 처럼 입력"/>
+                                 TextAlignment="Right" ToolTip="판정이 '매수'일 때 살 금액. 기본값과 다르게 입력한 단계만 이 목표에 저장, 비우면 기본값, 0이면 사지 않음"/>
                         <TextBlock Grid.Row="4" Grid.Column="3" Style="{StaticResource Label}" Text="필수매수(원)"/>
                         <TextBox AutomationProperties.AutomationId="FormMustBuyKrw" Grid.Row="4" Grid.Column="4" Text="{Binding FormMustBuyKrw, UpdateSourceTrigger=PropertyChanged}"
                                  TextAlignment="Right" ToolTip="판정이 '필수매수'(매입 목표가 -10% 이하)일 때 살 금액"/>
                         <TextBlock Grid.Row="4" Grid.Column="6" Style="{StaticResource Label}" Text="강력매수(원)"/>
                         <TextBox AutomationProperties.AutomationId="FormStrongBuyKrw" Grid.Row="4" Grid.Column="7" Text="{Binding FormStrongBuyKrw, UpdateSourceTrigger=PropertyChanged}"
                                  TextAlignment="Right" ToolTip="판정이 '강력매수'(매입 목표가 -20% 이하)일 때 살 금액"/>
-                        <TextBlock Grid.Row="5" Grid.Column="1" Style="{StaticResource Num}" Foreground="#777" Text="{Binding FormBuyUsd}"/>
-                        <TextBlock Grid.Row="5" Grid.Column="4" Style="{StaticResource Num}" Foreground="#777" Text="{Binding FormMustBuyUsd}"/>
-                        <TextBlock Grid.Row="5" Grid.Column="7" Style="{StaticResource Num}" Foreground="#777" Text="{Binding FormStrongBuyUsd}"/>
+                        <TextBlock Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="2" Style="{StaticResource Num}" Foreground="#777" TextAlignment="Right" Text="{Binding FormBuyUsd}"/>
+                        <TextBlock Grid.Row="5" Grid.Column="3" Grid.ColumnSpan="2" Style="{StaticResource Num}" Foreground="#777" TextAlignment="Right" Text="{Binding FormMustBuyUsd}"/>
+                        <TextBlock Grid.Row="5" Grid.Column="6" Grid.ColumnSpan="2" Style="{StaticResource Num}" Foreground="#777" TextAlignment="Right" Text="{Binding FormStrongBuyUsd}"/>
 
                         <StackPanel Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="8" Orientation="Horizontal" Margin="0,8,0,0">
                             <Button Content="저장" Command="{Binding SaveCommand}" IsDefault="True"/>
@@ -118,7 +171,7 @@
                             <Button Content="새로 입력" Command="{Binding NewCommand}"/>
                             <Button Content="시세 새로고침(캐시 무시)" Command="{Binding RefreshCommand}"/>
                             <Button AutomationProperties.AutomationId="OpenReservation" Content="다음 주 LOC 예약..." Command="{Binding ReserveCommand}"
-                                    ToolTip="등록된 목표의 단계별 매수금액으로 다음 주(월~금) 키움 LOC 예약 매수 주문표를 만든다"/>
+                                    ToolTip="현재가가 이미 도달한 단계만 골라 다음 주(월~금) 키움 LOC 예약 매수 주문표를 만든다(나머지는 제외 목록에 사유 표시)"/>
                             <TextBlock VerticalAlignment="Center" Foreground="#888" Margin="6,0,0,0"
                                        Text="배당수익률을 비우면 5년 평균을 자동 조회"/>
                         </StackPanel>
@@ -133,7 +186,8 @@
                         <DataGridTextColumn Header="매입목표가" Binding="{Binding CurrentBuyPrice, StringFormat=N2}" Width="Auto" ElementStyle="{StaticResource Num}" FontWeight="SemiBold"/>
                         <DataGridTextColumn Header="괴리" Binding="{Binding GapPct, StringFormat={}{0:+0.0;-0.0}%}" Width="Auto" ElementStyle="{StaticResource Num}"/>
                         <DataGridTextColumn Header="판정" Binding="{Binding Verdict}" Width="Auto" MinWidth="72" ElementStyle="{StaticResource StatusText}"/>
-                        <DataGridTextColumn Header="매수금액" Binding="{Binding BuyAmountText}" Width="Auto" ElementStyle="{StaticResource Num}"/>
+                        <DataGridTextColumn Header="매수금액" Binding="{Binding BuyAmountText}" Width="Auto" MinWidth="200" ElementStyle="{StaticResource Num}"/>
+                        <DataGridTextColumn Header="매수단가 × 수량" Binding="{Binding BuySharesText}" Width="Auto" MinWidth="110" ElementStyle="{StaticResource Num}" FontWeight="SemiBold"/>
                         <DataGridTextColumn Header="분기" Binding="{Binding CurrentQuarter}" Width="Auto"/>
                         <DataGridTextColumn Header="목표연도" Binding="{Binding TargetYear}" Width="Auto"/>
                         <DataGridTextColumn Header="목표주가" Binding="{Binding TargetPrice, StringFormat=N2}" Width="Auto" ElementStyle="{StaticResource Num}"/>

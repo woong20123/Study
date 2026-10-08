@@ -311,6 +311,62 @@ public class MoneyTests
         Assert.True(BuyAmounts.Empty.IsEmpty);
         Assert.Same(BuyAmounts.Empty, new TargetPlan("KO", new DateOnly(2026, 10, 8), 2030, 1, 1, 10, 3).BuyAmounts);
     }
+
+    [Fact]
+    public void DefaultAmountsFillOnlyEmptyStages()
+    {
+        var defaults = new BuyAmounts(1_000_000, 2_000_000, 3_000_000);
+        var own = new BuyAmounts(BuyKrw: 0, StrongBuyKrw: 5_000_000); // 매수 단계는 0 = 사지 않음
+
+        Assert.Equal(new BuyAmounts(0, 2_000_000, 5_000_000), own.WithDefaults(defaults));
+        Assert.Equal(defaults, BuyAmounts.Empty.WithDefaults(defaults));
+        Assert.Same(own, own.WithDefaults(null));
+        Assert.Same(own, own.WithDefaults(BuyAmounts.Empty));
+
+        Assert.False(own.IsDefault(BuyStatus.Buy, defaults));      // 0으로 직접 입력
+        Assert.True(own.IsDefault(BuyStatus.MustBuy, defaults));   // 비워서 기본값
+        Assert.False(own.IsDefault(BuyStatus.StrongBuy, defaults));
+        Assert.False(own.IsDefault(BuyStatus.MustBuy, BuyAmounts.Empty)); // 기본값도 없음
+
+        var plan = new TargetPlan("KO", new DateOnly(2026, 10, 8), 2030, 1, 1, 10, 3, null, own);
+        Assert.Equal(new BuyAmounts(0, 2_000_000, 5_000_000), plan.EffectiveAmounts(defaults));
+    }
+
+    [Fact]
+    public void OnlyAmountsDifferentFromDefaultsAreKept()
+    {
+        var defaults = new BuyAmounts(1_000_000, 2_000_000, 3_000_000);
+        // 입력칸은 기본값으로 채워지므로, 손대지 않으면 아무것도 저장하지 않는다
+        Assert.True(defaults.ExceptDefaults(defaults).IsEmpty);
+        // 매수는 0(사지 않음), 필수매수는 비움, 강력매수만 변경
+        Assert.Equal(new BuyAmounts(0, null, 5_000_000),
+            new BuyAmounts(0, null, 5_000_000).ExceptDefaults(defaults));
+        Assert.Equal(new BuyAmounts(null, null, 5_000_000),
+            new BuyAmounts(1_000_000, 2_000_000, 5_000_000).ExceptDefaults(defaults));
+        // 기본값이 없으면 입력값을 그대로 저장
+        var input = new BuyAmounts(1_000_000);
+        Assert.Equal(input, input.ExceptDefaults(BuyAmounts.Empty));
+        Assert.Same(input, input.ExceptDefaults(null));
+        // 저장한 값 + 기본값 = 입력한 값
+        var saved = new BuyAmounts(1_000_000, null, 5_000_000).ExceptDefaults(defaults);
+        Assert.Equal(new BuyAmounts(1_000_000, 2_000_000, 5_000_000), saved.WithDefaults(defaults));
+    }
+
+    [Fact]
+    public void SharesAreRoundedDown()
+    {
+        // ₩1,000,000 ÷ 1,337.18 = $747.84 → 매수단가 222.00이면 3.37주 → 3주
+        Assert.Equal(3, Money.Shares(1_000_000, 1337.18, 222.00));
+        // 강력매수 단가 = 222 × 0.8 = 177.60 → ₩3,000,000 = $2,243.53 → 12.63주 → 12주
+        Assert.Equal(12, Money.Shares(3_000_000, 1337.18, ReservationPlanner.LimitPrice(222, BuyStatus.StrongBuy)));
+        // 딱 나누어떨어지면 그 수 그대로(이진 오차로 1주 모자라지 않음)
+        Assert.Equal(10, Money.Shares(1_350_000, 1350, 100));
+        Assert.Equal(3, Money.Shares(0.3 * 1350, 1350, 0.1));
+        // 1주도 못 사면 0, 환율 · 가격이 없으면 계산하지 않음
+        Assert.Equal(0, Money.Shares(50_000, 1350, 89.86));
+        Assert.Null(Money.Shares(1_000_000, null, 222));
+        Assert.Null(Money.Shares(1_000_000, 1350, 0));
+    }
 }
 
 public sealed class StockDatabaseTests : IDisposable
@@ -356,6 +412,22 @@ public sealed class StockDatabaseTests : IDisposable
 
         db.SaveTarget(new TargetPlan("KO", new DateOnly(2026, 10, 8), 2030, 10.5, 18, 10, 2.92)); // 금액 비우고 갱신
         Assert.True(Db().GetTargets().Single(t => t.Symbol == "KO").BuyAmounts.IsEmpty);
+    }
+
+    [Fact]
+    public void DefaultAmountsRoundTrip()
+    {
+        var db = Db();
+        Assert.True(db.GetDefaultAmounts().IsEmpty); // 처음에는 설정 없음
+
+        var defaults = new BuyAmounts(1_000_000, null, 3_500_000.5);
+        db.SaveDefaultAmounts(defaults);
+        Assert.Equal(defaults, Db().GetDefaultAmounts()); // 앱 재실행 후에도 유지
+
+        db.SaveDefaultAmounts(new BuyAmounts(MustBuyKrw: 0)); // 비운 단계는 지운다
+        Assert.Equal(new BuyAmounts(null, 0, null), Db().GetDefaultAmounts());
+        db.SaveDefaultAmounts(BuyAmounts.Empty);
+        Assert.True(Db().GetDefaultAmounts().IsEmpty);
     }
 
     [Fact]

@@ -65,13 +65,56 @@ public sealed class BackupTests : IDisposable
         var root = doc.RootElement;
 
         Assert.Equal("stocktarget-backup", root.GetProperty("format").GetString());
-        Assert.Equal(1, root.GetProperty("version").GetInt32());
+        Assert.Equal(2, root.GetProperty("version").GetInt32());
+        Assert.False(root.TryGetProperty("defaultAmounts", out _)); // 기본 매수금액이 없으면 생략
         Assert.False(root.TryGetProperty("cache", out _));
         var ko = root.GetProperty("targets").EnumerateArray().First(t => t.GetProperty("symbol").GetString() == "KO");
         Assert.Equal("2026-10-08", ko.GetProperty("inputDate").GetString());
         Assert.Equal(120, ko.GetProperty("targetPrice").GetDouble());
         Assert.False(ko.TryGetProperty("mustBuyKrw", out _)); // null은 생략
         Assert.False(ko.TryGetProperty("growthPct", out _));  // 계산 값은 넣지 않음
+    }
+
+    [Fact]
+    public void DefaultAmountsRoundTrip()
+    {
+        var source = Fill(NewDb());
+        source.SaveDefaultAmounts(new BuyAmounts(1_000_000, null, 3_000_000));
+        var backup = BackupSerializer.FromJson(BackupSerializer.ToJson(source.ExportBackup()));
+        Assert.EndsWith(" · 기본 매수금액", backup.Summary);
+
+        var target = NewDb();
+        target.SaveDefaultAmounts(new BuyAmounts(9_000_000, 9_000_000, 9_000_000));
+        target.ReplaceWithBackup(backup);
+        Assert.Equal(new BuyAmounts(1_000_000, null, 3_000_000), target.GetDefaultAmounts());
+    }
+
+    [Fact]
+    public void RestoreDefaultAmountsByVersion()
+    {
+        var current = new BuyAmounts(9_000_000);
+
+        // v2 백업에 기본 매수금액이 없음 = 설정 없음(Firebase가 빈 값을 저장하지 않은 경우 포함) → 지운다
+        var v2 = NewDb();
+        v2.SaveDefaultAmounts(current);
+        v2.ReplaceWithBackup(BackupSerializer.FromJson(
+            """{"format":"stocktarget-backup","version":2,"exportedAt":"2026-10-08T01:00:00+00:00"}"""));
+        Assert.True(v2.GetDefaultAmounts().IsEmpty);
+
+        // v1 백업은 이 항목을 모른다 → 현재 설정 유지
+        var v1 = NewDb();
+        v1.SaveDefaultAmounts(current);
+        v1.ReplaceWithBackup(BackupSerializer.FromJson(
+            """{"format":"stocktarget-backup","version":1,"exportedAt":"2026-10-08T01:00:00+00:00"}"""));
+        Assert.Equal(current, v1.GetDefaultAmounts());
+    }
+
+    [Fact]
+    public void NegativeDefaultAmountIsRejected()
+    {
+        var data = BackupSerializer.FromJson(
+            """{"format":"stocktarget-backup","version":2,"defaultAmounts":{"buyKrw":-1}}""");
+        Assert.Throws<BackupFormatException>(() => NewDb().ReplaceWithBackup(data));
     }
 
     [Fact]

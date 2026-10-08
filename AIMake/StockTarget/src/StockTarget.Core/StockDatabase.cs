@@ -34,6 +34,7 @@ public sealed record ReservationRecord(
 /// <item>price_checks : 분기 확인 이력(티커·날짜당 1행, 같은 날 다시 조회하면 갱신)</item>
 /// <item>cache        : 시세·배당 조회 결과 캐시(최대 1시간)</item>
 /// <item>reservations : 키움에 접수한 LOC 예약 매수(티커·단계·기간·환경당 1건)</item>
+/// <item>settings     : 앱 설정(키·값). 기본 매수금액 등</item>
 /// </list>
 /// </summary>
 public sealed class StockDatabase
@@ -110,6 +111,10 @@ public sealed class StockDatabase
                 scheduled_date TEXT NOT NULL,
                 created_at     TEXT NOT NULL,
                 PRIMARY KEY (symbol, stage, start_date, end_date, env)
+            );
+            CREATE TABLE IF NOT EXISTS settings (
+                key   TEXT PRIMARY KEY,
+                value TEXT NOT NULL
             );
             """;
         cmd.ExecuteNonQuery();
@@ -215,6 +220,64 @@ public sealed class StockDatabase
         cmd.ExecuteNonQuery();
         tx.Commit();
         return n > 0;
+    }
+
+    // --------------------------------------------------------------- settings
+    private const string DefaultBuyKey = "default_buy_krw";
+    private const string DefaultMustBuyKey = "default_must_buy_krw";
+    private const string DefaultStrongBuyKey = "default_strong_buy_krw";
+
+    /// <summary>기본 매수금액(목표에서 비운 단계에 쓴다). 설정하지 않았으면 모든 단계가 비어 있다.</summary>
+    public BuyAmounts GetDefaultAmounts()
+    {
+        using var c = Open();
+        using var cmd = c.CreateCommand();
+        cmd.CommandText = "SELECT key, value FROM settings WHERE key IN ($b, $m, $s)";
+        cmd.Parameters.AddWithValue("$b", DefaultBuyKey);
+        cmd.Parameters.AddWithValue("$m", DefaultMustBuyKey);
+        cmd.Parameters.AddWithValue("$s", DefaultStrongBuyKey);
+        var values = new Dictionary<string, double>();
+        using (var r = cmd.ExecuteReader())
+        {
+            while (r.Read())
+            {
+                if (double.TryParse(r.GetString(1), NumberStyles.Float, CultureInfo.InvariantCulture, out var v))
+                    values[r.GetString(0)] = v;
+            }
+        }
+        double? Get(string key) => values.TryGetValue(key, out var v) ? v : null;
+        return new BuyAmounts(Get(DefaultBuyKey), Get(DefaultMustBuyKey), Get(DefaultStrongBuyKey));
+    }
+
+    public void SaveDefaultAmounts(BuyAmounts amounts)
+    {
+        using var c = Open();
+        using var tx = c.BeginTransaction();
+        WriteDefaultAmounts(c, tx, amounts);
+        tx.Commit();
+    }
+
+    private static void WriteDefaultAmounts(SqliteConnection c, SqliteTransaction tx, BuyAmounts a)
+    {
+        foreach (var (key, value) in new[] { (DefaultBuyKey, a.BuyKrw), (DefaultMustBuyKey, a.MustBuyKrw), (DefaultStrongBuyKey, a.StrongBuyKrw) })
+        {
+            using var cmd = c.CreateCommand();
+            cmd.Transaction = tx;
+            cmd.Parameters.AddWithValue("$k", key);
+            if (value is { } v)
+            {
+                cmd.CommandText = """
+                    INSERT INTO settings (key, value) VALUES ($k, $v)
+                    ON CONFLICT(key) DO UPDATE SET value = excluded.value
+                    """;
+                cmd.Parameters.AddWithValue("$v", v.ToString("R", CultureInfo.InvariantCulture));
+            }
+            else
+            {
+                cmd.CommandText = "DELETE FROM settings WHERE key = $k";
+            }
+            cmd.ExecuteNonQuery();
+        }
     }
 
     // ----------------------------------------------------------- price_checks
@@ -327,18 +390,20 @@ public sealed class StockDatabase
     }
 
     // ----------------------------------------------------------------- backup
-    /// <summary>캐시를 뺀 사용자 데이터 전체(목표 · 확인 이력 · 예약 접수 이력).</summary>
+    /// <summary>캐시를 뺀 사용자 데이터 전체(목표 · 확인 이력 · 예약 접수 이력 · 기본 매수금액).</summary>
     public BackupData ExportBackup() =>
-        BackupData.Create(GetTargets(), GetChecks(null), GetReservations(), _now());
+        BackupData.Create(GetTargets(), GetChecks(null), GetReservations(), _now(), GetDefaultAmounts());
 
     /// <summary>
     /// 백업으로 사용자 데이터를 통째로 바꾼다(캐시는 그대로). 한 트랜잭션이라 중간에 실패하면 아무것도 바뀌지 않는다.
+    /// 기본 매수금액이 없는 옛 백업이면 현재 기본 매수금액을 그대로 둔다.
     /// </summary>
     public void ReplaceWithBackup(BackupData backup)
     {
         var targets = backup.ToTargets();
         var checks = backup.ToChecks();
         var reservations = backup.ToReservations();
+        var defaults = backup.ToDefaultAmounts();
 
         using var c = Open();
         using var tx = c.BeginTransaction();
@@ -355,6 +420,8 @@ public sealed class StockDatabase
             UpsertCheck(c, tx, p);
         foreach (var r in reservations)
             InsertReservation(c, tx, r);
+        if (defaults is not null)
+            WriteDefaultAmounts(c, tx, defaults);
         tx.Commit();
     }
 

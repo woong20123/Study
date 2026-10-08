@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+
+    <Color x:Key="Primary">#2563EB</Color>
+    <Color x:Key="Secondary">#64748B</Color>
+    <Color x:Key="Tertiary">#E2E8F0</Color>
+    <Color x:Key="Background">#F8FAFC</Color>
+    <Color x:Key="Surface">#FFFFFF</Color>
+    <Color x:Key="TextPrimary">#0F172A</Color>
+    <Color x:Key="TextSecondary">#64748B</Color>
+    <Color x:Key="BorderColor">#E2E8F0</Color>
+
+    <!-- 판정 5단계 색상 -->
+    <Color x:Key="StrongBuyColor">#1D4ED8</Color>
+    <Color x:Key="MustBuyColor">#0284C7</Color>
+    <Color x:Key="BuyColor">#16A34A</Color>
+    <Color x:Key="NearColor">#65A30D</Color>
+    <Color x:Key="WaitColor">#94A3B8</Color>
+
+    <Color x:Key="StrongBuyBg">#DBEAFE</Color>
+    <Color x:Key="MustBuyBg">#E0F2FE</Color>
+    <Color x:Key="BuyBg">#DCFCE7</Color>
+    <Color x:Key="NearBg">#ECFCCB</Color>
+    <Color x:Key="WaitBg">#F1F5F9</Color>
+</ResourceDictionary>

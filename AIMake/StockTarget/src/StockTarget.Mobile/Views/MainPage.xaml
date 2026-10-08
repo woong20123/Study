@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:StockTarget.Mobile.ViewModels"
+             xmlns:conv="clr-namespace:StockTarget.Mobile.Converters"
+             x:Class="StockTarget.Mobile.Views.MainPage"
+             x:DataType="vm:MobileMainViewModel"
+             Title="StockTarget">
+
+    <ContentPage.Resources>
+        <conv:StatusToBgColorConverter x:Key="StatusToBg" />
+        <conv:StatusToTextColorConverter x:Key="StatusToText" />
+    </ContentPage.Resources>
+
+    <Grid RowDefinitions="Auto, *">
+        <!-- Top Summary Bar -->
+        <Border Grid.Row="0" Margin="12,8,12,4" Padding="12,8" BackgroundColor="#F1F5F9" StrokeThickness="0">
+            <Grid ColumnDefinitions="*, Auto, Auto">
+                <Label Grid.Column="0" Text="{Binding Status}" VerticalOptions="Center" FontSize="13" TextColor="#475569" LineBreakMode="TailTruncation" />
+                <Label Grid.Column="1" Text="{Binding UsdKrwText}" VerticalOptions="Center" Margin="8,0" FontSize="13" TextColor="#2563EB" FontAttributes="Bold" />
+                <Button Grid.Column="2" Text="+ 종목추가" Command="{Binding AddTargetCommand}" FontSize="12" Padding="10,6" HeightRequest="34" CornerRadius="6" />
+            </Grid>
+        </Border>
+
+        <!-- Target List with Pull-to-Refresh -->
+        <RefreshView Grid.Row="1" IsRefreshing="{Binding IsRefreshing}" Command="{Binding RefreshCommand}">
+            <CollectionView ItemsSource="{Binding Targets}" Margin="12,4" SelectionMode="None">
+                <CollectionView.EmptyView>
+                    <VerticalStackLayout Spacing="10" HorizontalOptions="Center" VerticalOptions="Center" Margin="0,50">
+                        <Label Text="등록된 목표 종목이 없습니다." HorizontalOptions="Center" FontSize="16" TextColor="#64748B" />
+                        <Button Text="종목 추가하기" Command="{Binding AddTargetCommand}" HorizontalOptions="Center" />
+                    </VerticalStackLayout>
+                </CollectionView.EmptyView>
+
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="vm:MobileTargetRowViewModel">
+                        <Border Margin="0,4" Padding="14">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding SelectCommand}"
+                                                      CommandParameter="{Binding .}" />
+                            </Border.GestureRecognizers>
+
+                            <Grid RowDefinitions="Auto, Auto, Auto" ColumnDefinitions="*, Auto" RowSpacing="6">
+                                <!-- Row 0: Symbol & Target Year | Verdict Badge & Gap -->
+                                <HorizontalStackLayout Grid.Row="0" Grid.Column="0" Spacing="6" VerticalOptions="Center">
+                                    <Label Text="{Binding Symbol}" FontSize="18" FontAttributes="Bold" TextColor="#0F172A" />
+                                    <Label Text="{Binding TargetYear, StringFormat='({0}년)'}" FontSize="13" TextColor="#64748B" VerticalOptions="Center" />
+                                </HorizontalStackLayout>
+
+                                <HorizontalStackLayout Grid.Row="0" Grid.Column="1" Spacing="6" VerticalOptions="Center">
+                                    <Label Text="{Binding GapText}" FontSize="14" FontAttributes="Bold" VerticalOptions="Center"
+                                           TextColor="{Binding Status, Converter={StaticResource StatusToText}}" />
+                                    <Border BackgroundColor="{Binding Status, Converter={StaticResource StatusToBg}}"
+                                            Padding="8,2" StrokeShape="RoundRectangle 6" StrokeThickness="0">
+                                        <Label Text="{Binding Verdict}" FontSize="12" FontAttributes="Bold"
+                                               TextColor="{Binding Status, Converter={StaticResource StatusToText}}" />
+                                    </Border>
+                                </HorizontalStackLayout>
+
+                                <!-- Row 1: Prices Comparison -->
+                                <Grid Grid.Row="1" Grid.ColumnSpan="2" ColumnDefinitions="Auto, Auto, *, Auto" ColumnSpacing="8">
+                                    <Label Grid.Column="0" Text="현재가:" FontSize="13" TextColor="#64748B" />
+                                    <Label Grid.Column="1" Text="{Binding PriceText}" FontSize="14" FontAttributes="Bold" TextColor="#0F172A" />
+
+                                    <Label Grid.Column="2" HorizontalOptions="End" Text="{Binding CurrentQuarter, StringFormat='{0} 매입가:'}" FontSize="13" TextColor="#64748B" />
+                                    <Label Grid.Column="3" Text="{Binding BuyPriceText}" FontSize="14" FontAttributes="Bold" TextColor="#0F172A" />
+                                </Grid>
+
+                                <!-- Row 2: Buy Amount & Quantity -->
+                                <Grid Grid.Row="2" Grid.ColumnSpan="2" ColumnDefinitions="*, Auto" Margin="0,4,0,0">
+                                    <Label Grid.Column="0" Text="{Binding BuyAmountText}" FontSize="12" TextColor="#0284C7" FontAttributes="Bold" LineBreakMode="TailTruncation" />
+                                    <Label Grid.Column="1" Text="{Binding BuySharesText}" FontSize="12" TextColor="#16A34A" FontAttributes="Bold" />
+                                </Grid>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </RefreshView>
+    </Grid>
+
+</ContentPage>

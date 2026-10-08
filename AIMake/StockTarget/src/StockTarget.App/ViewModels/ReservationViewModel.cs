@@ -33,6 +33,9 @@ public sealed class ReservationViewModel : ObservableObject
     private readonly StockDatabase _db;
     private readonly StockService _service;
     private readonly IReadOnlyList<TargetPlan> _targets;
+    private readonly BuyAmounts _defaults;
+    private readonly IReadOnlyDictionary<string, double> _currentPrices;
+    private readonly KiwoomMode _mode;
     private readonly KiwoomOptions? _options;
     private ReservationPlan? _plan;
     private double? _usdKrw;
@@ -40,13 +43,18 @@ public sealed class ReservationViewModel : ObservableObject
     private string _status = "";
     private bool _busy;
 
-    public ReservationViewModel(StockDatabase db, StockService service, IReadOnlyList<TargetPlan> targets, double? usdKrw)
+    public ReservationViewModel(
+        StockDatabase db, StockService service, IReadOnlyList<TargetPlan> targets, double? usdKrw, BuyAmounts defaults,
+        KiwoomMode mode, IReadOnlyDictionary<string, double> currentPrices)
     {
+        _currentPrices = currentPrices;
+        _mode = mode;
+        _defaults = defaults;
         _db = db;
         _service = service;
         _targets = targets;
         _usdKrw = usdKrw;
-        _options = KiwoomOptions.FromEnvironment();
+        _options = KiwoomOptions.FromEnvironment(mode);
         (Start, End) = ReservationPlanner.NextWeek(DateOnly.FromDateTime(DateTime.Today));
         RefreshCommand = new AsyncCommand(() => BuildAsync(force: true), () => !IsBusy);
         SubmitCommand = new AsyncCommand(SubmitAsync, () => !IsBusy && _options is not null && Rows.Any(r => CanSubmit(r)));
@@ -65,9 +73,13 @@ public sealed class ReservationViewModel : ObservableObject
     public string PeriodText =>
         $"예약 기간 {Start:yyyy-MM-dd}(월) ~ {End:yyyy-MM-dd}(금) · 기간예약(잔량주문) · LOC · 계단식(총액 맞춤)";
 
-    public string EnvText => _options is null
+    public string EnvText => _mode == KiwoomMode.Off
+        ? "키움 연동 꺼짐(구동 옵션 --kiwoom off) — 주문표 계산만 가능"
+        : _options is null
         ? $"키움 API 키 미설정 — 환경변수 {KiwoomOptions.AppKeyVariable}, {KiwoomOptions.SecretKeyVariable} 필요 (주문표 계산만 가능)"
-        : $"접수 대상: {_options.EnvText} ({_options.BaseUrl})   ·   {KiwoomOptions.EnvVariable}=real 이면 실전";
+        : _mode == KiwoomMode.Auto
+        ? $"접수 대상: {_options.EnvText} ({_options.BaseUrl})   ·   {KiwoomOptions.EnvVariable}=real 이면 실전 (구동 옵션 --kiwoom 이 우선)"
+        : $"접수 대상: {_options.EnvText} ({_options.BaseUrl})   ·   구동 옵션 --kiwoom {(_options.IsMock ? "mock" : "real")}";
 
     public bool IsRealEnv => _options is { IsMock: false };
 
@@ -88,7 +100,7 @@ public sealed class ReservationViewModel : ObservableObject
                 _usdKrw = (await _service.GetUsdKrwAsync(force)).Value.Price;
             }
             var rate = _usdKrw.Value;
-            _plan = ReservationPlanner.Plan(_targets, Start, End, rate);
+            _plan = ReservationPlanner.Plan(_targets, Start, End, rate, _defaults, _currentPrices);
 
             Rows.Clear();
             foreach (var o in _plan.Orders)
@@ -100,7 +112,7 @@ public sealed class ReservationViewModel : ObservableObject
 
             var totalKrw = _plan.Orders.Sum(o => o.AmountKrw);
             var totalUsd = _plan.Orders.Sum(o => o.OrderUsd);
-            Summary = $"목표 {_targets.Count}개 → 주문 {_plan.Orders.Count}건 (제외 {_plan.Skips.Count}건) · " +
+            Summary = $"목표 {_targets.Count}개 → 현재가가 도달한 단계 주문 {_plan.Orders.Count}건 (제외 {_plan.Skips.Count}건) · " +
                       $"최대 체결 {Money.KrwText(totalKrw)} / 주문가 기준 {Money.UsdText(totalUsd)} · 환율 {rate:#,0.00}원";
             Status = $"{DateTime.Now:HH:mm:ss} 주문표 계산";
         }

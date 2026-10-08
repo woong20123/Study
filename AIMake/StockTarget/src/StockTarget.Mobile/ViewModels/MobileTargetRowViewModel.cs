@@ -1,9 +1,8 @@
 using StockTarget.Core;
 
-namespace StockTarget.App.ViewModels;
+namespace StockTarget.Mobile.ViewModels;
 
-/// <summary>목표 목록의 한 행: 저장된 목표 + 현재가 비교.</summary>
-public sealed class TargetRowViewModel(TargetPlan plan) : ObservableObject
+public sealed class MobileTargetRowViewModel(TargetPlan plan) : ObservableObject
 {
     private Quote? _quote;
     private double? _cacheAge;
@@ -12,6 +11,7 @@ public sealed class TargetRowViewModel(TargetPlan plan) : ObservableObject
     private BuyAmounts? _defaults;
 
     public TargetPlan Plan { get; private set; } = plan;
+    public System.Windows.Input.ICommand? SelectCommand { get; set; }
 
     public string Symbol => Plan.Symbol;
     public int TargetYear => Plan.TargetYear;
@@ -19,7 +19,6 @@ public sealed class TargetRowViewModel(TargetPlan plan) : ObservableObject
     public double ReturnPct => Plan.ReturnPct;
     public double DividendYieldPct => Plan.DividendYieldPct;
     public double GrowthPct => Plan.GrowthPct;
-    public string InputDate => Plan.InputDate.ToString("yyyy-MM-dd");
 
     public ScheduleRow? CurrentRow => TargetCalculator.CurrentRow(Plan, DateOnly.FromDateTime(DateTime.Today));
     public double? CurrentBuyPrice => CurrentRow?.BuyPrice;
@@ -31,7 +30,7 @@ public sealed class TargetRowViewModel(TargetPlan plan) : ObservableObject
         set
         {
             if (Set(ref _quote, value))
-                RaiseQuoteDerived();
+                RaiseDerived();
         }
     }
 
@@ -51,16 +50,10 @@ public sealed class TargetRowViewModel(TargetPlan plan) : ObservableObject
         set
         {
             if (Set(ref _error, value))
-            {
-                OnPropertyChanged(nameof(Status));
-                OnPropertyChanged(nameof(Verdict));
-                OnPropertyChanged(nameof(BuyAmountText));
-                OnPropertyChanged(nameof(BuySharesText));
-            }
+                RaiseDerived();
         }
     }
 
-    /// <summary>USD/KRW 환율(1달러당 원). 매수금액 달러 환산에 쓴다.</summary>
     public double? UsdKrw
     {
         get => _usdKrw;
@@ -74,7 +67,6 @@ public sealed class TargetRowViewModel(TargetPlan plan) : ObservableObject
         }
     }
 
-    /// <summary>기본 매수금액(목표에서 비운 단계에 쓴다).</summary>
     public BuyAmounts? Defaults
     {
         get => _defaults;
@@ -82,48 +74,41 @@ public sealed class TargetRowViewModel(TargetPlan plan) : ObservableObject
         {
             if (Set(ref _defaults, value))
             {
+                OnPropertyChanged(nameof(Amounts));
                 OnPropertyChanged(nameof(BuyAmountText));
                 OnPropertyChanged(nameof(BuySharesText));
             }
         }
     }
 
-    /// <summary>실제로 쓰는 매수금액 = 목표에 입력한 값, 비운 단계는 기본 매수금액.</summary>
     public BuyAmounts Amounts => Plan.EffectiveAmounts(Defaults);
 
     public double? Price => Quote?.Price;
 
-    /// <summary>현재가가 이번 분기 매입 목표가보다 몇 % 높은지(음수면 아래).</summary>
     public double? GapPct => Price is { } p && CurrentBuyPrice is { } b && b > 0 ? (p / b - 1) * 100 : null;
 
-    public bool? BuyCondition => Price is { } p && CurrentBuyPrice is { } b ? p <= b : null;
+    public string PriceText => Price is { } p ? $"${p:N2}" : "—";
+    public string BuyPriceText => CurrentBuyPrice is { } b ? $"${b:N2}" : "—";
 
-    /// <summary>매수(≤ 매입 목표가) / 매입 대기(3% 이내) / 대기(3% 초과).</summary>
+    public string GapText => GapPct is { } g ? $"{(g >= 0 ? "+" : "")}{g:N1}%" : "";
+
     public BuyStatus Status => Error is not null ? BuyStatus.None : TargetCalculator.Classify(Price, CurrentBuyPrice);
 
     public string Verdict => Error is not null ? "조회 실패" : Status.ToText();
 
-    /// <summary>
-    /// 현재 판정 단계의 매수금액 "₩1,000,000 ($747.12)", 기본 매수금액이면 뒤에 "· 기본".
-    /// 매수 단계가 아니거나 금액이 없으면(0 포함) 빈 문자열.
-    /// </summary>
     public string BuyAmountText =>
         Error is null && Amounts.For(Status) is { } krw && krw > 0
             ? Money.Text(krw, UsdKrw) + (Plan.BuyAmounts.IsDefault(Status, Defaults) ? " · 기본" : "")
             : "";
 
-    /// <summary>현재 판정 단계의 매수단가와 살 주식 수 "222.00 × 3주". 매수 단계가 아니거나 계산할 수 없으면 빈 문자열.</summary>
     public string BuySharesText =>
         Error is null && Amounts.For(Status) is { } krw && krw > 0 && SharesText(Status, krw) is { } text ? text : "";
 
-    /// <summary>매수 단계의 매수단가 = 이번 분기 매입 목표가 × (1 − 단계 할인율), LOC 주문가와 같다.</summary>
+    public string CacheText => CacheAge is { } a ? (a >= 60 ? $"{(int)(a / 60)}분 전" : $"{(int)a}초 전") : "실시간";
+
     public double? StagePrice(BuyStatus stage) =>
         CurrentBuyPrice is { } b ? ReservationPlanner.LimitPrice(b, stage) : null;
 
-    /// <summary>
-    /// 단계 금액(원)으로 그 단계 매수단가에 살 수 있는 주식 수(내림) "222.00 × 3주".
-    /// 달러 종목이 아니거나(시세 조회 전에는 달러로 본다) 환율 · 매입 목표가가 없으면 null.
-    /// </summary>
     public string? SharesText(BuyStatus stage, double krw)
     {
         if (Quote is { } q && q.Currency != "USD")
@@ -133,27 +118,22 @@ public sealed class TargetRowViewModel(TargetPlan plan) : ObservableObject
         return $"{price:N2} × {n:N0}주";
     }
 
-    public string CacheText => CacheAge is { } a ? $"캐시 {Format.Age(a)}" : "실시간";
-
     public void Update(TargetPlan plan)
     {
         Plan = plan;
-        OnPropertyChanged(string.Empty); // 모든 속성 갱신
+        OnPropertyChanged(string.Empty);
     }
 
-    private void RaiseQuoteDerived()
+    private void RaiseDerived()
     {
         OnPropertyChanged(nameof(Price));
+        OnPropertyChanged(nameof(PriceText));
+        OnPropertyChanged(nameof(BuyPriceText));
         OnPropertyChanged(nameof(GapPct));
-        OnPropertyChanged(nameof(BuyCondition));
+        OnPropertyChanged(nameof(GapText));
         OnPropertyChanged(nameof(Status));
         OnPropertyChanged(nameof(Verdict));
         OnPropertyChanged(nameof(BuyAmountText));
         OnPropertyChanged(nameof(BuySharesText));
     }
-}
-
-public static class Format
-{
-    public static string Age(double seconds) => seconds >= 60 ? $"{(int)(seconds / 60)}분 전" : $"{(int)seconds}초 전";
 }

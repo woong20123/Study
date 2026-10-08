@@ -10,7 +10,7 @@ namespace StockTarget.Core;
 public sealed record BackupData
 {
     public const string FormatName = "stocktarget-backup";
-    public const int CurrentVersion = 1;
+    public const int CurrentVersion = 2; // v2: 기본 매수금액 추가
 
     public string Format { get; init; } = FormatName;
     public int Version { get; init; } = CurrentVersion;
@@ -21,19 +21,33 @@ public sealed record BackupData
     public List<BackupCheck>? PriceChecks { get; init; } = [];
     public List<BackupReservation>? Reservations { get; init; } = [];
 
+    /// <summary>
+    /// 기본 매수금액(v2부터). 설정이 없으면 생략된다(Firebase도 빈 객체는 저장하지 않는다).
+    /// </summary>
+    public BackupAmounts? DefaultAmounts { get; init; }
+
     [JsonIgnore]
     public string Summary =>
-        $"목표 {Targets?.Count ?? 0}개 · 확인 이력 {PriceChecks?.Count ?? 0}건 · 예약 이력 {Reservations?.Count ?? 0}건";
+        $"목표 {Targets?.Count ?? 0}개 · 확인 이력 {PriceChecks?.Count ?? 0}건 · 예약 이력 {Reservations?.Count ?? 0}건" +
+        (ToDefaultAmounts() is { IsEmpty: false } ? " · 기본 매수금액" : "");
 
     public static BackupData Create(
         IEnumerable<TargetPlan> targets, IEnumerable<PriceCheck> checks, IEnumerable<ReservationRecord> reservations,
-        DateTimeOffset exportedAt) => new()
+        DateTimeOffset exportedAt, BuyAmounts? defaultAmounts = null) => new()
         {
             ExportedAt = exportedAt,
             Targets = targets.Select(BackupTarget.From).ToList(),
             PriceChecks = checks.Select(BackupCheck.From).ToList(),
             Reservations = reservations.Select(BackupReservation.From).ToList(),
+            DefaultAmounts = defaultAmounts is null || defaultAmounts.IsEmpty ? null : BackupAmounts.From(defaultAmounts),
         };
+
+    /// <summary>
+    /// 복원할 기본 매수금액. v1 백업은 이 항목을 몰라 null(복원할 때 현재 설정 유지),
+    /// v2 이상에서 항목이 없으면 '설정 없음'(빈 값)이다.
+    /// </summary>
+    public BuyAmounts? ToDefaultAmounts() =>
+        DefaultAmounts?.ToAmounts() ?? (Version >= 2 ? BuyAmounts.Empty : null);
 
     public IReadOnlyList<TargetPlan> ToTargets()
     {
@@ -85,6 +99,21 @@ public sealed record BackupTarget(
         var amounts = new BuyAmounts(BuyKrw, MustBuyKrw, StrongBuyKrw);
         return new TargetPlan(StockService.Normalize(Symbol), InputDate, TargetYear, Eps, Per, ReturnPct, DividendYieldPct,
             Memo, amounts.IsEmpty ? null : amounts, TargetPrice);
+    }
+}
+
+public sealed record BackupAmounts(double? BuyKrw, double? MustBuyKrw, double? StrongBuyKrw)
+{
+    public static BackupAmounts From(BuyAmounts a) => new(a.BuyKrw, a.MustBuyKrw, a.StrongBuyKrw);
+
+    public BuyAmounts ToAmounts()
+    {
+        foreach (var v in new[] { BuyKrw, MustBuyKrw, StrongBuyKrw })
+        {
+            if (v is { } k && (k < 0 || double.IsNaN(k) || double.IsInfinity(k)))
+                throw new BackupFormatException($"기본 매수금액이 올바르지 않습니다: {k}");
+        }
+        return new BuyAmounts(BuyKrw, MustBuyKrw, StrongBuyKrw);
     }
 }
 

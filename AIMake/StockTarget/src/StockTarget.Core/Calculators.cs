@@ -193,6 +193,12 @@ public static class Money
     public static double? KrwToUsd(double? krw, double? usdKrw) =>
         krw is { } k && usdKrw is { } r && r > 0 ? k / r : null;
 
+    /// <summary>원화 금액으로 달러 주가 price에 살 수 있는 주식 수(1주 단위 내림). 환율이나 가격이 없으면 null.</summary>
+    public static int? Shares(double krw, double? usdKrw, double price) =>
+        KrwToUsd(krw, usdKrw) is { } usd && price > 0
+            ? (int)Math.Floor(usd / price + 1e-9) // 1e-9: 딱 나누어떨어질 때 이진 오차로 1주 모자라지 않게
+            : null;
+
     public static string KrwText(double krw) => "₩" + krw.ToString("#,0", CultureInfo.InvariantCulture);
 
     public static string UsdText(double usd) => "$" + usd.ToString("#,0.00", CultureInfo.InvariantCulture);

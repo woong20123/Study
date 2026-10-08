@@ -22,11 +22,12 @@ FILES = [
     ('src/StockTarget.Core/Models.cs', '레코드: 시세·배당·분할·목표·매수금액·분기 행'),
     ('src/StockTarget.Core/Calculators.cs', '순수 계산: 목표가 역산, 5년 배당수익률, 분할 보정, 원화 매수금액 환산'),
     ('src/StockTarget.Core/YahooChartClient.cs', 'Yahoo chart API 호출과 JSON 파싱'),
-    ('src/StockTarget.Core/StockDatabase.cs', 'SQLite 스키마·목표·확인 이력·캐시'),
+    ('src/StockTarget.Core/StockDatabase.cs', 'SQLite 스키마·목표·확인 이력·캐시·설정(기본 매수금액)'),
     ('src/StockTarget.Core/StockService.cs', '캐시 우선 조회, 분할 보정, USD/KRW 환율, 확인 이력 기록'),
     ('src/StockTarget.Core/Reservations.cs', '다음 주 계단식 LOC 예약 주문표, 접수·중복 방지'),
     ('src/StockTarget.Core/KiwoomClient.cs', '키움 REST API: 토큰, 거래소구분, 미국주식 예약 매수'),
-    ('src/StockTarget.Core/Backup.cs', '기기 간 백업 JSON 형식(v1)과 검증'),
+    ('src/StockTarget.Core/StartupOptions.cs', '구동 옵션 --db, --kiwoom off|mock|real'),
+    ('src/StockTarget.Core/Backup.cs', '기기 간 백업 JSON 형식(v2, 기본 매수금액 포함)과 검증'),
     ('src/StockTarget.Core/Cloud.cs', 'Google OAuth(PKCE) · Firebase 로그인 · Realtime Database 저장/읽기'),
     ('src/StockTarget.App/StockTarget.App.csproj', 'WPF 앱 프로젝트 (net9.0-windows, DPAPI 패키지)'),
     ('src/StockTarget.App/AssemblyInfo.cs', 'WPF 템플릿 기본 파일'),
@@ -40,12 +41,13 @@ FILES = [
     ('src/StockTarget.App/ViewModels/TargetRowViewModel.cs', '목표 목록 한 행'),
     ('src/StockTarget.App/ViewModels/MainViewModel.cs', '메인 화면 뷰모델'),
     ('src/StockTarget.App/ViewModels/MainViewModel.Backup.cs', '데이터 메뉴: JSON 백업·복원, Firebase 저장·복원'),
+    ('src/StockTarget.App/ViewModels/MainViewModel.Defaults.cs', '기본 매수금액 입력·저장, 목표 입력칸 기본값 채움'),
     ('src/StockTarget.App/Services/CloudAuth.cs', '브라우저 Google 로그인(루프백), 로그인 정보 DPAPI 저장'),
     ('src/StockTarget.App/ViewModels/ReservationViewModel.cs', '예약 창 뷰모델: 주문표 계산·접수 확인'),
     ('tests/StockTarget.Tests/StockTarget.Tests.csproj', 'xUnit 테스트 프로젝트'),
-    ('tests/StockTarget.Tests/CoreTests.cs', '단위 테스트 59개 + 실데이터 테스트 2개'),
-    ('tests/StockTarget.Tests/ReservationTests.cs', '예약 주문표 · 키움 요청(가짜 서버) 테스트 15개'),
-    ('tests/StockTarget.Tests/BackupTests.cs', '백업 왕복 · Google/Firebase 요청(가짜 서버) 테스트 16개'),
+    ('tests/StockTarget.Tests/CoreTests.cs', '단위 테스트 63개 + 실데이터 테스트 2개'),
+    ('tests/StockTarget.Tests/ReservationTests.cs', '예약 주문표(도달 단계) · 키움 요청(가짜 서버) · 구동 옵션 테스트 33개'),
+    ('tests/StockTarget.Tests/BackupTests.cs', '백업 왕복 · 기본 매수금액 · Google/Firebase 요청(가짜 서버) 테스트 19개'),
 ]
 
 LANG = {'.cs': 'C#', '.xaml': 'XAML', '.csproj': 'XML', '.sln': 'sln'}
@@ -198,7 +200,7 @@ TEMPLATE = r'''<!doctype html>
     <tbody>
       <tr><td><code>StockTarget.Core</code></td><td>net9.0 클래스 라이브러리</td><td>계산(순수 함수), Yahoo 조회, SQLite 저장, 서비스</td></tr>
       <tr><td><code>StockTarget.App</code></td><td>net9.0-windows WPF</td><td>화면(MVVM, 외부 MVVM 라이브러리 없음)</td></tr>
-      <tr><td><code>StockTarget.Tests</code></td><td>net9.0 xUnit</td><td>단위 테스트 38개 + 실데이터 테스트 2개</td></tr>
+      <tr><td><code>StockTarget.Tests</code></td><td>net9.0 xUnit</td><td>단위 테스트 115개 + 실데이터 테스트 2개</td></tr>
     </tbody>
   </table></div>
 

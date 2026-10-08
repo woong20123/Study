@@ -32,10 +32,11 @@ public sealed partial class MainViewModel : ObservableObject
     private string _formStrongBuyKrw = "";
     private double? _usdKrw;
 
-    public MainViewModel(StockDatabase db, StockService service)
+    public MainViewModel(StockDatabase db, StockService service, KiwoomMode kiwoomMode = KiwoomMode.Auto)
     {
         _db = db;
         _service = service;
+        KiwoomMode = kiwoomMode;
         SaveCommand = new AsyncCommand(SaveAsync, () => !IsBusy);
         DeleteCommand = new AsyncCommand(DeleteAsync, () => !IsBusy && Selected is not null);
         RefreshCommand = new AsyncCommand(() => RefreshAllAsync(force: true), () => !IsBusy);
@@ -43,6 +44,8 @@ public sealed partial class MainViewModel : ObservableObject
         ReserveCommand = new RelayCommand(OpenReservation, () => !IsBusy && Targets.Count > 0);
         DbPath = db.Path;
         InitBackupCommands();
+        InitDefaults();
+        ClearForm();
     }
 
     // ------------------------------------------------------------- 바인딩 속성
@@ -58,6 +61,14 @@ public sealed partial class MainViewModel : ObservableObject
     public RelayCommand ReserveCommand { get; }
 
     public string DbPath { get; }
+
+    /// <summary>구동 옵션 --kiwoom 으로 정한 키움 연동 방식.</summary>
+    public KiwoomMode KiwoomMode { get; }
+
+    /// <summary>상태 표시줄의 키움 연동 상태(시작 시점 기준. 예약 창은 열 때 환경변수를 다시 읽는다).</summary>
+    public string KiwoomStatus => KiwoomOptions.StatusText(KiwoomMode, KiwoomOptions.FromEnvironment(KiwoomMode));
+
+    public bool IsKiwoomReal => KiwoomOptions.FromEnvironment(KiwoomMode) is { IsMock: false };
 
     public TargetRowViewModel? Selected
     {
@@ -159,9 +170,9 @@ public sealed partial class MainViewModel : ObservableObject
         }
     }
 
-    public string FormBuyUsd => AmountPreview(FormBuyKrw);
-    public string FormMustBuyUsd => AmountPreview(FormMustBuyKrw);
-    public string FormStrongBuyUsd => AmountPreview(FormStrongBuyKrw);
+    public string FormBuyUsd => AmountPreview(FormBuyKrw, BuyStatus.Buy);
+    public string FormMustBuyUsd => AmountPreview(FormMustBuyKrw, BuyStatus.MustBuy);
+    public string FormStrongBuyUsd => AmountPreview(FormStrongBuyKrw, BuyStatus.StrongBuy);
 
     /// <summary>USD/KRW 환율(1달러당 원). 조회 전이거나 실패하면 null.</summary>
     public double? UsdKrw
@@ -174,9 +185,7 @@ public sealed partial class MainViewModel : ObservableObject
             foreach (var row in Targets)
                 row.UsdKrw = value;
             OnPropertyChanged(nameof(UsdKrwText));
-            OnPropertyChanged(nameof(FormBuyUsd));
-            OnPropertyChanged(nameof(FormMustBuyUsd));
-            OnPropertyChanged(nameof(FormStrongBuyUsd));
+            RaiseFormAmountPreviews();
         }
     }
 
@@ -186,8 +195,10 @@ public sealed partial class MainViewModel : ObservableObject
     public async Task LoadAsync()
     {
         Targets.Clear();
+        LoadDefaults();
         foreach (var t in _db.GetTargets())
-            Targets.Add(new TargetRowViewModel(t) { UsdKrw = UsdKrw });
+            Targets.Add(new TargetRowViewModel(t) { UsdKrw = UsdKrw, Defaults = Defaults });
+        OnPropertyChanged(nameof(DefaultsSummary));
         Status = $"목표 {Targets.Count}개 로드";
         await RefreshAllAsync(force: false);
         if (Selected is null && Targets.Count > 0)
@@ -266,10 +277,11 @@ public sealed partial class MainViewModel : ObservableObject
                 per = ParseDouble(FormPer, "PER");
             }
             var ret = ParseDouble(FormReturn, "목표 수익률");
+            // 기본 매수금액과 같거나 비운 단계는 저장하지 않는다(기본값을 따라가 기본값을 바꾸면 함께 바뀐다)
             var amounts = new BuyAmounts(
                 Money.ParseKrw(FormBuyKrw, "매수"),
                 Money.ParseKrw(FormMustBuyKrw, "필수매수"),
-                Money.ParseKrw(FormStrongBuyKrw, "강력매수"));
+                Money.ParseKrw(FormStrongBuyKrw, "강력매수")).ExceptDefaults(Defaults);
 
             IsBusy = true;
             double div;
@@ -293,7 +305,7 @@ public sealed partial class MainViewModel : ObservableObject
             var row = Targets.FirstOrDefault(r => r.Symbol == symbol);
             if (row is null)
             {
-                row = new TargetRowViewModel(plan) { UsdKrw = UsdKrw };
+                row = new TargetRowViewModel(plan) { UsdKrw = UsdKrw, Defaults = Defaults };
                 Targets.Add(row);
             }
             else
@@ -302,8 +314,10 @@ public sealed partial class MainViewModel : ObservableObject
             }
             IsBusy = false;
             Selected = row;
+            OnPropertyChanged(nameof(DefaultsSummary));
             await RefreshOneAsync(row);
-            Status = $"{symbol} 목표 저장 (배당수익률 {div:0.00}% 고정, 필요 주가 상승률 연 {plan.GrowthPct:0.00}%)";
+            Status = $"{symbol} 목표 저장 (배당수익률 {div:0.00}% 고정, 필요 주가 상승률 연 {plan.GrowthPct:0.00}%, " +
+                     $"매수금액 {(amounts.IsEmpty ? "기본값 사용" : "개별 " + DefaultsText(amounts))})";
         }
         catch (Exception e) when (e is ArgumentException or StockDataException or HttpRequestException)
         {
@@ -344,6 +358,7 @@ public sealed partial class MainViewModel : ObservableObject
 
         _db.DeleteTarget(row.Symbol);
         Targets.Remove(row);
+        OnPropertyChanged(nameof(DefaultsSummary));
         Selected = Targets.FirstOrDefault();
         if (Selected is null)
             ClearDetail();
@@ -351,18 +366,22 @@ public sealed partial class MainViewModel : ObservableObject
         return Task.CompletedTask;
     }
 
-    /// <summary>다음 주 LOC 예약 매수 주문표 창. 접수는 그 창에서 확인을 눌러야만 한다.</summary>
+    /// <summary>
+    /// 다음 주 LOC 예약 매수 주문표 창. 지금 화면의 현재가로 이미 도달한 단계만 주문표에 넣는다.
+    /// 접수는 그 창에서 확인을 눌러야만 한다.
+    /// </summary>
     private void OpenReservation()
     {
-        var vm = new ReservationViewModel(_db, _service, Targets.Select(r => r.Plan).ToList(), UsdKrw);
+        var vm = new ReservationViewModel(_db, _service, Targets.Select(r => r.Plan).ToList(), UsdKrw, Defaults, KiwoomMode,
+            Targets.Where(r => r.Error is null && r.Price is > 0).ToDictionary(r => r.Symbol, r => r.Price!.Value));
         new ReservationWindow(vm) { Owner = Application.Current.MainWindow }.ShowDialog();
     }
 
     private void ClearForm()
     {
         Selected = null;
-        FormSymbol = FormYear = FormEps = FormPer = FormDividend = FormMemo = "";
-        FormBuyKrw = FormMustBuyKrw = FormStrongBuyKrw = FormTargetPrice = "";
+        FormSymbol = FormYear = FormEps = FormPer = FormDividend = FormMemo = FormTargetPrice = "";
+        FillFormAmounts(BuyAmounts.Empty); // 새 목표는 기본 매수금액으로 시작
         FormDirectPrice = false;
         FormReturn = "10";
         ClearDetail();
@@ -391,9 +410,7 @@ public sealed partial class MainViewModel : ObservableObject
         FormReturn = p.ReturnPct.ToString(CultureInfo.InvariantCulture);
         FormDividend = p.DividendYieldPct.ToString("0.####", CultureInfo.InvariantCulture);
         FormMemo = p.Memo ?? "";
-        FormBuyKrw = KrwInput(p.BuyAmounts.BuyKrw);
-        FormMustBuyKrw = KrwInput(p.BuyAmounts.MustBuyKrw);
-        FormStrongBuyKrw = KrwInput(p.BuyAmounts.StrongBuyKrw);
+        FillFormAmounts(p.BuyAmounts);
         await LoadDetailAsync(row, force: false);
     }
 
@@ -437,6 +454,7 @@ public sealed partial class MainViewModel : ObservableObject
         if (!string.IsNullOrEmpty(p.Memo))
             lines.Add($"메모: {p.Memo}");
         Summary = string.Join(Environment.NewLine, lines);
+        RaiseFormAmountPreviews(); // 입력칸 아래 주식 수는 선택한 목표의 현재 매입 목표가를 쓴다
 
         DividendPeriods.Clear();
         DividendSummary = "배당 이력 조회 중...";
@@ -465,44 +483,67 @@ public sealed partial class MainViewModel : ObservableObject
         }
     }
 
-    /// <summary>단계별 매수금액(원 · 달러, 달러 종목이면 살 수 있는 주식 수). 현재 판정 단계에 ◀ 표시.</summary>
+    /// <summary>단계별 매수금액(원 · 달러)과 그 단계 매수단가에 살 주식 수(내림). 현재 판정 단계에 ◀ 표시.</summary>
     private void AddAmountLines(List<string> lines, TargetRowViewModel row)
     {
-        var a = row.Plan.BuyAmounts;
+        var a = row.Amounts;
         if (a.IsEmpty)
             return;
-        var usdPrice = row.Quote is { Currency: "USD", Price: > 0 } q ? q.Price : (double?)null;
         lines.Add(UsdKrw is { } r ? $"매수금액 (환율 {r:#,0.00}원)" : "매수금액 (환율 조회 전 — 원화만 표시)");
         var stages = new[] { (BuyStatus.Buy, a.BuyKrw), (BuyStatus.MustBuy, a.MustBuyKrw), (BuyStatus.StrongBuy, a.StrongBuyKrw) };
         foreach (var (stage, krw) in stages)
         {
-            if (krw is not { } k)
+            if (krw is not { } k || k <= 0)
                 continue;
             var label = stage.ToText();
             var text = $"  {label}{new string(' ', 9 - 2 * label.Length)}{Money.Text(k, UsdKrw)}"; // 한글은 2칸 폭
-            if (Money.KrwToUsd(k, UsdKrw) is { } usd && usdPrice is { } price)
-                text += $" ≈ {usd / price:0.#}주";
+            if (row.SharesText(stage, k) is { } shares)
+                text += $" → {shares}";
+            if (row.Plan.BuyAmounts.IsDefault(stage, Defaults))
+                text += " (기본)";
             if (row.Error is null && row.Status == stage)
                 text += "  ◀";
             lines.Add(text);
         }
     }
 
-    /// <summary>매수금액 입력칸 아래 달러 환산 미리보기.</summary>
-    private string AmountPreview(string text)
+    /// <summary>
+    /// 매수금액 입력칸 아래 달러 환산 미리보기. stage를 주면(목표 입력칸) 기본값을 따르는지 개별 저장인지도 표시한다.
+    /// </summary>
+    private string AmountPreview(string text, BuyStatus? stage)
     {
         try
         {
+            var defaultKrw = stage is { } s ? Defaults.For(s) : null;
             if (Money.ParseKrw(text, "") is not { } krw)
-                return "";
-            return Money.KrwToUsd(krw, UsdKrw) is { } usd
+                return defaultKrw is { } d ? $"비우면 기본 {Money.KrwText(d)}" : "";
+            if (krw == 0)
+                return stage is null ? "0 = 이 단계는 사지 않음" : "0 = 사지 않음 · 개별 저장";
+            var preview = Money.KrwToUsd(krw, UsdKrw) is { } usd
                 ? $"{Money.KrwText(krw)} ≈ {Money.UsdText(usd)}"
                 : $"{Money.KrwText(krw)} (환율 조회 전)";
+            if (stage is not { } st)
+                return preview;
+            // 선택한 목표가 있으면 그 단계 매수단가에 살 주식 수(내림)
+            // 선택한 목표가 있으면 둘째 줄에 그 단계 매수단가에 살 주식 수(내림)
+            var tag = krw == defaultKrw ? "기본" : "개별 저장";
+            return Selected?.SharesText(st, krw) is { } shares
+                ? $"{preview}{Environment.NewLine}{shares} · {tag}"
+                : $"{preview} · {tag}";
         }
         catch (ArgumentException)
         {
             return "금액 형식 오류";
         }
+    }
+
+    /// <summary>목표 입력칸의 매수금액 = 목표에 저장한 값, 없는 단계는 기본 매수금액.</summary>
+    private void FillFormAmounts(BuyAmounts saved)
+    {
+        var a = saved.WithDefaults(Defaults);
+        FormBuyKrw = KrwInput(a.BuyKrw);
+        FormMustBuyKrw = KrwInput(a.MustBuyKrw);
+        FormStrongBuyKrw = KrwInput(a.StrongBuyKrw);
     }
 
     private double? EpsPerPrice() =>

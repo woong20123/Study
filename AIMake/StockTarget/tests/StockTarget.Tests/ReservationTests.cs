@@ -85,8 +85,68 @@ public class ReservationPlannerTests
         var plan = ReservationPlanner.Plan([msft, tiny], start, start.AddDays(4), 1350);
 
         Assert.Empty(plan.Orders);
-        Assert.Equal("매수금액 미입력", plan.Skips.Single(s => s.Symbol == "MSFT").Reason);
+        Assert.Equal("매수금액 미입력(기본 매수금액도 없음)", plan.Skips.Single(s => s.Symbol == "MSFT").Reason);
         Assert.Contains("1주", plan.Skips.Single(s => s.Symbol == "KO").Reason);
+    }
+
+    [Fact]
+    public void PlanUsesDefaultAmountsForEmptyStages()
+    {
+        var start = new DateOnly(2026, 10, 12);
+        var defaults = new BuyAmounts(1_000_000, 2_000_000, 3_000_000);
+        var followsDefault = Ko(null);
+        var withOverride = Ko(new BuyAmounts(BuyKrw: 0, StrongBuyKrw: 4_000_000)) with { Symbol = "PEP" };
+
+        var plan = ReservationPlanner.Plan([followsDefault, withOverride], start, start.AddDays(4), 1350, defaults);
+
+        Assert.Empty(plan.Skips);
+        // 기본값만 쓰는 목표: 100만 / +100만 / +100만
+        Assert.Equal([1_000_000d, 1_000_000, 1_000_000], plan.Orders.Where(o => o.Symbol == "KO").Select(o => o.AmountKrw));
+        // 매수 0(사지 않음) · 필수매수 기본 200만 · 강력매수 개별 400만 → 필수 200만 / 강력 +200만
+        var pep = plan.Orders.Where(o => o.Symbol == "PEP").ToList();
+        Assert.Equal([BuyStatus.MustBuy, BuyStatus.StrongBuy], pep.Select(o => o.Stage));
+        Assert.Equal([2_000_000d, 2_000_000], pep.Select(o => o.AmountKrw));
+    }
+
+    [Theory]
+    [InlineData(100.0, new BuyStatus[0], "매수 · 필수매수 · 강력매수 미도달: 현재가 100.00 > 주문가 89.84 · 80.86 · 71.87 (+11.3%)")]
+    [InlineData(89.84, new[] { BuyStatus.Buy }, "필수매수 · 강력매수 미도달: 현재가 89.84 > 주문가 80.86 · 71.87 (+11.1%)")] // 주문가와 같으면 도달
+    [InlineData(85.82, new[] { BuyStatus.Buy }, "필수매수 · 강력매수 미도달: 현재가 85.82 > 주문가 80.86 · 71.87 (+6.1%)")]
+    [InlineData(75.0, new[] { BuyStatus.Buy, BuyStatus.MustBuy }, "강력매수 미도달: 현재가 75.00 > 주문가 71.87 (+4.4%)")]
+    [InlineData(70.0, new[] { BuyStatus.Buy, BuyStatus.MustBuy, BuyStatus.StrongBuy }, null)]
+    public void PlanKeepsOnlyStagesReachedByCurrentPrice(double current, BuyStatus[] expected, string? skip)
+    {
+        var start = new DateOnly(2026, 10, 12);
+        var prices = new Dictionary<string, double> { ["KO"] = current };
+        var plan = ReservationPlanner.Plan([Ko(new BuyAmounts(1_000_000, 2_000_000, 3_000_000))],
+            start, start.AddDays(4), 1350, currentPrices: prices);
+
+        Assert.Equal(expected, plan.Orders.Select(o => o.Stage));
+        Assert.All(plan.Orders, o => Assert.True(current <= o.Price));
+        Assert.All(plan.Orders, o => Assert.Equal(1_000_000, o.AmountKrw)); // 계단식 금액은 그대로
+        Assert.Equal(skip is null ? [] : [skip], plan.Skips.Select(s => s.Reason));
+    }
+
+    [Fact]
+    public void PlanSkipsTargetWithoutCurrentPrice()
+    {
+        var start = new DateOnly(2026, 10, 12);
+        var pep = Ko(new BuyAmounts(BuyKrw: 1_000_000)) with { Symbol = "PEP" };
+        var plan = ReservationPlanner.Plan([Ko(new BuyAmounts(BuyKrw: 1_000_000)), pep], start, start.AddDays(4), 1350,
+            currentPrices: new Dictionary<string, double> { ["KO"] = 80 }); // PEP 시세 조회 실패
+
+        Assert.Equal("KO", Assert.Single(plan.Orders).Symbol);
+        Assert.Equal("현재가 없음(시세 조회 실패) — 도달한 단계를 알 수 없음", plan.Skips.Single(s => s.Symbol == "PEP").Reason);
+    }
+
+    [Fact]
+    public void UnreachedReasonNamesQuarterWhenPeriodIsSplit()
+    {
+        // 분기 경계 주: Q4(b≈89.85)에는 도달, Q1(b가 더 높음)에도 도달 / 현재가 95면 둘 다 미도달
+        var plan = ReservationPlanner.Plan([Ko(new BuyAmounts(BuyKrw: 1_000_000))],
+            new DateOnly(2026, 12, 28), new DateOnly(2027, 1, 1), 1350, currentPrices: new Dictionary<string, double> { ["KO"] = 95 });
+        Assert.Empty(plan.Orders);
+        Assert.Equal(["2026Q4", "2027Q1"], plan.Skips.Select(s => s.Reason[..6]));
     }
 
     [Fact]
@@ -235,5 +295,60 @@ public sealed class KiwoomClientTests : IDisposable
             };
             return new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(json, Encoding.UTF8, "application/json") };
         }
+    }
+}
+
+public class StartupOptionsTests
+{
+    private static readonly Dictionary<string, string> Keys = new()
+    {
+        [KiwoomOptions.AppKeyVariable] = "APPKEY",
+        [KiwoomOptions.SecretKeyVariable] = "SECRET",
+    };
+
+    private static Func<string, string?> Env(string? kiwoomEnv = null, bool keys = true) => name =>
+        name == KiwoomOptions.EnvVariable ? kiwoomEnv : keys && Keys.TryGetValue(name, out var v) ? v : null;
+
+    [Fact]
+    public void ParsesDbAndKiwoom()
+    {
+        Assert.Equal(new StartupOptions(), StartupOptions.Parse([]));
+        Assert.Equal(new StartupOptions(@"C:\t\a.db", KiwoomMode.Off), StartupOptions.Parse(["--db", @"C:\t\a.db", "--kiwoom", "off"]));
+        Assert.Equal(KiwoomMode.Real, StartupOptions.Parse(["--KIWOOM", "Real"]).Kiwoom); // 대소문자 무시
+        Assert.Equal(KiwoomMode.Mock, StartupOptions.Parse(["--kiwoom", "mock"]).Kiwoom);
+        Assert.Equal(KiwoomMode.Auto, StartupOptions.Parse(["--kiwoom", "auto"]).Kiwoom);
+    }
+
+    [Theory]
+    [InlineData("--kiwoom", "on")]   // 잘못된 값
+    [InlineData("--kiwoom")]         // 값 없음
+    [InlineData("--kiwoom", "--db")] // 다음 옵션을 값으로 착각하지 않음
+    [InlineData("--real")]           // 모르는 옵션
+    public void RejectsBadOptions(params string[] args) =>
+        Assert.Throws<ArgumentException>(() => StartupOptions.Parse(args));
+
+    [Theory]
+    [InlineData(KiwoomMode.Auto, null, true)]    // 옵션 없음 + KIWOOM_ENV 없음 → 모의투자
+    [InlineData(KiwoomMode.Auto, "real", false)] // 옵션 없음 → KIWOOM_ENV=real 따름
+    [InlineData(KiwoomMode.Mock, "real", true)]  // --kiwoom mock 이 KIWOOM_ENV=real보다 우선
+    [InlineData(KiwoomMode.Real, null, false)]   // --kiwoom real
+    public void ModeOverridesKiwoomEnv(KiwoomMode mode, string? kiwoomEnv, bool expectMock)
+    {
+        var o = KiwoomOptions.FromEnvironment(mode, Env(kiwoomEnv));
+        Assert.NotNull(o);
+        Assert.Equal(expectMock, o.IsMock);
+    }
+
+    [Fact]
+    public void OffDisablesEvenWithKeys()
+    {
+        Assert.Null(KiwoomOptions.FromEnvironment(KiwoomMode.Off, Env("real")));
+        Assert.Null(KiwoomOptions.FromEnvironment(KiwoomMode.Real, Env(keys: false))); // 키가 없으면 실전 옵션이어도 연동 안 함
+
+        Assert.Equal("키움: 꺼짐(--kiwoom off)", KiwoomOptions.StatusText(KiwoomMode.Off, null));
+        Assert.Equal("키움: 키 미설정", KiwoomOptions.StatusText(KiwoomMode.Real, null));
+        Assert.Equal("키움: 모의투자", KiwoomOptions.StatusText(KiwoomMode.Auto, KiwoomOptions.FromEnvironment(KiwoomMode.Auto, Env())));
+        Assert.Equal("키움: 실전(--kiwoom real)",
+            KiwoomOptions.StatusText(KiwoomMode.Real, KiwoomOptions.FromEnvironment(KiwoomMode.Real, Env())));
     }
 }

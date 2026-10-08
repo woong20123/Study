@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:StockTarget.Mobile.ViewModels"
+             x:Class="StockTarget.Mobile.Views.TargetEditPage"
+             x:DataType="vm:MobileTargetEditViewModel"
+             Title="목표 종목 설정">
+
+    <ScrollView>
+        <VerticalStackLayout Spacing="14" Padding="16">
+            <!-- 기본 정보 -->
+            <Border Padding="16">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="기본 정보" FontSize="16" FontAttributes="Bold" TextColor="#0F172A" />
+
+                    <Label Text="티커 심볼 (예: KO, AAPL)" FontSize="12" TextColor="#64748B" />
+                    <Entry Text="{Binding Symbol}" Placeholder="티커 입력" />
+
+                    <Grid ColumnDefinitions="*, Auto" ColumnSpacing="10">
+                        <VerticalStackLayout Grid.Column="0">
+                            <Label Text="목표 연도" FontSize="12" TextColor="#64748B" />
+                            <Entry Text="{Binding TargetYear}" Keyboard="Numeric" />
+                        </VerticalStackLayout>
+                        <VerticalStackLayout Grid.Column="1" VerticalOptions="End">
+                            <Stepper Minimum="2025" Maximum="2050" Increment="1" Value="{Binding TargetYear}" />
+                        </VerticalStackLayout>
+                    </Grid>
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- 목표 주가 산정 방식 -->
+            <Border Padding="16">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="목표 주가 설정" FontSize="16" FontAttributes="Bold" TextColor="#0F172A" />
+
+                    <HorizontalStackLayout Spacing="10">
+                        <Label Text="직접 입력 모드" VerticalOptions="Center" FontSize="13" />
+                        <Switch IsToggled="{Binding UseDirectPrice}" />
+                    </HorizontalStackLayout>
+
+                    <!-- 직접 입력 시 -->
+                    <VerticalStackLayout Spacing="6" IsVisible="{Binding UseDirectPrice}">
+                        <Label Text="목표 주가 ($)" FontSize="12" TextColor="#64748B" />
+                        <Entry Text="{Binding TargetPrice}" Placeholder="예: 189.00" Keyboard="Numeric" />
+                    </VerticalStackLayout>
+
+                    <!-- EPS × PER 산정 시 -->
+                    <Grid ColumnDefinitions="*, *" ColumnSpacing="10" IsVisible="{Binding UseEpsPer}">
+                        <VerticalStackLayout Grid.Column="0">
+                            <Label Text="목표 EPS ($)" FontSize="12" TextColor="#64748B" />
+                            <Entry Text="{Binding Eps}" Placeholder="예: 10.5" Keyboard="Numeric" />
+                        </VerticalStackLayout>
+                        <VerticalStackLayout Grid.Column="1">
+                            <Label Text="목표 PER (배)" FontSize="12" TextColor="#64748B" />
+                            <Entry Text="{Binding Per}" Placeholder="예: 18" Keyboard="Numeric" />
+                        </VerticalStackLayout>
+                    </Grid>
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- 수익률 및 배당 -->
+            <Border Padding="16">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="수익률 &amp; 배당수익률" FontSize="16" FontAttributes="Bold" TextColor="#0F172A" />
+
+                    <Label Text="목표 수익률 (%)" FontSize="12" TextColor="#64748B" />
+                    <Entry Text="{Binding ReturnPct}" Placeholder="예: 10.0" Keyboard="Numeric" />
+
+                    <Label Text="최근 5년 배당수익률 (%)" FontSize="12" TextColor="#64748B" />
+                    <Grid ColumnDefinitions="*, Auto" ColumnSpacing="10">
+                        <Entry Grid.Column="0" Text="{Binding DividendYieldPct}" Placeholder="비우면 자동 계산" Keyboard="Numeric" />
+                        <Button Grid.Column="1" Text="5년조회" Command="{Binding AutoFetchDividendCommand}" FontSize="12" Padding="12,0" HeightRequest="44" />
+                    </Grid>
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- 단계별 매수금액 (원) -->
+            <Border Padding="16">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="단계별 매수금액 (원)" FontSize="16" FontAttributes="Bold" TextColor="#0F172A" />
+                    <Label Text="비워두면 '기본 매수금액'이 적용됩니다." FontSize="11" TextColor="#64748B" />
+
+                    <Label Text="매수 (≤ 매입 목표가)" FontSize="12" TextColor="#16A34A" FontAttributes="Bold" />
+                    <Entry Text="{Binding BuyKrw}" Placeholder="예: 100만 또는 1000000" />
+
+                    <Label Text="필수매수 (-10% 이하)" FontSize="12" TextColor="#0284C7" FontAttributes="Bold" />
+                    <Entry Text="{Binding MustBuyKrw}" Placeholder="예: 200만" />
+
+                    <Label Text="강력매수 (-20% 이하)" FontSize="12" TextColor="#1D4ED8" FontAttributes="Bold" />
+                    <Entry Text="{Binding StrongBuyKrw}" Placeholder="예: 300만" />
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- 메모 -->
+            <Border Padding="16">
+                <VerticalStackLayout Spacing="6">
+                    <Label Text="메모" FontSize="12" TextColor="#64748B" />
+                    <Entry Text="{Binding Memo}" Placeholder="투자 근거 또는 메모" />
+                </VerticalStackLayout>
+            </Border>
+
+            <Label Text="{Binding Message}" FontSize="13" TextColor="#DC2626" HorizontalOptions="Center" />
+
+            <!-- 저장 버튼 -->
+            <Button Text="저장하기" Command="{Binding SaveCommand}" HeightRequest="50" FontSize="16" CornerRadius="10" />
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>

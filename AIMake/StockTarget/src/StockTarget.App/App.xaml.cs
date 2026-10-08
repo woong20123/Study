@@ -14,15 +14,23 @@ public partial class App : Application
         base.OnStartup(e);
         DispatcherUnhandledException += OnUnhandled;
 
-        // DB 경로: 인자로 지정하거나(--db <path>) 기본 %LOCALAPPDATA%\StockTarget\stocktarget.db
-        var dbPath = StockDatabase.DefaultPath;
-        var idx = Array.IndexOf(e.Args, "--db");
-        if (idx >= 0 && idx + 1 < e.Args.Length)
-            dbPath = e.Args[idx + 1];
+        // 구동 옵션: --db <path>(기본 %LOCALAPPDATA%\StockTarget\stocktarget.db), --kiwoom off|mock|real
+        StartupOptions options;
+        try
+        {
+            options = StartupOptions.Parse(e.Args);
+        }
+        catch (ArgumentException ex)
+        {
+            MessageBox.Show($"{ex.Message}\n\n사용법: {StartupOptions.Usage}", "구동 옵션 오류",
+                MessageBoxButton.OK, MessageBoxImage.Error);
+            Shutdown(1);
+            return;
+        }
 
-        var db = new StockDatabase(dbPath);
+        var db = new StockDatabase(options.DbPath ?? StockDatabase.DefaultPath);
         _client = new YahooChartClient();
-        var vm = new MainViewModel(db, new StockService(db, _client));
+        var vm = new MainViewModel(db, new StockService(db, _client), options.Kiwoom);
         MainWindow = new MainWindow(vm);
         MainWindow.Show();
     }

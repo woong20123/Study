@@ -76,7 +76,9 @@ public sealed partial class MainViewModel
     /// <summary>현재 데이터를 자동 백업한 뒤 백업 내용으로 통째로 바꾼다.</summary>
     private async Task RestoreAsync(BackupData backup, string source)
     {
-        backup.ToTargets(); // 값 검사(잘못된 백업이면 여기서 예외, DB는 그대로)
+        // 값 검사(잘못된 백업이면 여기서 예외, DB는 그대로)
+        backup.ToTargets();
+        backup.ToDefaultAmounts();
         var current = _db.ExportBackup();
         var answer = MessageBox.Show(
             $"{source}의 백업으로 현재 데이터를 바꿉니다.\n\n" +

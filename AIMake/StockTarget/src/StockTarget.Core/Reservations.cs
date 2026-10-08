@@ -42,6 +42,8 @@ public sealed record ReservationPlan(
 /// <code>
 /// 단계별 주문가 : 매수 b · 필수매수 b × 0.90 · 강력매수 b × 0.80   (b = 그 분기 매입 목표가, 센트 단위 내림)
 /// 단계별 금액   : 매수 금액 / 필수매수 − 매수 / 강력매수 − 필수매수  (계단식 · 총액 맞춤)
+/// 금액          : 목표에 입력한 값, 비운 단계는 기본 매수금액(0이면 그 단계는 주문하지 않음)
+/// 대상 단계     : 현재가가 주문가 이하로 이미 내려온 단계만(현재가를 주면). 나머지는 제외 목록에 사유와 함께
 /// 수량          : 금액(원) ÷ 환율 ÷ 주문가, 1주 단위 내림
 /// </code>
 /// 종가가 강력매수 가격 이하면 세 건이 모두 체결돼 총 체결액이 강력매수 금액이 된다.
@@ -87,7 +89,14 @@ public static class ReservationPlanner
         return list;
     }
 
-    public static ReservationPlan Plan(IEnumerable<TargetPlan> targets, DateOnly start, DateOnly end, double usdKrw)
+    /// <param name="defaults">기본 매수금액. 목표에서 비운 단계에 쓴다.</param>
+    /// <param name="currentPrices">
+    /// 티커별 현재가. 주면 현재가 ≤ 주문가인(이미 도달한) 단계만 주문하고, 현재가가 없는 목표는 제외한다.
+    /// null이면 도달 여부를 보지 않고 모든 단계를 주문한다.
+    /// </param>
+    public static ReservationPlan Plan(
+        IEnumerable<TargetPlan> targets, DateOnly start, DateOnly end, double usdKrw, BuyAmounts? defaults = null,
+        IReadOnlyDictionary<string, double>? currentPrices = null)
     {
         if (usdKrw <= 0)
             throw new ArgumentException("환율이 올바르지 않습니다");
@@ -98,14 +107,27 @@ public static class ReservationPlanner
         var skips = new List<ReservationSkip>();
         foreach (var t in targets)
         {
-            if (t.BuyAmounts.IsEmpty)
+            var amounts = t.EffectiveAmounts(defaults);
+            if (amounts.IsEmpty)
             {
-                skips.Add(new ReservationSkip(t.Symbol, "매수금액 미입력"));
+                skips.Add(new ReservationSkip(t.Symbol, "매수금액 미입력(기본 매수금액도 없음)"));
                 continue;
             }
 
+            double? current = null;
+            if (currentPrices is not null)
+            {
+                if (!currentPrices.TryGetValue(t.Symbol, out var c) || c <= 0)
+                {
+                    skips.Add(new ReservationSkip(t.Symbol, "현재가 없음(시세 조회 실패) — 도달한 단계를 알 수 없음"));
+                    continue;
+                }
+                current = c;
+            }
+
             var schedule = TargetCalculator.Schedule(t);
-            foreach (var (quarter, segStart, segEnd) in QuarterSegments(start, end))
+            var segments = QuarterSegments(start, end);
+            foreach (var (quarter, segStart, segEnd) in segments)
             {
                 var row = schedule.FirstOrDefault(r => r.Quarter == quarter);
                 if (row is null)
@@ -113,13 +135,19 @@ public static class ReservationPlanner
                     skips.Add(new ReservationSkip(t.Symbol, $"{quarter}는 목표 일정 밖"));
                     continue;
                 }
-                foreach (var (stage, krw) in StageIncrements(t.BuyAmounts))
+                var unreached = new List<(BuyStatus Stage, double Price)>();
+                foreach (var (stage, krw) in StageIncrements(amounts))
                 {
                     if (krw <= 0)
                         continue;
                     var price = LimitPrice(row.BuyPrice, stage);
+                    if (current is { } cur && cur > price)
+                    {
+                        unreached.Add((stage, price));
+                        continue;
+                    }
                     var usd = krw / usdKrw;
-                    var qty = price > 0 ? (int)Math.Floor(usd / price) : 0;
+                    var qty = Money.Shares(krw, usdKrw, price) ?? 0;
                     if (qty <= 0)
                     {
                         skips.Add(new ReservationSkip(t.Symbol,
@@ -128,9 +156,22 @@ public static class ReservationPlanner
                     }
                     orders.Add(new ReservationOrder(t.Symbol, stage, quarter, segStart, segEnd, row.BuyPrice, price, qty, krw, usd));
                 }
+                if (unreached.Count > 0 && current is { } now)
+                    skips.Add(new ReservationSkip(t.Symbol, UnreachedReason(unreached, now, segments.Count > 1 ? quarter : null)));
             }
         }
         return new ReservationPlan(start, end, usdKrw, orders, skips);
+    }
+
+    /// <summary>"필수매수 · 강력매수 미도달: 현재가 85.82 > 주문가 80.86 · 71.87 (+6.1%)". 괴리는 가장 가까운 단계 기준.</summary>
+    private static string UnreachedReason(List<(BuyStatus Stage, double Price)> unreached, double current, string? quarter)
+    {
+        var stages = string.Join(" · ", unreached.Select(u => u.Stage.ToText()));
+        var prices = string.Join(" · ", unreached.Select(u => u.Price.ToString("0.00", CultureInfo.InvariantCulture)));
+        var gap = (current / unreached[0].Price - 1) * 100;
+        var prefix = quarter is null ? "" : quarter + " ";
+        return $"{prefix}{stages} 미도달: 현재가 {current.ToString("0.00", CultureInfo.InvariantCulture)} > 주문가 {prices} " +
+               $"({gap.ToString("+0.0", CultureInfo.InvariantCulture)}%)";
     }
 
     /// <summary>기간을 분기별로 나눈다(주말은 양 끝에서 뺀다).</summary>

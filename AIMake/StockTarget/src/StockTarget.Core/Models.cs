@@ -89,6 +89,9 @@ public sealed record TargetPlan(
     /// <summary>매수 단계별 매수금액(원). 입력하지 않았으면 모든 단계가 비어 있다.</summary>
     public BuyAmounts BuyAmounts => Amounts ?? BuyAmounts.Empty;
 
+    /// <summary>실제로 쓰는 매수금액 = 목표에 입력한 값, 비운 단계는 기본 매수금액.</summary>
+    public BuyAmounts EffectiveAmounts(BuyAmounts? defaults) => BuyAmounts.WithDefaults(defaults);
+
     /// <summary>목표일 = 목표 연도 12월 31일.</summary>
     public DateOnly TargetDate => new(TargetYear, 12, 31);
 
@@ -105,6 +108,21 @@ public sealed record BuyAmounts(double? BuyKrw = null, double? MustBuyKrw = null
     public static readonly BuyAmounts Empty = new();
 
     public bool IsEmpty => BuyKrw is null && MustBuyKrw is null && StrongBuyKrw is null;
+
+    /// <summary>비운 단계를 기본 매수금액으로 채운다(0은 '이 단계는 사지 않음'이라 기본값으로 바꾸지 않는다).</summary>
+    public BuyAmounts WithDefaults(BuyAmounts? defaults) => defaults is null || defaults.IsEmpty
+        ? this
+        : new(BuyKrw ?? defaults.BuyKrw, MustBuyKrw ?? defaults.MustBuyKrw, StrongBuyKrw ?? defaults.StrongBuyKrw);
+
+    /// <summary>기본 매수금액과 같은 단계는 비운다(목표에는 기본값과 다른 단계만 저장한다).</summary>
+    public BuyAmounts ExceptDefaults(BuyAmounts? defaults) => defaults is null
+        ? this
+        : new(BuyKrw == defaults.BuyKrw ? null : BuyKrw,
+              MustBuyKrw == defaults.MustBuyKrw ? null : MustBuyKrw,
+              StrongBuyKrw == defaults.StrongBuyKrw ? null : StrongBuyKrw);
+
+    /// <summary>단계 금액이 목표에 직접 입력한 값이 아니라 기본 매수금액에서 온 것인지.</summary>
+    public bool IsDefault(BuyStatus s, BuyAmounts? defaults) => For(s) is null && defaults?.For(s) is not null;
 
     /// <summary>판정 단계에 해당하는 매수금액. 매수 단계가 아니거나(매입 대기·대기) 비어 있으면 null.</summary>
     public double? For(BuyStatus s) => s switch

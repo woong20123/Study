@@ -129,6 +129,11 @@
       <tr><td>14</td><td>매입 대기 범위를 5% → 3% 이내로</td><td><code>TargetCalculator.NearPct</code> = 3</td><td><span class="tag ok">완료</span></td></tr>
       <tr><td>15</td><td>등록 목록 기준 다음 주(월~금) 키움증권 API로 미국주식 LOC 예약 매수</td><td><code>ReservationPlanner</code>(주문표) · <code>KiwoomClient</code>(<code>au10001</code> · <code>usa10098</code> · <code>ust21200</code>) · <code>ReservationService</code>(중복 방지) · <code>ReservationWindow</code>. 기간예약(잔량주문) · LOC · 계단식(총액 맞춤)</td><td><span class="tag ok">구현</span> <span class="tag warn">실접수 미확인</span></td></tr>
       <tr><td>16</td><td>데이터를 JSON으로 추출 · 복원, 기기 간 호환을 위해 Firebase에 저장, Google 로그인으로 고유 키</td><td><code>BackupData</code>/<code>BackupSerializer</code>(형식 v1), <code>StockDatabase.ExportBackup</code>/<code>ReplaceWithBackup</code>, <code>FirebaseClient</code>(Auth · Realtime Database REST), <code>GoogleLoopbackSignIn</code>(PKCE), <code>CloudSessionStore</code>(DPAPI). 메뉴 <strong>데이터</strong></td><td><span class="tag ok">구현</span> <span class="tag warn">실연결 미확인</span></td></tr>
+      <tr><td>17</td><td>기본으로 쓸 매수금액을 입력해 관리. 평소에는 기본 매수금액을 쓰고, 입력값이 다를 때만 목표에 저장</td><td>DB <code>settings</code> 테이블(<code>StockDatabase.GetDefaultAmounts</code>/<code>SaveDefaultAmounts</code>), <code>BuyAmounts.WithDefaults</code>(비운 단계 = 기본값) · <code>ExceptDefaults</code>(기본값과 같은 단계는 저장 안 함). 화면 위쪽 <strong>기본 매수금액</strong> 영역, 목표 입력칸은 기본값으로 채워지고 단계마다 <code>· 기본</code> / <code>· 개별 저장</code> 표시. 예약 주문표 · 백업(형식 v2) · Firebase에도 반영</td><td><span class="tag ok">완료</span></td></tr>
+      <tr><td>18</td><td>매수금액 옆에 매수단가별로 살 주식 수를 내림해서 표시</td><td>매수단가 = 이번 분기 매입 목표가 × (1 − 단계 할인율) = LOC 주문가(<code>ReservationPlanner.LimitPrice</code>), 주식 수 = 단계 금액 ÷ 환율 ÷ 매수단가 내림(<code>Money.Shares</code>). 목록 <strong>매수단가 × 수량</strong> 열(현재 판정 단계), 요약의 단계별 줄, 목표 입력칸 아래 둘째 줄</td><td><span class="tag ok">완료</span></td></tr>
+      <tr><td>19</td><td>구동 옵션으로 키움증권 연동 기능 제어</td><td><code>--kiwoom off|mock|real</code>(<code>StartupOptions</code>, <code>KiwoomMode</code>). off = 주문표 계산만 · 접수 불가, mock/real = <code>KIWOOM_ENV</code>보다 우선, 옵션 없음 = 기존처럼 환경변수. 상태 표시줄에 <code>키움: …</code>(실전은 빨간색), 잘못된 옵션이면 오류 창 후 종료</td><td><span class="tag ok">완료</span></td></tr>
+      <tr><td>20</td><td>주문표에는 주문 가능한 목록만 표시</td><td>현재가 ≤ 그 단계 LOC 주문가인(이미 도달한) 단계만 주문(<code>ReservationPlanner.Plan</code>의 <code>currentPrices</code>, 메인 화면의 현재가 사용). 미도달 단계는 제외 목록에 <code>필수매수 · 강력매수 미도달: 현재가 85.82 &gt; 주문가 80.86 · 71.87 (+6.1%)</code>, 시세 조회 실패 목표는 <code>현재가 없음</code>. 계단식 금액은 그대로</td><td><span class="tag ok">완료</span></td></tr>
+      <tr><td>21</td><td>WPF 데스크톱 앱과 코어 로직을 공유하는 Android 모바일 앱 구성</td><td><code>StockTarget.Core</code>를 그대로 참조하는 .NET MAUI(<code>net9.0-android</code>) 프로젝트 <code>StockTarget.Mobile</code> 추가. 모바일 카드 리스트, 당겨서 새로고침, 5단계 판정 색상, 종목 상세/수정 및 LOC 예약 화면 구현</td><td><span class="tag ok">완료</span></td></tr>
     </tbody>
     <caption>Python 버전(<code>E:\work\tools\stock_price\</code>)은 CLI로 그대로 남아 있다. C# 앱은 별도 DB를 쓴다.</caption>
   </table></div>
@@ -248,6 +253,23 @@
   <!-- 5 -->
   <h2 id="ui">5. 화면</h2>
   <figure>
+    <img src="images/main_defaults.png" alt="기본 매수금액 입력과 목표별 개별 금액">
+    <figcaption>기본 매수금액: 위쪽에 매수 100만 · 필수매수 200만 · 강력매수 300만을 저장. AAPL은 목표에 금액을 저장하지 않아 요약의 세 단계가 모두 <code>(기본)</code>이다.
+      목표 입력칸은 기본값으로 채워지고, 강력매수만 <code>500만</code>으로 바꾸면 그 단계에 <code>· 개별 저장</code>이 표시된다. 이 상태로 저장하면 이 목표에는 강력매수 500만만 저장된다.
+      MSFT처럼 일부 단계를 따로 저장한 목표는 아래 요약 줄에 개수로 나온다.</figcaption>
+  </figure>
+  <h3>기본 매수금액 규칙</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>목표 입력칸 값</th><th>목표에 저장되는 값</th><th>실제로 쓰는 금액</th><th>기본값을 바꾸면</th></tr></thead>
+    <tbody>
+      <tr><td>기본값 그대로(처음에 채워진 값)</td><td>없음(null)</td><td>기본값</td><td>따라 바뀐다</td></tr>
+      <tr><td>비움</td><td>없음(null)</td><td>기본값</td><td>따라 바뀐다</td></tr>
+      <tr><td>기본값과 다른 금액</td><td>그 금액</td><td>그 금액</td><td>그대로</td></tr>
+      <tr><td>0</td><td>0</td><td>그 단계는 사지 않음(목록 · 주문표에서 빠짐)</td><td>그대로</td></tr>
+    </tbody>
+    <caption>근거: <code>Models.cs</code> <code>BuyAmounts.WithDefaults</code> · <code>ExceptDefaults</code> · <code>IsDefault</code>, <code>MainViewModel.SaveAsync</code>. 기본값을 저장하면 입력 중인 칸 중 이전 기본값 그대로이거나 비어 있던 칸은 새 기본값으로 바뀐다.</caption>
+  </table></div>
+  <figure>
     <img src="images/main_amounts.png" alt="매수금액 원화·달러 표시와 목표 주가 직접 입력">
     <figcaption>매수금액 · 목표 주가 직접 입력: 입력 폼에서 목표 주가 <strong>직접 입력</strong>(120) 선택, 단계별 매수금액(원) 아래에 달러 미리보기.
       목록 <strong>매수금액</strong> 열에 현재 판정(매수) 단계 금액 <code>₩1,000,000 ($747.67)</code>, 요약에 단계별 금액·주식 수와 <code>◀</code>, 상태 표시줄에 환율.</figcaption>
@@ -281,11 +303,17 @@
       <tr><td>키움 API</td><td>가짜 서버로 요청 확인: 토큰 → <code>ust21200</code> 본문(기간예약 2 · 기간 · 거래소 · LOC 30 · 주문가), 토큰 재사용 · 실전 도메인, 오류 코드 예외, 키 비노출, 중복 접수 방지 · 실패 후 계속</td><td class="num">5 통과</td></tr>
       <tr><td>백업</td><td>다른 DB로 왕복 시 목표 · 이력 · 예약 동일, 형식(format · version · 날짜 문자열 · null 생략 · 캐시 제외), 교체 시 백업에 없는 데이터 삭제, Realtime Database의 빈 배열 누락, 다른 파일 · 새 버전 거부 3종, 잘못된 백업이면 DB 그대로</td><td class="num">8 통과</td></tr>
       <tr><td>Google · Firebase</td><td>PKCE(SHA-256), 인증 URL, 코드 교환, 로그인(uid · Google 번호), 본인 uid 경로 저장 · 읽기, 만료 토큰 자동 갱신, 권한 거부 오류, 설정값 비노출 (가짜 서버)</td><td class="num">8 통과</td></tr>
-      <tr><td>DB · 캐시</td><td>목표 갱신·삭제(이력 동반 삭제), 하루 1행, 59분 적중/60분 만료, TTL 상한, 무효화, JSON 왕복, 매수금액 저장·비우기, 직접 입력 목표 주가 왕복, <strong>이전 스키마 DB에 컬럼 자동 추가</strong></td><td class="num">8 통과</td></tr>
+      <tr><td>DB · 캐시</td><td>목표 갱신·삭제(이력 동반 삭제), 하루 1행, 59분 적중/60분 만료, TTL 상한, 무효화, JSON 왕복, 매수금액 저장·비우기, 직접 입력 목표 주가 왕복, <strong>이전 스키마 DB에 컬럼 자동 추가</strong>, 기본 매수금액 저장 · 단계 비우기 · 해제</td><td class="num">9 통과</td></tr>
+      <tr><td>주식 수 · 구동 옵션</td><td>주식 수 내림(3.37→3, 강력매수 단가 177.60에 12주, 딱 나누어떨어지는 경우 이진 오차 없음, 1주 미만 0, 환율 · 가격 없음), <code>--db</code> · <code>--kiwoom</code> 해석 · 대소문자 무시, 잘못된 값 · 값 없음 · 모르는 옵션 거부, mock/real이 <code>KIWOOM_ENV</code>보다 우선, off면 키가 있어도 연동 안 함, 상태 문구</td><td class="num">11 통과</td></tr>
+      <tr><td>UI 자동화(주식 수 · 구동 옵션)</td><td>KO(매수 판정) 요약 <code>89.84 × 8주</code> · <code>80.86 × 18주</code> · <code>71.87 × 31주</code>, 목록 열, 입력칸 둘째 줄 확인. <code>--kiwoom off</code>로 실행 → 상태 표시줄 <code>키움: 꺼짐</code>, 예약 창 안내 문구 · 접수 버튼 비활성. <code>--kiwoom on</code> → 구동 옵션 오류 창</td><td class="num">확인</td></tr>
+      <tr><td>도달 단계만 주문</td><td>현재가 100 · 89.84(주문가와 같음) · 85.82 · 75 · 70 → 주문 0 · 1 · 1 · 2 · 3단계와 제외 사유 문구, 계단식 금액 유지, 현재가 없는 목표 제외, 분기 경계 주는 사유에 분기 표시</td><td class="num">7 통과</td></tr>
+      <tr><td>UI 자동화(도달 단계)</td><td>예약 창: KO(−4.5%) <code>매수 89.84 × 8주</code> 1건만 주문표에, AAPL · MSFT(대기)와 KO 필수 · 강력매수는 제외 목록에 사유 표시</td><td class="num">확인</td></tr>
+      <tr><td>기본 매수금액</td><td>비운 단계만 기본값으로 채움(0은 유지), 기본값과 같은 단계는 저장하지 않음, 저장값 + 기본값 = 입력값, 주문표에 기본값 적용(0 단계 제외 · 계단식), 백업 왕복, v1 백업은 현재 설정 유지 · v2에 항목 없으면 해제, 음수 거부</td><td class="num">6 통과</td></tr>
       <tr><td>실데이터</td><td>KO 5년 평균이 Python 결과(2.92%)와 일치, NVDA 분할 전 배당이 0.004로 환산</td><td class="num">2 통과</td></tr>
       <tr><td>UI 자동화</td><td>임시 DB로 앱 실행 → 목록·요약·탭 표시, 입력 폼으로 NVDA 저장(배당률 자동 조회 0.0902%) → DB에 목표·확인 이력 기록</td><td class="num">확인</td></tr>
       <tr><td>UI 자동화(추가)</td><td>KO를 매수금액 <code>100만</code> / <code>2,000,000</code> / <code>3000000</code>으로 저장 → 달러 미리보기·목록 열·요약 표시. EPS 6 × PER 25(−23.6% 강력매수) 및 목표 주가 직접 입력 120(−4.5% 매수) 두 경우 확인</td><td class="num">확인</td></tr>
       <tr><td>UI 자동화(예약)</td><td><strong>다음 주 LOC 예약...</strong> → KO 3건(89.85×8 · 80.86×9 · 71.88×10), 키 미설정이라 접수 버튼 비활성</td><td class="num">확인</td></tr>
+      <tr><td>UI 자동화(기본 매수금액)</td><td>실제 DB 복사본으로 실행 → 기본값 <code>100만</code> / <code>2,000,000</code> / <code>300만</code> 저장(입력칸이 <code>1,000,000</code> 형식으로 정리, 저장 버튼 비활성) → AAPL 요약 세 단계 <code>(기본)</code>, 목표 입력칸 기본값 채움, 강력매수 <code>500만</code> 입력 시 <code>· 개별 저장</code></td><td class="num">확인</td></tr>
     </tbody>
     <caption>실행: <code>dotnet test</code> (실데이터는 <code>STOCKTARGET_LIVE=1</code>일 때만 실제 조회). UI 확인은 PowerShell UI Automation + PrintWindow 캡처.</caption>
   </table></div>
@@ -329,6 +357,17 @@ dotnet test                                    # 단위 테스트
 set STOCKTARGET_LIVE=1 &amp;&amp; dotnet test          # 실데이터 테스트 포함
 dotnet run --project src\StockTarget.App       # 앱 실행
 src\StockTarget.App\bin\Debug\net9.0-windows\StockTarget.App.exe --db D:\temp\test.db   # 다른 DB로 실행</code></pre>
+  <div class="table-wrap"><table>
+    <thead><tr><th>구동 옵션</th><th>동작</th><th>상태 표시줄</th></tr></thead>
+    <tbody>
+      <tr><td><code>--db &lt;경로&gt;</code></td><td>다른 SQLite 파일 사용(기본 <code>%LOCALAPPDATA%\StockTarget\stocktarget.db</code>)</td><td><code>DB: …</code></td></tr>
+      <tr><td>(<code>--kiwoom</code> 없음)</td><td>기존과 같음: 키가 있으면 <code>KIWOOM_ENV</code>(<code>real</code>이면 실전, 그 외 모의투자)</td><td><code>키움: 모의투자</code> / <code>키움: 실전</code></td></tr>
+      <tr><td><code>--kiwoom off</code></td><td>키움 연동 끔. 예약 창은 주문표 계산만 하고 <strong>접수 버튼 비활성화</strong>(키가 있어도)</td><td><code>키움: 꺼짐(--kiwoom off)</code></td></tr>
+      <tr><td><code>--kiwoom mock</code></td><td><code>KIWOOM_ENV</code>와 상관없이 모의투자</td><td><code>키움: 모의투자(--kiwoom mock)</code></td></tr>
+      <tr><td><code>--kiwoom real</code></td><td><code>KIWOOM_ENV</code>와 상관없이 실전(접수 시 경고 대화상자는 그대로)</td><td><code>키움: 실전(--kiwoom real)</code> 빨간색</td></tr>
+    </tbody>
+    <caption>키가 없으면 어떤 옵션이든 <code>키움: 키 미설정</code>이고 접수할 수 없다. 모르는 옵션 · 잘못된 값이면 <strong>구동 옵션 오류</strong> 창을 띄우고 종료한다. 근거: <code>StartupOptions.cs</code>, <code>KiwoomOptions.FromEnvironment</code>, <code>StartupOptionsTests</code>.</caption>
+  </table></div>
   <p>사용 순서: 입력 폼에 티커·목표 연도·EPS·PER·목표 수익률 입력 → 배당수익률을 비우면 5년 평균을 자동 조회해 고정 → <strong>저장</strong>.
     이후에는 앱을 열 때마다(분기마다) 이번 분기 매입 목표가와 현재가가 비교되고 확인 이력이 쌓인다.</p>
   <p>목표 주가를 따로 정했다면 <strong>목표 주가 → 직접 입력</strong>을 고르고 값을 넣는다(EPS·PER 칸은 비활성화).
@@ -365,7 +404,7 @@ src\StockTarget.App\bin\Debug\net9.0-windows\StockTarget.App.exe --db D:\temp\te
       <tr><td>필수매수</td><td>b × 0.90</td><td>필수매수 − 매수</td><td>필수매수 금액</td></tr>
       <tr><td>강력매수</td><td>b × 0.80</td><td>강력매수 − 필수매수</td><td>강력매수 금액</td></tr>
     </tbody>
-    <caption>b = 예약 기간이 속한 분기의 매입 목표가. 수량 = 금액 ÷ 환율 ÷ 주문가, 1주 단위 내림(실제 체결액은 금액 이하). 기간이 분기 경계를 넘으면 분기별로 나눠 주문. 근거: <code>Reservations.cs</code>, <code>ReservationTests.cs</code>.</caption>
+    <caption>b = 예약 기간이 속한 분기의 매입 목표가. 수량 = 금액 ÷ 환율 ÷ 주문가, 1주 단위 내림(실제 체결액은 금액 이하). 기간이 분기 경계를 넘으면 분기별로 나눠 주문. <strong>현재가가 이미 주문가 이하로 내려온 단계만</strong> 주문표에 넣고, 나머지는 제외 목록에 사유와 함께 남긴다. 근거: <code>Reservations.cs</code>, <code>ReservationTests.cs</code>.</caption>
   </table></div>
   <div class="table-wrap"><table>
     <thead><tr><th>API</th><th>TR</th><th>사용 값</th></tr></thead>
@@ -378,7 +417,7 @@ src\StockTarget.App\bin\Debug\net9.0-windows\StockTarget.App.exe --db D:\temp\te
   </table></div>
   <div class="panel warn"><p><strong>접속 정보</strong> — 앱키 · 시크릿키는 코드 · DB · 문서에 두지 않고 사용자 환경변수에서만 읽는다:
     <code>KIWOOM_APPKEY</code>, <code>KIWOOM_SECRETKEY</code>, <code>KIWOOM_ENV</code>(<code>real</code>이면 실전, 없으면 <strong>모의투자</strong>).
-    키가 없으면 주문표 계산만 되고 접수 버튼이 비활성화된다. 접수는 확인 대화상자에서 <strong>예</strong>를 눌러야만 하고, 실전이면 경고 표시를 한다.</p></div>
+    키가 없거나 구동 옵션 <code>--kiwoom off</code>면 주문표 계산만 되고 접수 버튼이 비활성화된다. <code>--kiwoom mock|real</code>은 <code>KIWOOM_ENV</code>보다 우선한다(8. 빌드 · 실행). 접수는 확인 대화상자에서 <strong>예</strong>를 눌러야만 하고, 실전이면 경고 표시를 한다.</p></div>
   <figure>
     <img src="images/reservation.png" alt="다음 주 LOC 예약 매수 주문표">
     <figcaption>예약 창(키 미설정 상태): 2026-10-12 ~ 10-16, KO 매수금액 100만/200만/300만 → LOC 89.85×8 · 80.86×9 · 71.88×10. 행 색은 판정 색과 같다.</figcaption>
@@ -397,14 +436,14 @@ src\StockTarget.App\bin\Debug\net9.0-windows\StockTarget.App.exe --db D:\temp\te
   <h2 id="backup">11. 백업 · Firebase 동기화</h2>
   <div class="flow">
     <div class="box">SQLite<br>(캐시 제외)</div><span class="arrow">↔</span>
-    <div class="box"><code>BackupData</code><br>JSON v1</div><span class="arrow">↔</span>
+    <div class="box"><code>BackupData</code><br>JSON v2</div><span class="arrow">↔</span>
     <div class="box">파일 <code>*.json</code><br>또는</div>
     <div class="box">본인 Firebase 프로젝트<br><code>users/{uid}/stocktarget</code></div>
   </div>
   <div class="table-wrap"><table>
     <thead><tr><th>메뉴 <strong>데이터</strong></th><th>동작</th></tr></thead>
     <tbody>
-      <tr><td>JSON으로 내보내기</td><td>목표 · 확인 이력 · 예약 접수 이력을 JSON 파일로 저장(시세 캐시 제외)</td></tr>
+      <tr><td>JSON으로 내보내기</td><td>목표 · 확인 이력 · 예약 접수 이력 · 기본 매수금액을 JSON 파일로 저장(시세 캐시 제외)</td></tr>
       <tr><td>JSON에서 복원</td><td>파일 검사 → 확인 → <strong>현재 데이터를 <code>%LOCALAPPDATA%\StockTarget\backups\before-restore-*.json</code>에 자동 백업</strong> → 백업 내용으로 통째로 교체(한 트랜잭션)</td></tr>
       <tr><td>Firebase에 저장</td><td>Firebase에 있는 백업 시각 · 건수를 보여 주고 확인 후 덮어씀(마지막 저장이 이김)</td></tr>
       <tr><td>Firebase에서 복원</td><td>Firebase 백업으로 JSON 복원과 같은 절차</td></tr>
@@ -442,10 +481,11 @@ src\StockTarget.App\bin\Debug\net9.0-windows\StockTarget.App.exe --db D:\temp\te
   <div class="table-wrap"><table>
     <thead><tr><th>JSON 필드</th><th>내용</th></tr></thead>
     <tbody>
-      <tr><td><code>format</code> · <code>version</code> · <code>exportedAt</code></td><td><code>stocktarget-backup</code> · 1 · 내보낸 시각. 다른 파일이나 더 새 버전은 거부</td></tr>
+      <tr><td><code>format</code> · <code>version</code> · <code>exportedAt</code></td><td><code>stocktarget-backup</code> · 2 · 내보낸 시각. 다른 파일이나 더 새 버전은 거부(v1 백업은 읽을 수 있다)</td></tr>
       <tr><td><code>targets[]</code></td><td>symbol, inputDate, targetYear, eps, per, returnPct, dividendYieldPct, memo, targetPrice, buyKrw, mustBuyKrw, strongBuyKrw (null은 생략)</td></tr>
       <tr><td><code>priceChecks[]</code></td><td>symbol, checkDate, quarter, price, buyPrice</td></tr>
       <tr><td><code>reservations[]</code></td><td>symbol, stage, start, end, price, quantity, amountKrw, env, reservationNo, scheduledDate, createdAt</td></tr>
+      <tr><td><code>defaultAmounts</code> (v2)</td><td>buyKrw, mustBuyKrw, strongBuyKrw. 기본 매수금액이 없으면 생략. 복원할 때 v2에서 없으면 해제, v1 백업이면 현재 설정 유지(그래서 형식 버전을 올렸다 — Firebase는 빈 객체를 저장하지 않아 v1과 구분할 수 없다)</td></tr>
     </tbody>
     <caption>날짜는 <code>yyyy-MM-dd</code>, 시각은 ISO 8601. Realtime Database는 빈 배열을 저장하지 않으므로 읽을 때 없으면 빈 목록으로 본다. 근거: <code>Backup.cs</code>, <code>BackupTests.cs</code>.</caption>
   </table></div>

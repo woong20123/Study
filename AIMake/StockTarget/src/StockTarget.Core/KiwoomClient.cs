@@ -11,6 +11,7 @@ namespace StockTarget.Core;
 /// <item>KIWOOM_APPKEY, KIWOOM_SECRETKEY : 키움 REST API 앱키 · 시크릿키</item>
 /// <item>KIWOOM_ENV : real 이면 실전(api.kiwoom.com), 그 외(기본)는 모의투자(mockapi.kiwoom.com)</item>
 /// </list>
+/// 구동 옵션 <c>--kiwoom off|mock|real</c>(<see cref="KiwoomMode"/>)이 있으면 KIWOOM_ENV보다 우선한다.
 /// </summary>
 public sealed record KiwoomOptions(string AppKey, string SecretKey, bool IsMock)
 {
@@ -22,16 +23,36 @@ public sealed record KiwoomOptions(string AppKey, string SecretKey, bool IsMock)
 
     public string EnvText => IsMock ? "모의투자" : "실전";
 
-    /// <summary>환경변수에서 읽는다. 키가 없으면 null.</summary>
-    public static KiwoomOptions? FromEnvironment()
+    /// <summary>
+    /// 환경변수에서 읽는다. 연동을 껐거나(<see cref="KiwoomMode.Off"/>) 키가 없으면 null.
+    /// 실전 · 모의투자는 구동 옵션(mode)이 우선이고, Auto면 KIWOOM_ENV를 따른다.
+    /// </summary>
+    public static KiwoomOptions? FromEnvironment(KiwoomMode mode = KiwoomMode.Auto, Func<string, string?>? get = null)
     {
-        var appKey = Get(AppKeyVariable);
-        var secretKey = Get(SecretKeyVariable);
+        get ??= Get;
+        if (mode == KiwoomMode.Off)
+            return null;
+        var appKey = get(AppKeyVariable);
+        var secretKey = get(SecretKeyVariable);
         if (string.IsNullOrWhiteSpace(appKey) || string.IsNullOrWhiteSpace(secretKey))
             return null;
-        var isReal = string.Equals(Get(EnvVariable)?.Trim(), "real", StringComparison.OrdinalIgnoreCase);
+        var isReal = mode switch
+        {
+            KiwoomMode.Real => true,
+            KiwoomMode.Mock => false,
+            _ => string.Equals(get(EnvVariable)?.Trim(), "real", StringComparison.OrdinalIgnoreCase),
+        };
         return new KiwoomOptions(appKey.Trim(), secretKey.Trim(), !isReal);
     }
+
+    /// <summary>상태 표시줄용 한 줄: "키움: 모의투자" / "키움: 실전(--kiwoom real)" / "키움: 꺼짐(--kiwoom off)" / "키움: 키 미설정".</summary>
+    public static string StatusText(KiwoomMode mode, KiwoomOptions? options) => (mode, options) switch
+    {
+        (KiwoomMode.Off, _) => "키움: 꺼짐(--kiwoom off)",
+        (_, null) => "키움: 키 미설정",
+        (KiwoomMode.Auto, { } o) => $"키움: {o.EnvText}",
+        (_, { } o) => $"키움: {o.EnvText}(--kiwoom {(o.IsMock ? "mock" : "real")})",
+    };
 
     // 앱 실행 후 setx로 설정한 값도 읽도록 프로세스 → 사용자 환경변수 순으로 찾는다
     private static string? Get(string name) =>
