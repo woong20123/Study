@@ -26,7 +26,7 @@ public sealed class StockService(StockDatabase db, YahooChartClient client, Func
                 return new Fetched<Quote>(cached, age);
         }
 
-        var chart = await client.GetChartAsync(symbol, "1d", withEvents: false, ct).ConfigureAwait(false);
+        var chart = await client.GetChartAsync(ToYahooSymbol(symbol), "1d", withEvents: false, ct).ConfigureAwait(false);
         if (chart.RegularMarketPrice is not { } price)
             throw new StockDataException($"{symbol}: 현재가 없음 (티커 확인 필요)");
 
@@ -34,7 +34,7 @@ public sealed class StockService(StockDatabase db, YahooChartClient client, Func
         string? splitNote = null;
         if (SplitAdjuster.NeedsCheck(price, prev))
         {
-            var recent = await client.GetChartAsync(symbol, "1mo", withEvents: true, ct).ConfigureAwait(false);
+            var recent = await client.GetChartAsync(ToYahooSymbol(symbol), "1mo", withEvents: true, ct).ConfigureAwait(false);
             var (adjusted, applied) = SplitAdjuster.Adjust(price, prev, recent.Splits, _today());
             if (applied is not null)
             {
@@ -60,7 +60,7 @@ public sealed class StockService(StockDatabase db, YahooChartClient client, Func
         }
 
         // 5년 구간 + 여유 1년
-        var chart = await client.GetChartAsync(symbol, "6y", withEvents: true, ct).ConfigureAwait(false);
+        var chart = await client.GetChartAsync(ToYahooSymbol(symbol), "6y", withEvents: true, ct).ConfigureAwait(false);
         if (chart.Bars.Count == 0)
             throw new StockDataException($"{symbol}: 주가 이력 없음 (티커 확인 필요)");
 
@@ -85,5 +85,18 @@ public sealed class StockService(StockDatabase db, YahooChartClient client, Func
         return check;
     }
 
-    public static string Normalize(string symbol) => symbol.Trim().ToUpperInvariant();
+    /// <summary>입력한 티커의 앞뒤 공백만 지운다. 대소문자는 그대로 둔다(키움 클래스주 표기 BRKb 등).</summary>
+    public static string Normalize(string symbol) => symbol.Trim();
+
+    /// <summary>
+    /// Yahoo 조회용 티커. Yahoo는 대문자만 받고 클래스주를 "-"로 구분하므로
+    /// 키움식 소문자 클래스 접미사(BRKb)나 "."·"/" 구분(BRK.B, BRK/B)을 BRK-B로 바꾼다.
+    /// </summary>
+    public static string ToYahooSymbol(string symbol)
+    {
+        symbol = symbol.Trim();
+        if (symbol.Length >= 2 && char.IsLower(symbol[^1]) && symbol[..^1].All(char.IsUpper))
+            return $"{symbol[..^1]}-{char.ToUpperInvariant(symbol[^1])}";
+        return symbol.Replace('.', '-').Replace('/', '-').ToUpperInvariant();
+    }
 }

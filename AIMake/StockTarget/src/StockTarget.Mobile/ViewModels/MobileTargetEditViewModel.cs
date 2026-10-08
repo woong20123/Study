@@ -27,7 +27,7 @@ public sealed class MobileTargetEditViewModel : ObservableObject
     public string Symbol
     {
         get => _symbol;
-        set => Set(ref _symbol, value?.ToUpperInvariant() ?? "");
+        set => Set(ref _symbol, value ?? "");
     }
 
     public int TargetYear
@@ -238,7 +238,7 @@ public sealed class MobileTargetEditViewModel : ObservableObject
             var amountsToSave = inputAmounts.ExceptDefaults(defaults);
 
             var plan = new TargetPlan(
-                Symbol: Symbol,
+                Symbol: StockService.Normalize(Symbol),
                 InputDate: DateOnly.FromDateTime(DateTime.Today),
                 TargetYear: TargetYear,
                 Eps: eps,

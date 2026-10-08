@@ -558,3 +558,25 @@ public class LiveTests
         Assert.Contains(chart.Splits, s => s.Ratio == 10);
     }
 }
+
+public class SymbolTests
+{
+    [Theory]
+    [InlineData(" BRKb ", "BRKb")]
+    [InlineData("aapl", "aapl")]
+    [InlineData("KO", "KO")]
+    public void Normalize_공백만_지우고_대소문자_유지(string input, string expected) =>
+        Assert.Equal(expected, StockService.Normalize(input));
+
+    [Theory]
+    [InlineData("BRKb", "BRK-B")]
+    [InlineData("BFb", "BF-B")]
+    [InlineData("BRK.B", "BRK-B")]
+    [InlineData("BRK/B", "BRK-B")]
+    [InlineData("BRK-B", "BRK-B")]
+    [InlineData("aapl", "AAPL")]
+    [InlineData("KO", "KO")]
+    [InlineData("KRW=X", "KRW=X")]
+    public void ToYahooSymbol_클래스주_표기_변환(string input, string expected) =>
+        Assert.Equal(expected, StockService.ToYahooSymbol(input));
+}

@@ -14,7 +14,7 @@
                     <Label Text="기본 정보" FontSize="16" FontAttributes="Bold" TextColor="#0F172A" />
 
                     <Label Text="티커 심볼 (예: KO, AAPL)" FontSize="12" TextColor="#64748B" />
-                    <Entry Text="{Binding Symbol}" Placeholder="티커 입력" />
+                    <Entry Text="{Binding Symbol}" Placeholder="티커 입력 (예: AAPL, BRKb)" Keyboard="Plain" IsSpellCheckEnabled="False" IsTextPredictionEnabled="False" />
 
                     <Grid ColumnDefinitions="*, Auto" ColumnSpacing="10">
                         <VerticalStackLayout Grid.Column="0">

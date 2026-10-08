@@ -119,7 +119,7 @@
                         </Grid.RowDefinitions>
 
                         <TextBlock Grid.Row="0" Grid.Column="0" Style="{StaticResource Label}" Text="티커"/>
-                        <TextBox AutomationProperties.AutomationId="FormSymbol" Grid.Row="0" Grid.Column="1" Text="{Binding FormSymbol, UpdateSourceTrigger=PropertyChanged}" CharacterCasing="Upper"/>
+                        <TextBox AutomationProperties.AutomationId="FormSymbol" Grid.Row="0" Grid.Column="1" Text="{Binding FormSymbol, UpdateSourceTrigger=PropertyChanged}"/>
                         <TextBlock Grid.Row="0" Grid.Column="3" Style="{StaticResource Label}" Text="목표 연도"/>
                         <TextBox AutomationProperties.AutomationId="FormYear" Grid.Row="0" Grid.Column="4" Text="{Binding FormYear, UpdateSourceTrigger=PropertyChanged}"/>
                         <TextBlock Grid.Row="0" Grid.Column="6" Style="{StaticResource Label}" Text="목표 수익률(%)"/>
