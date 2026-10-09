@@ -4,6 +4,7 @@ public partial class App : Application
 {
     public App()
     {
+        Localization.L.ApplySavedLanguage();
         InitializeComponent();
     }
 

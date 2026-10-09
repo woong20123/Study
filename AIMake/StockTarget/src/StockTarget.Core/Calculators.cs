@@ -199,6 +199,13 @@ public static class Money
             ? (int)Math.Floor(usd / price + 1e-9) // 1e-9: 딱 나누어떨어질 때 이진 오차로 1주 모자라지 않게
             : null;
 
+    /// <summary>
+    /// 화면에 보여줄 주식 수: <see cref="Shares"/>와 같되 최소 1주.
+    /// 1주 가격이 금액보다 큰 고가주(마켈 등)가 0주로 보이지 않게 한다. 실제 주문 수량에는 쓰지 않는다.
+    /// </summary>
+    public static int? DisplayShares(double krw, double? usdKrw, double price) =>
+        Shares(krw, usdKrw, price) is { } n ? Math.Max(1, n) : null;
+
     public static string KrwText(double krw) => "₩" + krw.ToString("#,0", CultureInfo.InvariantCulture);
 
     public static string UsdText(double usd) => "$" + usd.ToString("#,0.00", CultureInfo.InvariantCulture);

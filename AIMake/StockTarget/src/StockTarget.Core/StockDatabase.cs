@@ -13,7 +13,7 @@ public sealed record PriceCheck(string Symbol, DateOnly CheckDate, string Quarte
     public string StatusText => Status.ToText();
 }
 
-/// <summary>키움에 접수한 LOC 예약 매수 한 건(같은 예약을 두 번 넣지 않기 위해 남긴다).</summary>
+/// <summary>예전 버전에서 키움에 접수한 LOC 예약 매수 한 건. 지금은 새로 쌓지 않고 기존 이력 · 백업 호환을 위해 남긴다.</summary>
 public sealed record ReservationRecord(
     string Symbol,
     string Stage,
@@ -33,7 +33,7 @@ public sealed record ReservationRecord(
 /// <item>targets      : 목표(티커당 1개, 다시 저장하면 갱신)</item>
 /// <item>price_checks : 분기 확인 이력(티커·날짜당 1행, 같은 날 다시 조회하면 갱신)</item>
 /// <item>cache        : 시세·배당 조회 결과 캐시(최대 1시간)</item>
-/// <item>reservations : 키움에 접수한 LOC 예약 매수(티커·단계·기간·환경당 1건)</item>
+/// <item>reservations : 예전 버전에서 키움에 접수한 LOC 예약 매수 이력(티커·단계·기간·환경당 1건)</item>
 /// <item>settings     : 앱 설정(키·값). 기본 매수금액 등</item>
 /// <item>buy_done     : '매수 완료'로 표시한 티커(해제할 때까지 예약 주문표에서 뺀다)</item>
 /// <item>stock_names  : 네이버에서 받은 한글 종목명(찾지 못함은 name NULL). 7일 지나면 다시 조회</item>

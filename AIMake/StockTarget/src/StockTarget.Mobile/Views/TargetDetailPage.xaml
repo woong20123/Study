@@ -4,9 +4,10 @@
              xmlns:vm="clr-namespace:StockTarget.Mobile.ViewModels"
              xmlns:core="clr-namespace:StockTarget.Core;assembly=StockTarget.Core"
              xmlns:conv="clr-namespace:StockTarget.Mobile.Converters"
+             xmlns:loc="clr-namespace:StockTarget.Mobile.Localization"
              x:Class="StockTarget.Mobile.Views.TargetDetailPage"
              x:DataType="vm:MobileTargetDetailViewModel"
-             Title="종목 상세">
+             Title="{loc:Tr Detail_Title}">
 
     <ContentPage.Resources>
         <conv:StatusToBgColorConverter x:Key="StatusToBg" />
@@ -19,7 +20,10 @@
             <Border Padding="16">
                 <Grid RowDefinitions="Auto, Auto, Auto" RowSpacing="8">
                     <Grid Grid.Row="0" ColumnDefinitions="*, Auto">
-                        <Label Grid.Column="0" Text="{Binding TargetRow.Symbol}" FontSize="22" FontAttributes="Bold" />
+                        <VerticalStackLayout Grid.Column="0">
+                            <Label Text="{Binding TargetRow.Title}" FontSize="22" FontAttributes="Bold" LineBreakMode="TailTruncation" />
+                            <Label Text="{Binding TargetRow.Subtitle}" FontSize="13" TextColor="#64748B" />
+                        </VerticalStackLayout>
                         <Border Grid.Column="1" BackgroundColor="{Binding TargetRow.Status, Converter={StaticResource StatusToBg}}"
                                 Padding="8,3" StrokeShape="RoundRectangle 6" StrokeThickness="0">
                             <Label Text="{Binding TargetRow.Verdict}" FontSize="13" FontAttributes="Bold"
@@ -29,15 +33,15 @@
 
                     <Grid Grid.Row="1" ColumnDefinitions="*, *, *">
                         <VerticalStackLayout Grid.Column="0">
-                            <Label Text="현재가" FontSize="12" TextColor="#64748B" />
+                            <Label Text="{loc:Tr Detail_Price}" FontSize="12" TextColor="#64748B" />
                             <Label Text="{Binding TargetRow.PriceText}" FontSize="15" FontAttributes="Bold" />
                         </VerticalStackLayout>
                         <VerticalStackLayout Grid.Column="1">
-                            <Label Text="이번분기 목표가" FontSize="12" TextColor="#64748B" />
+                            <Label Text="{loc:Tr Detail_QuarterTarget}" FontSize="12" TextColor="#64748B" />
                             <Label Text="{Binding TargetRow.BuyPriceText}" FontSize="15" FontAttributes="Bold" />
                         </VerticalStackLayout>
                         <VerticalStackLayout Grid.Column="2">
-                            <Label Text="괴리율" FontSize="12" TextColor="#64748B" />
+                            <Label Text="{loc:Tr Detail_Gap}" FontSize="12" TextColor="#64748B" />
                             <Label Text="{Binding TargetRow.GapText}" FontSize="15" FontAttributes="Bold"
                                    TextColor="{Binding TargetRow.Status, Converter={StaticResource StatusToText}}" />
                         </VerticalStackLayout>
@@ -50,15 +54,15 @@
             <!-- Metrics Card -->
             <Border Padding="16">
                 <VerticalStackLayout Spacing="8">
-                    <Label Text="계산 기준" FontSize="15" FontAttributes="Bold" TextColor="#0F172A" />
+                    <Label Text="{loc:Tr Detail_Basis}" FontSize="15" FontAttributes="Bold" TextColor="#0F172A" />
                     <Grid ColumnDefinitions="*, *" RowDefinitions="Auto, Auto, Auto" RowSpacing="6">
-                        <Label Grid.Row="0" Grid.Column="0" Text="{Binding TargetRow.TargetYear, StringFormat='목표 연도: {0}년'}" FontSize="13" TextColor="#334155" />
-                        <Label Grid.Row="0" Grid.Column="1" Text="{Binding TargetRow.TargetPrice, StringFormat='최종 목표가: ${0:N2}'}" FontSize="13" TextColor="#334155" />
+                        <Label Grid.Row="0" Grid.Column="0" Text="{Binding TargetRow.TargetYearLine}" FontSize="13" TextColor="#334155" />
+                        <Label Grid.Row="0" Grid.Column="1" Text="{Binding TargetRow.TargetPriceLine}" FontSize="13" TextColor="#334155" />
 
-                        <Label Grid.Row="1" Grid.Column="0" Text="{Binding TargetRow.ReturnPct, StringFormat='목표 수익률: {0:N1}%'}" FontSize="13" TextColor="#334155" />
-                        <Label Grid.Row="1" Grid.Column="1" Text="{Binding TargetRow.DividendYieldPct, StringFormat='5년 배당률: {0:N2}%'}" FontSize="13" TextColor="#334155" />
+                        <Label Grid.Row="1" Grid.Column="0" Text="{Binding TargetRow.ReturnLine}" FontSize="13" TextColor="#334155" />
+                        <Label Grid.Row="1" Grid.Column="1" Text="{Binding TargetRow.DividendLine}" FontSize="13" TextColor="#334155" />
 
-                        <Label Grid.Row="2" Grid.ColumnSpan="2" Text="{Binding TargetRow.GrowthPct, StringFormat='필요 주가상승률: 연 {0:N2}%'}" FontSize="13" TextColor="#0969DA" FontAttributes="Bold" />
+                        <Label Grid.Row="2" Grid.ColumnSpan="2" Text="{Binding TargetRow.GrowthLine}" FontSize="13" TextColor="#0969DA" FontAttributes="Bold" />
                     </Grid>
                 </VerticalStackLayout>
             </Border>
@@ -66,13 +70,13 @@
             <!-- Quarterly Buy Price Schedule -->
             <Border Padding="16">
                 <VerticalStackLayout Spacing="8">
-                    <Label Text="분기별 매입 목표가 일정" FontSize="15" FontAttributes="Bold" TextColor="#0F172A" />
+                    <Label Text="{loc:Tr Detail_Schedule}" FontSize="15" FontAttributes="Bold" TextColor="#0F172A" />
                     <CollectionView ItemsSource="{Binding Schedule}" SelectionMode="None">
                         <CollectionView.Header>
                             <Grid ColumnDefinitions="*, *, *" Padding="0,4" BackgroundColor="#F8FAFC">
-                                <Label Grid.Column="0" Text="분기" FontAttributes="Bold" FontSize="12" TextColor="#64748B" />
-                                <Label Grid.Column="1" Text="기준일" FontAttributes="Bold" FontSize="12" TextColor="#64748B" />
-                                <Label Grid.Column="2" Text="매입 목표가" FontAttributes="Bold" FontSize="12" TextColor="#64748B" HorizontalOptions="End" />
+                                <Label Grid.Column="0" Text="{loc:Tr Detail_Quarter}" FontAttributes="Bold" FontSize="12" TextColor="#64748B" />
+                                <Label Grid.Column="1" Text="{loc:Tr Detail_BaseDate}" FontAttributes="Bold" FontSize="12" TextColor="#64748B" />
+                                <Label Grid.Column="2" Text="{loc:Tr Detail_BuyTarget}" FontAttributes="Bold" FontSize="12" TextColor="#64748B" HorizontalOptions="End" />
                             </Grid>
                         </CollectionView.Header>
                         <CollectionView.ItemTemplate>
@@ -91,14 +95,14 @@
             <!-- 5-Year Dividend History -->
             <Border Padding="16">
                 <VerticalStackLayout Spacing="8">
-                    <Label Text="최근 5년 배당 내역" FontSize="15" FontAttributes="Bold" TextColor="#0F172A" />
+                    <Label Text="{loc:Tr Detail_DividendHistory}" FontSize="15" FontAttributes="Bold" TextColor="#0F172A" />
                     <CollectionView ItemsSource="{Binding DividendPeriods}" SelectionMode="None">
                         <CollectionView.Header>
                             <Grid ColumnDefinitions="2*, *, *, *" Padding="0,4" BackgroundColor="#F8FAFC">
-                                <Label Grid.Column="0" Text="기간" FontAttributes="Bold" FontSize="11" TextColor="#64748B" />
-                                <Label Grid.Column="1" Text="배당금" FontAttributes="Bold" FontSize="11" TextColor="#64748B" HorizontalOptions="End" />
-                                <Label Grid.Column="2" Text="평균가" FontAttributes="Bold" FontSize="11" TextColor="#64748B" HorizontalOptions="End" />
-                                <Label Grid.Column="3" Text="수익률" FontAttributes="Bold" FontSize="11" TextColor="#64748B" HorizontalOptions="End" />
+                                <Label Grid.Column="0" Text="{loc:Tr Detail_Period}" FontAttributes="Bold" FontSize="11" TextColor="#64748B" />
+                                <Label Grid.Column="1" Text="{loc:Tr Detail_DividendAmount}" FontAttributes="Bold" FontSize="11" TextColor="#64748B" HorizontalOptions="End" />
+                                <Label Grid.Column="2" Text="{loc:Tr Detail_AvgPrice}" FontAttributes="Bold" FontSize="11" TextColor="#64748B" HorizontalOptions="End" />
+                                <Label Grid.Column="3" Text="{loc:Tr Detail_Yield}" FontAttributes="Bold" FontSize="11" TextColor="#64748B" HorizontalOptions="End" />
                             </Grid>
                         </CollectionView.Header>
                         <CollectionView.ItemTemplate>

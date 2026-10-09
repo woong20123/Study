@@ -33,13 +33,11 @@ public sealed partial class MainViewModel : ObservableObject
     private string _formStrongBuyKrw = "";
     private double? _usdKrw;
 
-    public MainViewModel(StockDatabase db, StockService service, KiwoomMode kiwoomMode = KiwoomMode.Auto,
-        StockNameService? names = null)
+    public MainViewModel(StockDatabase db, StockService service, StockNameService? names = null)
     {
         _db = db;
         _service = service;
         _names = names;
-        KiwoomMode = kiwoomMode;
         SaveCommand = new AsyncCommand(SaveAsync, () => !IsBusy);
         DeleteCommand = new AsyncCommand(DeleteAsync, () => !IsBusy && Selected is not null);
         RefreshCommand = new AsyncCommand(() => RefreshAllAsync(force: true), () => !IsBusy);
@@ -64,14 +62,6 @@ public sealed partial class MainViewModel : ObservableObject
     public RelayCommand ReserveCommand { get; }
 
     public string DbPath { get; }
-
-    /// <summary>구동 옵션 --kiwoom 으로 정한 키움 연동 방식.</summary>
-    public KiwoomMode KiwoomMode { get; }
-
-    /// <summary>상태 표시줄의 키움 연동 상태(시작 시점 기준. 예약 창은 열 때 환경변수를 다시 읽는다).</summary>
-    public string KiwoomStatus => KiwoomOptions.StatusText(KiwoomMode, KiwoomOptions.FromEnvironment(KiwoomMode));
-
-    public bool IsKiwoomReal => KiwoomOptions.FromEnvironment(KiwoomMode) is { IsMock: false };
 
     public TargetRowViewModel? Selected
     {
@@ -381,11 +371,11 @@ public sealed partial class MainViewModel : ObservableObject
 
     /// <summary>
     /// 다음 주 LOC 예약 매수 주문표 창. 지금 화면의 현재가로 이미 도달한 단계만 주문표에 넣는다.
-    /// 접수는 그 창에서 확인을 눌러야만 한다.
+    /// 증권사에 접수하지는 않고, 주문표를 복사해 직접 주문할 때 참고한다.
     /// </summary>
     private void OpenReservation()
     {
-        var vm = new ReservationViewModel(_db, _service, Targets.Select(r => r.Plan).ToList(), UsdKrw, Defaults, KiwoomMode,
+        var vm = new ReservationViewModel(_db, _service, Targets.Select(r => r.Plan).ToList(), UsdKrw, Defaults,
             Targets.Where(r => r.Error is null && r.Price is > 0).ToDictionary(r => r.Symbol, r => r.Price!.Value));
         new ReservationWindow(vm) { Owner = Application.Current.MainWindow }.ShowDialog();
     }
@@ -427,9 +417,13 @@ public sealed partial class MainViewModel : ObservableObject
         await LoadDetailAsync(row, force: false);
     }
 
+    /// <summary>마지막으로 시작한 오른쪽 패널 갱신 번호. 겹친 갱신이 배당 내역을 중복으로 채우지 않게 한다.</summary>
+    private int _detailLoadId;
+
     /// <summary>오른쪽 패널(요약·분기 일정·배당·이력) 갱신.</summary>
     private async Task LoadDetailAsync(TargetRowViewModel row, bool force)
     {
+        var id = ++_detailLoadId;
         var p = row.Plan;
         var today = DateOnly.FromDateTime(DateTime.Today);
         var current = TargetCalculator.QuarterLabel(today);
@@ -445,7 +439,7 @@ public sealed partial class MainViewModel : ObservableObject
         // 오른쪽 패널 폭(약 440px)에 맞춰 한 줄을 짧게 유지한다
         var lines = new List<string>
         {
-            $"{p.Symbol}  {row.Quote?.Name}",
+            $"{row.Name}  {p.Symbol}".Trim(),
             $"목표      {p.TargetYear}년 말 (입력일 {p.InputDate:yyyy-MM-dd})",
             p.IsDirectTargetPrice
                 ? $"목표 주가 {p.TargetPrice:N2} (직접 입력)"
@@ -474,8 +468,8 @@ public sealed partial class MainViewModel : ObservableObject
         try
         {
             var d = await _service.GetDividendYieldAsync(p.Symbol, force);
-            if (Selected != row)
-                return; // 조회 중 선택이 바뀌었다
+            if (id != _detailLoadId)
+                return; // 조회 중 선택이 바뀌었거나 같은 목표를 다시 불러오기 시작했다(저장 직후 등)
             foreach (var x in d.Value.Periods)
                 DividendPeriods.Add(x);
             var text = $"{d.Value.Years}년 평균: 배당금 {d.Value.AvgDividend:0.0000} / 평균 주가 {d.Value.AvgPrice:N2} / 수익률 {d.Value.AvgYieldPct:0.00}%";
@@ -492,7 +486,8 @@ public sealed partial class MainViewModel : ObservableObject
         }
         catch (Exception e) when (e is StockDataException or HttpRequestException or TaskCanceledException)
         {
-            DividendSummary = "배당 이력 조회 실패: " + e.Message;
+            if (id == _detailLoadId)
+                DividendSummary = "배당 이력 조회 실패: " + e.Message;
         }
     }
 

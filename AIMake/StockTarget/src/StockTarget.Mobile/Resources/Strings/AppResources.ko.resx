@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 모바일 화면 문자열. 기본(영어) = AppResources.resx, 한국어 = AppResources.ko.resx. 키 = 화면_내용 -->
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Tab_Targets" xml:space="preserve"><value>목표 종목</value></data>
+  <data name="Tab_Reservation" xml:space="preserve"><value>LOC 예약</value></data>
+  <data name="Common_Refresh" xml:space="preserve"><value>새로고침</value></data>
+  <data name="Status_Ready" xml:space="preserve"><value>준비</value></data>
+  <data name="Verdict_StrongBuy" xml:space="preserve"><value>강력매수</value></data>
+  <data name="Verdict_MustBuy" xml:space="preserve"><value>필수매수</value></data>
+  <data name="Verdict_Buy" xml:space="preserve"><value>매수</value></data>
+  <data name="Verdict_Near" xml:space="preserve"><value>매입 대기</value></data>
+  <data name="Verdict_Wait" xml:space="preserve"><value>대기</value></data>
+  <data name="Verdict_None" xml:space="preserve"><value>-</value></data>
+  <data name="Main_AddTarget" xml:space="preserve"><value>+ 종목추가</value></data>
+  <data name="Main_Empty" xml:space="preserve"><value>등록된 목표 종목이 없습니다.</value></data>
+  <data name="Main_EmptyFiltered" xml:space="preserve"><value>지금 매수가 필요한 종목이 없습니다.</value></data>
+  <data name="Main_OnlyBuy" xml:space="preserve"><value>매수 필요 종목만 보기 ({0})</value></data>
+  <data name="Main_AddFirst" xml:space="preserve"><value>종목 추가하기</value></data>
+  <data name="Main_Language" xml:space="preserve"><value>English</value></data>
+  <data name="Main_ImportJson" xml:space="preserve"><value>JSON 백업 가져오기</value></data>
+  <data name="Main_ImportTitle" xml:space="preserve"><value>백업 가져오기</value></data>
+  <data name="Main_ImportMessage" xml:space="preserve"><value>{0}의 백업으로 현재 데이터를 바꿉니다.
+
+백업({1:yyyy-MM-dd HH:mm}): 목표 {2}개
+현재: 목표 {3}개
+
+현재 데이터는 먼저 앱 안에 자동 백업합니다.</value></data>
+  <data name="Main_ImportOk" xml:space="preserve"><value>가져오기</value></data>
+  <data name="Main_Imported" xml:space="preserve"><value>목표 {0}개를 가져왔습니다</value></data>
+  <data name="Main_ImportFailed" xml:space="preserve"><value>가져오기 실패</value></data>
+  <data name="Main_PriceLabel" xml:space="preserve"><value>현재가:</value></data>
+  <data name="Main_Loading" xml:space="preserve"><value>데이터 로딩 중...</value></data>
+  <data name="Main_TargetCount" xml:space="preserve"><value>총 {0}개 목표 종목</value></data>
+  <data name="Main_LoadFailed" xml:space="preserve"><value>로딩 실패: {0}</value></data>
+  <data name="Main_UsdKrw" xml:space="preserve"><value>환율: ₩{0:N2}/$</value></data>
+  <data name="Main_UsdKrwNone" xml:space="preserve"><value>환율: —</value></data>
+  <data name="Main_DeleteTitle" xml:space="preserve"><value>목표 삭제</value></data>
+  <data name="Main_DeleteMessage" xml:space="preserve"><value>{0} 목표를 삭제하시겠습니까?</value></data>
+  <data name="Main_DeleteOk" xml:space="preserve"><value>삭제</value></data>
+  <data name="Main_DeleteCancel" xml:space="preserve"><value>취소</value></data>
+  <data name="Main_Deleted" xml:space="preserve"><value>{0} 삭제됨</value></data>
+  <data name="Row_TargetYear" xml:space="preserve"><value>({0}년)</value></data>
+  <data name="Row_QuarterBuy" xml:space="preserve"><value>{0} 매입가:</value></data>
+  <data name="Row_OutOfRange" xml:space="preserve"><value>범위 밖</value></data>
+  <data name="Row_FetchFailed" xml:space="preserve"><value>조회 실패</value></data>
+  <data name="Row_DefaultSuffix" xml:space="preserve"><value> · 기본</value></data>
+  <data name="Row_Shares" xml:space="preserve"><value>{0:N2} × {1:N0}주</value></data>
+  <data name="Row_CacheMin" xml:space="preserve"><value>{0}분 전</value></data>
+  <data name="Row_CacheSec" xml:space="preserve"><value>{0}초 전</value></data>
+  <data name="Row_CacheLive" xml:space="preserve"><value>실시간</value></data>
+  <data name="Detail_Title" xml:space="preserve"><value>종목 상세</value></data>
+  <data name="Detail_Price" xml:space="preserve"><value>현재가</value></data>
+  <data name="Detail_QuarterTarget" xml:space="preserve"><value>이번분기 목표가</value></data>
+  <data name="Detail_Gap" xml:space="preserve"><value>괴리율</value></data>
+  <data name="Detail_Basis" xml:space="preserve"><value>계산 기준</value></data>
+  <data name="Detail_TargetYear" xml:space="preserve"><value>목표 연도: {0}년</value></data>
+  <data name="Detail_FinalTarget" xml:space="preserve"><value>최종 목표가: ${0:N2}</value></data>
+  <data name="Detail_Return" xml:space="preserve"><value>목표 수익률: {0:N1}%</value></data>
+  <data name="Detail_Dividend" xml:space="preserve"><value>5년 배당률: {0:N2}%</value></data>
+  <data name="Detail_Growth" xml:space="preserve"><value>필요 주가상승률: 연 {0:N2}%</value></data>
+  <data name="Detail_Schedule" xml:space="preserve"><value>분기별 매입 목표가 일정</value></data>
+  <data name="Detail_Quarter" xml:space="preserve"><value>분기</value></data>
+  <data name="Detail_BaseDate" xml:space="preserve"><value>기준일</value></data>
+  <data name="Detail_BuyTarget" xml:space="preserve"><value>매입 목표가</value></data>
+  <data name="Detail_DividendHistory" xml:space="preserve"><value>최근 5년 배당 내역</value></data>
+  <data name="Detail_Period" xml:space="preserve"><value>기간</value></data>
+  <data name="Detail_DividendAmount" xml:space="preserve"><value>배당금</value></data>
+  <data name="Detail_AvgPrice" xml:space="preserve"><value>평균가</value></data>
+  <data name="Detail_Yield" xml:space="preserve"><value>수익률</value></data>
+  <data name="Detail_Loaded" xml:space="preserve"><value>{0} 상세 정보 로딩 완료</value></data>
+  <data name="Detail_Failed" xml:space="preserve"><value>상세 조회 실패: {0}</value></data>
+  <data name="Edit_Title" xml:space="preserve"><value>목표 종목 설정</value></data>
+  <data name="Edit_Basic" xml:space="preserve"><value>기본 정보</value></data>
+  <data name="Edit_SymbolLabel" xml:space="preserve"><value>티커 심볼 (예: KO, AAPL)</value></data>
+  <data name="Edit_SymbolHint" xml:space="preserve"><value>티커 입력 (예: AAPL, BRKb)</value></data>
+  <data name="Edit_TargetYear" xml:space="preserve"><value>목표 연도</value></data>
+  <data name="Edit_PriceSection" xml:space="preserve"><value>목표 주가 설정</value></data>
+  <data name="Edit_DirectMode" xml:space="preserve"><value>직접 입력 모드</value></data>
+  <data name="Edit_TargetPrice" xml:space="preserve"><value>목표 주가 ($)</value></data>
+  <data name="Edit_TargetPriceHint" xml:space="preserve"><value>예: 189.00</value></data>
+  <data name="Edit_Eps" xml:space="preserve"><value>목표 EPS ($)</value></data>
+  <data name="Edit_EpsHint" xml:space="preserve"><value>예: 10.5</value></data>
+  <data name="Edit_Per" xml:space="preserve"><value>목표 PER (배)</value></data>
+  <data name="Edit_PerHint" xml:space="preserve"><value>예: 18</value></data>
+  <data name="Edit_ReturnSection" xml:space="preserve"><value>수익률 &amp; 배당수익률</value></data>
+  <data name="Edit_Return" xml:space="preserve"><value>목표 수익률 (%)</value></data>
+  <data name="Edit_ReturnHint" xml:space="preserve"><value>예: 10.0</value></data>
+  <data name="Edit_Dividend" xml:space="preserve"><value>최근 5년 배당수익률 (%)</value></data>
+  <data name="Edit_DividendHint" xml:space="preserve"><value>비우면 자동 계산</value></data>
+  <data name="Edit_FetchDividend" xml:space="preserve"><value>5년조회</value></data>
+  <data name="Edit_AmountSection" xml:space="preserve"><value>단계별 매수금액 (원)</value></data>
+  <data name="Edit_AmountNote" xml:space="preserve"><value>비워두면 '기본 매수금액'이 적용됩니다.</value></data>
+  <data name="Edit_BuyLabel" xml:space="preserve"><value>매수 (≤ 매입 목표가)</value></data>
+  <data name="Edit_BuyHint" xml:space="preserve"><value>예: 100만 또는 1000000</value></data>
+  <data name="Edit_MustBuyLabel" xml:space="preserve"><value>필수매수 (-10% 이하)</value></data>
+  <data name="Edit_MustBuyHint" xml:space="preserve"><value>예: 200만</value></data>
+  <data name="Edit_StrongBuyLabel" xml:space="preserve"><value>강력매수 (-20% 이하)</value></data>
+  <data name="Edit_StrongBuyHint" xml:space="preserve"><value>예: 300만</value></data>
+  <data name="Edit_Memo" xml:space="preserve"><value>메모</value></data>
+  <data name="Edit_MemoHint" xml:space="preserve"><value>투자 근거 또는 메모</value></data>
+  <data name="Edit_Save" xml:space="preserve"><value>저장하기</value></data>
+  <data name="Edit_NeedSymbolFirst" xml:space="preserve"><value>티커를 먼저 입력하세요.</value></data>
+  <data name="Edit_FetchingDividend" xml:space="preserve"><value>5년 배당수익률 조회 중...</value></data>
+  <data name="Edit_DividendDone" xml:space="preserve"><value>배당수익률 조회 완료: {0}%</value></data>
+  <data name="Edit_DividendFailed" xml:space="preserve"><value>배당수익률 조회 실패: {0}</value></data>
+  <data name="Edit_NeedSymbol" xml:space="preserve"><value>티커를 입력하세요.</value></data>
+  <data name="Edit_InvalidPrice" xml:space="preserve"><value>유효한 목표 주가를 입력하세요.</value></data>
+  <data name="Edit_InvalidEps" xml:space="preserve"><value>유효한 목표 EPS를 입력하세요.</value></data>
+  <data name="Edit_InvalidPer" xml:space="preserve"><value>유효한 목표 PER을 입력하세요.</value></data>
+  <data name="Edit_InvalidReturn" xml:space="preserve"><value>유효한 목표 수익률(%)을 입력하세요.</value></data>
+  <data name="Edit_InvalidDividend" xml:space="preserve"><value>유효한 배당수익률(%)을 입력하세요.</value></data>
+  <data name="Edit_InvalidAmount" xml:space="preserve"><value>{0} 금액이 올바르지 않습니다: '{1}'</value></data>
+  <data name="Edit_SaveFailed" xml:space="preserve"><value>저장 실패: {0}</value></data>
+  <data name="Res_Title" xml:space="preserve"><value>LOC 예약 주문표</value></data>
+  <data name="Res_Header" xml:space="preserve"><value>다음 주 예약 매수 플랜</value></data>
+  <data name="Res_Calculating" xml:space="preserve"><value>예약 주문표 계산 중...</value></data>
+  <data name="Res_Period" xml:space="preserve"><value>예약 기간: {0:yyyy-MM-dd} ~ {1:yyyy-MM-dd} (다음 주 월~금)</value></data>
+  <data name="Res_Summary" xml:space="preserve"><value>주문 가능 {0}건 / 제외 {1}건</value></data>
+  <data name="Res_Failed" xml:space="preserve"><value>주문표 생성 실패: {0}</value></data>
+  <data name="Res_Eligible" xml:space="preserve"><value>주문 가능 단계 (현재가 도달)</value></data>
+  <data name="Res_NoOrders" xml:space="preserve"><value>현재 조건에 도달한 주문 건이 없습니다.</value></data>
+  <data name="Res_ColStock" xml:space="preserve"><value>종목·단계</value></data>
+  <data name="Res_ColPrice" xml:space="preserve"><value>LOC 주문가</value></data>
+  <data name="Res_ColQty" xml:space="preserve"><value>수량</value></data>
+  <data name="Res_ColAmount" xml:space="preserve"><value>주문금액</value></data>
+  <data name="Res_Qty" xml:space="preserve"><value>{0:N0}주</value></data>
+  <data name="Res_Done" xml:space="preserve"><value>완료</value></data>
+  <data name="Res_Undo" xml:space="preserve"><value>해제</value></data>
+  <data name="Res_Excluded" xml:space="preserve"><value>제외 종목 및 사유</value></data>
+  <data name="Res_NoExcluded" xml:space="preserve"><value>제외된 종목이 없습니다.</value></data>
+  <data name="Res_BuyDoneReason" xml:space="preserve"><value>매수 완료 — 해제할 때까지 주문표에서 제외</value></data>
+  <data name="Res_MarkedDone" xml:space="preserve"><value>{0} 매수 완료 — 해제할 때까지 주문표에서 제외</value></data>
+  <data name="Res_Unmarked" xml:space="preserve"><value>{0} 매수 완료 해제 — 다시 주문표에 넣음</value></data>
+</root>

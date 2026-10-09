@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using StockTarget.Core;
+using StockTarget.Mobile.Localization;
 
 namespace StockTarget.Mobile.ViewModels;
 
@@ -66,11 +67,11 @@ public sealed class MobileTargetDetailViewModel : ObservableObject
             DividendPeriods.Clear();
             foreach (var p in divYield.Value.Periods) DividendPeriods.Add(p);
 
-            Status = $"{row.Symbol} 상세 정보 로딩 완료";
+            Status = L.Format("Detail_Loaded", row.Title);
         }
         catch (Exception ex)
         {
-            Status = $"상세 조회 실패: {ex.Message}";
+            Status = L.Format("Detail_Failed", ex.Message);
         }
         finally
         {

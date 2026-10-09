@@ -1,4 +1,5 @@
 using StockTarget.Core;
+using StockTarget.Mobile.Localization;
 
 namespace StockTarget.Mobile.ViewModels;
 
@@ -165,21 +166,21 @@ public sealed class MobileTargetEditViewModel : ObservableObject
     {
         if (string.IsNullOrWhiteSpace(Symbol))
         {
-            Message = "티커를 먼저 입력하세요.";
+            Message = L.Get("Edit_NeedSymbolFirst");
             return;
         }
 
         IsBusy = true;
-        Message = "5년 배당수익률 조회 중...";
+        Message = L.Get("Edit_FetchingDividend");
         try
         {
             var div = await _stockService.GetDividendYieldAsync(Symbol, force: false);
             DividendYieldPct = div.Value.AvgYieldPct.ToString("F2");
-            Message = $"배당수익률 조회 완료: {DividendYieldPct}%";
+            Message = L.Format("Edit_DividendDone", DividendYieldPct);
         }
         catch (Exception ex)
         {
-            Message = $"배당수익률 조회 실패: {ex.Message}";
+            Message = L.Format("Edit_DividendFailed", ex.Message);
         }
         finally
         {
@@ -187,11 +188,24 @@ public sealed class MobileTargetEditViewModel : ObservableObject
         }
     }
 
+    /// <summary>원화 금액 입력. Core의 오류 문구 대신 화면 언어로 알린다.</summary>
+    private static double? ParseKrw(string text, BuyStatus stage)
+    {
+        try
+        {
+            return Money.ParseKrw(text, stage.ToText());
+        }
+        catch (ArgumentException)
+        {
+            throw new ArgumentException(L.Format("Edit_InvalidAmount", L.Verdict(stage), text));
+        }
+    }
+
     private async Task SaveAsync()
     {
         if (string.IsNullOrWhiteSpace(Symbol))
         {
-            Message = "티커를 입력하세요.";
+            Message = L.Get("Edit_NeedSymbol");
             return;
         }
 
@@ -204,19 +218,19 @@ public sealed class MobileTargetEditViewModel : ObservableObject
             if (UseDirectPrice)
             {
                 if (!double.TryParse(TargetPrice, out var p) || p <= 0)
-                    throw new ArgumentException("유효한 목표 주가를 입력하세요.");
+                    throw new ArgumentException(L.Get("Edit_InvalidPrice"));
                 directPrice = p;
             }
             else
             {
                 if (!double.TryParse(Eps, out eps) || eps <= 0)
-                    throw new ArgumentException("유효한 목표 EPS를 입력하세요.");
+                    throw new ArgumentException(L.Get("Edit_InvalidEps"));
                 if (!double.TryParse(Per, out per) || per <= 0)
-                    throw new ArgumentException("유효한 목표 PER을 입력하세요.");
+                    throw new ArgumentException(L.Get("Edit_InvalidPer"));
             }
 
             if (!double.TryParse(ReturnPct, out var ret) || ret <= 0)
-                throw new ArgumentException("유효한 목표 수익률(%)을 입력하세요.");
+                throw new ArgumentException(L.Get("Edit_InvalidReturn"));
 
             double divYield;
             if (string.IsNullOrWhiteSpace(DividendYieldPct))
@@ -226,14 +240,14 @@ public sealed class MobileTargetEditViewModel : ObservableObject
             }
             else if (!double.TryParse(DividendYieldPct, out divYield))
             {
-                throw new ArgumentException("유효한 배당수익률(%)을 입력하세요.");
+                throw new ArgumentException(L.Get("Edit_InvalidDividend"));
             }
 
             var defaults = _db.GetDefaultAmounts();
             var inputAmounts = new BuyAmounts(
-                Money.ParseKrw(BuyKrw, "매수금액"),
-                Money.ParseKrw(MustBuyKrw, "필수매수금액"),
-                Money.ParseKrw(StrongBuyKrw, "강력매수금액"));
+                ParseKrw(BuyKrw, BuyStatus.Buy),
+                ParseKrw(MustBuyKrw, BuyStatus.MustBuy),
+                ParseKrw(StrongBuyKrw, BuyStatus.StrongBuy));
 
             var amountsToSave = inputAmounts.ExceptDefaults(defaults);
 
@@ -255,7 +269,7 @@ public sealed class MobileTargetEditViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            Message = $"저장 실패: {ex.Message}";
+            Message = L.Format("Edit_SaveFailed", ex.Message);
         }
         finally
         {

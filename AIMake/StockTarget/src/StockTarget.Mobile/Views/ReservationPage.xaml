@@ -2,21 +2,21 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:StockTarget.Mobile.ViewModels"
-             xmlns:core="clr-namespace:StockTarget.Core;assembly=StockTarget.Core"
+             xmlns:loc="clr-namespace:StockTarget.Mobile.Localization"
              x:Class="StockTarget.Mobile.Views.ReservationPage"
              x:DataType="vm:MobileReservationViewModel"
-             Title="LOC 예약 주문표">
+             Title="{loc:Tr Res_Title}">
 
     <ScrollView>
         <VerticalStackLayout Spacing="14" Padding="14">
             <!-- Header Card -->
             <Border Padding="16">
                 <VerticalStackLayout Spacing="6">
-                    <Label Text="다음 주 예약 매수 플랜" FontSize="16" FontAttributes="Bold" TextColor="#0F172A" />
+                    <Label Text="{loc:Tr Res_Header}" FontSize="16" FontAttributes="Bold" TextColor="#0F172A" />
                     <Label Text="{Binding PeriodText}" FontSize="13" TextColor="#2563EB" FontAttributes="Bold" />
                     <Grid ColumnDefinitions="*, Auto" Margin="0,4,0,0">
                         <Label Grid.Column="0" Text="{Binding Status}" FontSize="12" TextColor="#64748B" VerticalOptions="Center" />
-                        <Button Grid.Column="1" Text="새로고침" Command="{Binding RefreshPlanCommand}" FontSize="12" Padding="12,6" HeightRequest="34" />
+                        <Button Grid.Column="1" Text="{loc:Tr Common_Refresh}" Command="{Binding RefreshPlanCommand}" FontSize="12" Padding="12,6" HeightRequest="34" />
                     </Grid>
                 </VerticalStackLayout>
             </Border>
@@ -24,31 +24,30 @@
             <!-- Eligible Orders Section -->
             <Border Padding="16">
                 <VerticalStackLayout Spacing="8">
-                    <Label Text="주문 가능 단계 (현재가 도달)" FontSize="15" FontAttributes="Bold" TextColor="#16A34A" />
+                    <Label Text="{loc:Tr Res_Eligible}" FontSize="15" FontAttributes="Bold" TextColor="#16A34A" />
                     <CollectionView ItemsSource="{Binding Orders}" SelectionMode="None">
                         <CollectionView.EmptyView>
-                            <Label Text="현재 조건에 도달한 주문 건이 없습니다." TextColor="#64748B" FontSize="13" Margin="0,10" />
+                            <Label Text="{loc:Tr Res_NoOrders}" TextColor="#64748B" FontSize="13" Margin="0,10" />
                         </CollectionView.EmptyView>
                         <CollectionView.Header>
                             <Grid ColumnDefinitions="*, *, *, *, 64" Padding="0,4" BackgroundColor="#F8FAFC">
-                                <Label Grid.Column="0" Text="종목·단계" FontAttributes="Bold" FontSize="11" TextColor="#64748B" />
-                                <Label Grid.Column="1" Text="LOC 주문가" FontAttributes="Bold" FontSize="11" TextColor="#64748B" HorizontalOptions="End" />
-                                <Label Grid.Column="2" Text="수량" FontAttributes="Bold" FontSize="11" TextColor="#64748B" HorizontalOptions="End" />
-                                <Label Grid.Column="3" Text="주문금액" FontAttributes="Bold" FontSize="11" TextColor="#64748B" HorizontalOptions="End" />
+                                <Label Grid.Column="0" Text="{loc:Tr Res_ColStock}" FontAttributes="Bold" FontSize="11" TextColor="#64748B" />
+                                <Label Grid.Column="1" Text="{loc:Tr Res_ColPrice}" FontAttributes="Bold" FontSize="11" TextColor="#64748B" HorizontalOptions="End" />
+                                <Label Grid.Column="2" Text="{loc:Tr Res_ColQty}" FontAttributes="Bold" FontSize="11" TextColor="#64748B" HorizontalOptions="End" />
+                                <Label Grid.Column="3" Text="{loc:Tr Res_ColAmount}" FontAttributes="Bold" FontSize="11" TextColor="#64748B" HorizontalOptions="End" />
                             </Grid>
                         </CollectionView.Header>
                         <CollectionView.ItemTemplate>
                             <DataTemplate x:DataType="vm:MobileOrderRow">
                                 <Grid ColumnDefinitions="*, *, *, *, 64" Padding="0,6">
                                     <VerticalStackLayout Grid.Column="0">
-                                        <Label Text="{Binding Symbol}" FontSize="13" FontAttributes="Bold" TextColor="#0F172A" />
-                                        <Label Text="{Binding Name}" FontSize="11" TextColor="#334155" LineBreakMode="TailTruncation" />
-                                        <Label Text="{Binding StageText}" FontSize="11" TextColor="#64748B" />
+                                        <Label Text="{Binding Title}" FontSize="13" FontAttributes="Bold" TextColor="#0F172A" LineBreakMode="TailTruncation" />
+                                        <Label Text="{Binding Subtitle}" FontSize="11" TextColor="#64748B" LineBreakMode="TailTruncation" />
                                     </VerticalStackLayout>
                                     <Label Grid.Column="1" Text="{Binding Price, StringFormat='${0:N2}'}" FontSize="13" FontAttributes="Bold" HorizontalOptions="End" TextColor="#0969DA" />
-                                    <Label Grid.Column="2" Text="{Binding Quantity, StringFormat='{0:N0}주'}" FontSize="12" HorizontalOptions="End" TextColor="#334155" />
+                                    <Label Grid.Column="2" Text="{Binding QuantityText}" FontSize="12" HorizontalOptions="End" TextColor="#334155" />
                                     <Label Grid.Column="3" Text="{Binding AmountKrw, StringFormat='₩{0:N0}'}" FontSize="12" HorizontalOptions="End" TextColor="#0284C7" />
-                                    <Button Grid.Column="4" Text="완료" FontSize="11" Padding="6,2" HeightRequest="30" Margin="6,0,0,0"
+                                    <Button Grid.Column="4" Text="{loc:Tr Res_Done}" FontSize="11" Padding="6,2" HeightRequest="30" Margin="6,0,0,0"
                                             VerticalOptions="Center"
                                             Command="{Binding Source={RelativeSource AncestorType={x:Type vm:MobileReservationViewModel}}, Path=MarkBuyDoneCommand, x:DataType=vm:MobileReservationViewModel}"
                                             CommandParameter="{Binding Symbol}" />
@@ -62,20 +61,20 @@
             <!-- Excluded Targets Section -->
             <Border Padding="16">
                 <VerticalStackLayout Spacing="8">
-                    <Label Text="제외 종목 및 사유" FontSize="15" FontAttributes="Bold" TextColor="#64748B" />
+                    <Label Text="{loc:Tr Res_Excluded}" FontSize="15" FontAttributes="Bold" TextColor="#64748B" />
                     <CollectionView ItemsSource="{Binding Excluded}" SelectionMode="None">
                         <CollectionView.EmptyView>
-                            <Label Text="제외된 종목이 없습니다." TextColor="#64748B" FontSize="13" Margin="0,10" />
+                            <Label Text="{loc:Tr Res_NoExcluded}" TextColor="#64748B" FontSize="13" Margin="0,10" />
                         </CollectionView.EmptyView>
                         <CollectionView.ItemTemplate>
                             <DataTemplate x:DataType="vm:MobileSkipRow">
                                 <Grid ColumnDefinitions="Auto, *, Auto" Padding="0,4" ColumnSpacing="8">
                                     <VerticalStackLayout Grid.Column="0">
-                                        <Label Text="{Binding Symbol}" FontSize="13" FontAttributes="Bold" TextColor="#475569" />
-                                        <Label Text="{Binding Name}" FontSize="11" TextColor="#64748B" LineBreakMode="TailTruncation" MaximumWidthRequest="110" />
+                                        <Label Text="{Binding Title}" FontSize="13" FontAttributes="Bold" TextColor="#475569" LineBreakMode="TailTruncation" MaximumWidthRequest="120" />
+                                        <Label Text="{Binding Subtitle}" FontSize="11" TextColor="#64748B" />
                                     </VerticalStackLayout>
                                     <Label Grid.Column="1" Text="{Binding Reason}" FontSize="12" TextColor="#64748B" />
-                                    <Button Grid.Column="2" Text="해제" FontSize="11" Padding="6,2" HeightRequest="30"
+                                    <Button Grid.Column="2" Text="{loc:Tr Res_Undo}" FontSize="11" Padding="6,2" HeightRequest="30"
                                             VerticalOptions="Center" IsVisible="{Binding BuyDone}"
                                             Command="{Binding Source={RelativeSource AncestorType={x:Type vm:MobileReservationViewModel}}, Path=UnmarkBuyDoneCommand, x:DataType=vm:MobileReservationViewModel}"
                                             CommandParameter="{Binding Symbol}" />

@@ -140,14 +140,14 @@ public sealed class TargetRowViewModel(TargetPlan plan) : ObservableObject
         CurrentBuyPrice is { } b ? ReservationPlanner.LimitPrice(b, stage) : null;
 
     /// <summary>
-    /// 단계 금액(원)으로 그 단계 매수단가에 살 수 있는 주식 수(내림) "222.00 × 3주".
+    /// 단계 금액(원)으로 그 단계 매수단가에 살 수 있는 주식 수(내림, 최소 1주) "222.00 × 3주".
     /// 달러 종목이 아니거나(시세 조회 전에는 달러로 본다) 환율 · 매입 목표가가 없으면 null.
     /// </summary>
     public string? SharesText(BuyStatus stage, double krw)
     {
         if (Quote is { } q && q.Currency != "USD")
             return null;
-        if (StagePrice(stage) is not { } price || Money.Shares(krw, UsdKrw, price) is not { } n)
+        if (StagePrice(stage) is not { } price || Money.DisplayShares(krw, UsdKrw, price) is not { } n)
             return null;
         return $"{price:N2} × {n:N0}주";
     }

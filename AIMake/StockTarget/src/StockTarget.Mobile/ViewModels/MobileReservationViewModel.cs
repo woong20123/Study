@@ -1,29 +1,34 @@
 using System.Collections.ObjectModel;
 using StockTarget.Core;
+using StockTarget.Mobile.Localization;
 
 namespace StockTarget.Mobile.ViewModels;
 
-/// <summary>주문표 한 행(종목명 표시용).</summary>
+/// <summary>주문표 한 행. 종목명을 크게, 없으면 티커.</summary>
 public sealed record MobileOrderRow(ReservationOrder Order, string Name)
 {
     public string Symbol => Order.Symbol;
-    public string StageText => Order.StageText;
+    public string Title => Name.Length > 0 ? Name : Symbol;
+    public string Subtitle => (Name.Length > 0 ? Symbol + " · " : "") + L.Verdict(Order.Stage);
     public double Price => Order.Price;
-    public int Quantity => Order.Quantity;
+    public string QuantityText => L.Format("Res_Qty", Order.Quantity);
     public double AmountKrw => Order.AmountKrw;
 }
 
-/// <summary>제외 목록 한 행(종목명 표시용).</summary>
-public sealed record MobileSkipRow(string Symbol, string Name, string Reason, bool BuyDone);
+/// <summary>제외 목록 한 행. 종목명을 크게, 없으면 티커.</summary>
+public sealed record MobileSkipRow(string Symbol, string Name, string Reason, bool BuyDone)
+{
+    public string Title => Name.Length > 0 ? Name : Symbol;
+    public string Subtitle => Name.Length > 0 ? Symbol : "";
+}
 
 public sealed class MobileReservationViewModel : ObservableObject
 {
     private readonly StockDatabase _db;
     private readonly StockService _stockService;
-    private readonly ReservationService _reservationService;
 
     private bool _isBusy;
-    private string _status = "준비";
+    private string _status = L.Get("Status_Ready");
     private string _periodText = "";
 
     public ObservableCollection<MobileOrderRow> Orders { get; } = [];
@@ -55,11 +60,10 @@ public sealed class MobileReservationViewModel : ObservableObject
     /// <summary>'매수 완료' 표시를 해제해 다시 주문표에 넣는다.</summary>
     public AsyncCommand<string> UnmarkBuyDoneCommand { get; }
 
-    public MobileReservationViewModel(StockDatabase db, StockService stockService, ReservationService reservationService)
+    public MobileReservationViewModel(StockDatabase db, StockService stockService)
     {
         _db = db;
         _stockService = stockService;
-        _reservationService = reservationService;
 
         RefreshPlanCommand = new AsyncCommand(LoadPlanAsync);
         MarkBuyDoneCommand = new AsyncCommand<string>(s => SetBuyDoneAsync(s, true));
@@ -71,7 +75,7 @@ public sealed class MobileReservationViewModel : ObservableObject
     public async Task LoadPlanAsync()
     {
         IsBusy = true;
-        Status = "예약 주문표 계산 중...";
+        Status = L.Get("Res_Calculating");
         try
         {
             var plans = _db.GetTargets();
@@ -82,12 +86,16 @@ public sealed class MobileReservationViewModel : ObservableObject
             var (start, end) = ReservationPlanner.NextWeek(DateOnly.FromDateTime(DateTime.Today));
 
             var currentPrices = new Dictionary<string, double>();
+            // 종목명: 한국어 기기면 캐시한 한글명, 아니면 시세의 영문명
+            var names = L.IsKorean ? new Dictionary<string, string>(_db.GetStockNames()) : new Dictionary<string, string>();
             foreach (var p in plans)
             {
                 try
                 {
                     var q = await _stockService.GetQuoteAsync(p.Symbol, force: false);
                     currentPrices[p.Symbol] = q.Value.Price;
+                    if (q.Value.Name is { Length: > 0 } en)
+                        names.TryAdd(p.Symbol, en);
                 }
                 catch
                 {
@@ -97,21 +105,21 @@ public sealed class MobileReservationViewModel : ObservableObject
 
             var planResult = ReservationPlanner.Plan(plans, start, end, usdKrw, defaults, currentPrices, _db.GetBuyDone());
 
-            PeriodText = $"예약 기간: {planResult.Start:yyyy-MM-dd} ~ {planResult.End:yyyy-MM-dd} (다음 주 월~금)";
+            PeriodText = L.Format("Res_Period", planResult.Start, planResult.End);
 
-            var names = _db.GetStockNames();
             Orders.Clear();
             foreach (var o in planResult.Orders) Orders.Add(new MobileOrderRow(o, names.GetValueOrDefault(o.Symbol, "")));
 
             Excluded.Clear();
             foreach (var e in planResult.Skips)
-                Excluded.Add(new MobileSkipRow(e.Symbol, names.GetValueOrDefault(e.Symbol, ""), e.Reason, e.BuyDone));
+                Excluded.Add(new MobileSkipRow(e.Symbol, names.GetValueOrDefault(e.Symbol, ""),
+                    e.BuyDone ? L.Get("Res_BuyDoneReason") : e.Reason, e.BuyDone));
 
-            Status = $"주문 가능 {Orders.Count}건 / 제외 {Excluded.Count}건";
+            Status = L.Format("Res_Summary", Orders.Count, Excluded.Count);
         }
         catch (Exception ex)
         {
-            Status = $"주문표 생성 실패: {ex.Message}";
+            Status = L.Format("Res_Failed", ex.Message);
         }
         finally
         {
@@ -126,7 +134,7 @@ public sealed class MobileReservationViewModel : ObservableObject
         _db.SetBuyDone(symbol, done);
         await LoadPlanAsync();
         Status = done
-            ? $"{symbol} 매수 완료 — 해제할 때까지 주문표에서 제외"
-            : $"{symbol} 매수 완료 해제 — 다시 주문표에 넣음";
+            ? L.Format("Res_MarkedDone", symbol)
+            : L.Format("Res_Unmarked", symbol);
     }
 }

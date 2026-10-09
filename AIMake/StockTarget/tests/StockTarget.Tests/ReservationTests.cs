@@ -1,6 +1,3 @@
-using System.Net;
-using System.Text;
-using System.Text.Json;
 using StockTarget.Core;
 
 namespace StockTarget.Tests;
@@ -186,185 +183,21 @@ public class ReservationPlannerTests
     }
 }
 
-/// <summary>키움 API 요청 형식과 응답 처리. 가짜 HTTP 처리기를 써서 실제로는 아무것도 보내지 않는다.</summary>
-public sealed class KiwoomClientTests : IDisposable
-{
-    private readonly string _path = Path.Combine(Path.GetTempPath(), $"stocktarget_rsv_{Guid.NewGuid():N}.db");
-    private readonly FakeKiwoom _fake = new();
-
-    public void Dispose()
-    {
-        if (File.Exists(_path))
-            File.Delete(_path);
-    }
-
-    private static ReservationOrder Order(BuyStatus stage = BuyStatus.Buy, double price = 89.86, int qty = 8) =>
-        new("KO", stage, "2026Q4", new DateOnly(2026, 10, 12), new DateOnly(2026, 10, 16), 89.86, price, qty, 1_000_000, 740.74);
-
-    private KiwoomClient Client(bool mock = true) => new(new KiwoomOptions("APPKEY", "SECRET", mock), _fake);
-
-    [Fact]
-    public async Task ReserveBuySendsPeriodLocRequest()
-    {
-        using var client = Client();
-        var receipt = await client.ReserveBuyLocAsync(Order(), "NY");
-
-        Assert.Equal("000000000026", receipt.ReservationNo);
-        Assert.Equal("20261012", receipt.ScheduledDate);
-
-        var token = _fake.Requests[0];
-        Assert.Equal("au10001", token.ApiId);
-        Assert.Equal("https://mockapi.kiwoom.com/oauth2/token", token.Url);
-        Assert.Equal("client_credentials", token.Body.GetProperty("grant_type").GetString());
-        Assert.Null(token.Authorization);
-
-        var order = _fake.Requests[1];
-        Assert.Equal("ust21200", order.ApiId);
-        Assert.Equal("https://mockapi.kiwoom.com/api/us/ordr", order.Url);
-        Assert.Equal("Bearer TOKEN-1", order.Authorization);
-        var b = order.Body;
-        Assert.Equal("2", b.GetProperty("rsrv_ord_tp").GetString());          // 기간예약(잔량주문)
-        Assert.Equal("20261012", b.GetProperty("rsrv_strt_dt").GetString());
-        Assert.Equal("20261016", b.GetProperty("rsrv_end_dt").GetString());
-        Assert.Equal("NY", b.GetProperty("stex_tp").GetString());
-        Assert.Equal("KO", b.GetProperty("stk_cd").GetString());
-        Assert.Equal("8", b.GetProperty("ord_qty").GetString());
-        Assert.Equal("89.86", b.GetProperty("ord_uv").GetString());
-        Assert.Equal("30", b.GetProperty("trde_tp").GetString());             // LOC
-    }
-
-    [Fact]
-    public async Task TokenIsReusedAndRealUsesApiDomain()
-    {
-        using var client = Client(mock: false);
-        Assert.Equal("NY", await client.GetExchangeAsync("KO"));
-        await client.ReserveBuyLocAsync(Order(), "NY");
-        Assert.Single(_fake.Requests, r => r.ApiId == "au10001");             // 토큰은 한 번만
-        Assert.All(_fake.Requests, r => Assert.StartsWith("https://api.kiwoom.com/", r.Url));
-        Assert.Equal("usa10098", _fake.Requests[1].ApiId);
-        Assert.Equal("KO", _fake.Requests[1].Body.GetProperty("stk_cd").GetString());
-    }
-
-    [Fact]
-    public async Task ErrorReturnCodeThrows()
-    {
-        _fake.OrderResponse = """{"return_code": 20, "return_msg": "주문가능금액이 부족합니다"}""";
-        using var client = Client();
-        var e = await Assert.ThrowsAsync<KiwoomException>(() => client.ReserveBuyLocAsync(Order(), "NY"));
-        Assert.Equal(20, e.Code);
-        Assert.Contains("주문가능금액이 부족합니다", e.Message);
-    }
-
-    [Fact]
-    public void OptionsToStringHidesKeys()
-    {
-        var o = new KiwoomOptions("APPKEY", "SECRET", true);
-        Assert.DoesNotContain("SECRET", o.ToString());
-        Assert.DoesNotContain("APPKEY", o.ToString());
-    }
-
-    [Fact]
-    public async Task ServiceSkipsDuplicatesAndContinuesAfterFailure()
-    {
-        var db = new StockDatabase(_path);
-        using var client = Client();
-        var service = new ReservationService(db, client) { RequestDelay = TimeSpan.Zero };
-        var orders = new[] { Order(BuyStatus.Buy), Order(BuyStatus.MustBuy, 80.87, 9) };
-
-        var first = await service.SubmitAsync(orders);
-        Assert.All(first, r => Assert.True(r.Submitted));
-        Assert.Equal(2, db.GetReservations().Count);
-        Assert.Single(_fake.Requests, r => r.ApiId == "usa10098"); // 같은 티커 거래소 조회는 한 번
-
-        // 다시 보내면 DB에 있는 건은 건너뛴다(키움에 두 번 접수하지 않음)
-        var sent = _fake.Requests.Count(r => r.ApiId == "ust21200");
-        var again = await service.SubmitAsync(orders);
-        Assert.All(again, r => Assert.StartsWith("이미 접수됨", r.Message));
-        Assert.Equal(sent, _fake.Requests.Count(r => r.ApiId == "ust21200"));
-
-        // 실패한 건은 기록하지 않고 다음 건을 계속 보낸다
-        _fake.OrderResponse = """{"return_code": 20, "return_msg": "거부"}""";
-        var failed = await service.SubmitAsync([Order(BuyStatus.StrongBuy, 71.89, 10)]);
-        Assert.StartsWith("실패", failed[0].Message);
-        Assert.Equal(2, db.GetReservations().Count);
-    }
-
-    private sealed record Captured(string ApiId, string Url, string? Authorization, JsonElement Body);
-
-    private sealed class FakeKiwoom : HttpMessageHandler
-    {
-        public List<Captured> Requests { get; } = [];
-        public string OrderResponse { get; set; } =
-            """{"rsrv_ord_no": "000000000026", "frcs_dt": "20261012", "return_code": 0, "return_msg": "미국 예약주문 입력이 완료되었습니다."}""";
-
-        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct)
-        {
-            var apiId = request.Headers.GetValues("api-id").Single();
-            var body = JsonDocument.Parse(await request.Content!.ReadAsStringAsync(ct)).RootElement.Clone();
-            Requests.Add(new Captured(apiId, request.RequestUri!.ToString(), request.Headers.Authorization?.ToString(), body));
-            var json = apiId switch
-            {
-                "au10001" => """{"expires_dt": "29991231235959", "token_type": "bearer", "token": "TOKEN-1", "return_code": 0}""",
-                "usa10098" => """{"list": [{"stex_tp": "NY", "stk_cd": "KO", "stk_nm": "코카콜라"}], "return_code": 0}""",
-                "ust21200" => OrderResponse,
-                _ => """{"return_code": 1, "return_msg": "unknown"}""",
-            };
-            return new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(json, Encoding.UTF8, "application/json") };
-        }
-    }
-}
-
 public class StartupOptionsTests
 {
-    private static readonly Dictionary<string, string> Keys = new()
-    {
-        [KiwoomOptions.AppKeyVariable] = "APPKEY",
-        [KiwoomOptions.SecretKeyVariable] = "SECRET",
-    };
-
-    private static Func<string, string?> Env(string? kiwoomEnv = null, bool keys = true) => name =>
-        name == KiwoomOptions.EnvVariable ? kiwoomEnv : keys && Keys.TryGetValue(name, out var v) ? v : null;
-
     [Fact]
-    public void ParsesDbAndKiwoom()
+    public void ParsesDb()
     {
         Assert.Equal(new StartupOptions(), StartupOptions.Parse([]));
-        Assert.Equal(new StartupOptions(@"C:\t\a.db", KiwoomMode.Off), StartupOptions.Parse(["--db", @"C:\t\a.db", "--kiwoom", "off"]));
-        Assert.Equal(KiwoomMode.Real, StartupOptions.Parse(["--KIWOOM", "Real"]).Kiwoom); // 대소문자 무시
-        Assert.Equal(KiwoomMode.Mock, StartupOptions.Parse(["--kiwoom", "mock"]).Kiwoom);
-        Assert.Equal(KiwoomMode.Auto, StartupOptions.Parse(["--kiwoom", "auto"]).Kiwoom);
+        Assert.Equal(new StartupOptions(@"C:\t\a.db"), StartupOptions.Parse(["--db", @"C:\t\a.db"]));
+        Assert.Equal(@"C:\t\a.db", StartupOptions.Parse(["--DB", @"C:\t\a.db"]).DbPath); // 대소문자 무시
     }
 
     [Theory]
-    [InlineData("--kiwoom", "on")]   // 잘못된 값
-    [InlineData("--kiwoom")]         // 값 없음
-    [InlineData("--kiwoom", "--db")] // 다음 옵션을 값으로 착각하지 않음
-    [InlineData("--real")]           // 모르는 옵션
+    [InlineData("--db")]            // 값 없음
+    [InlineData("--db", "--db")]    // 다음 옵션을 값으로 착각하지 않음
+    [InlineData("--kiwoom", "off")] // 키움 연동은 없앴으므로 모르는 옵션
+    [InlineData("--real")]          // 모르는 옵션
     public void RejectsBadOptions(params string[] args) =>
         Assert.Throws<ArgumentException>(() => StartupOptions.Parse(args));
-
-    [Theory]
-    [InlineData(KiwoomMode.Auto, null, true)]    // 옵션 없음 + KIWOOM_ENV 없음 → 모의투자
-    [InlineData(KiwoomMode.Auto, "real", false)] // 옵션 없음 → KIWOOM_ENV=real 따름
-    [InlineData(KiwoomMode.Mock, "real", true)]  // --kiwoom mock 이 KIWOOM_ENV=real보다 우선
-    [InlineData(KiwoomMode.Real, null, false)]   // --kiwoom real
-    public void ModeOverridesKiwoomEnv(KiwoomMode mode, string? kiwoomEnv, bool expectMock)
-    {
-        var o = KiwoomOptions.FromEnvironment(mode, Env(kiwoomEnv));
-        Assert.NotNull(o);
-        Assert.Equal(expectMock, o.IsMock);
-    }
-
-    [Fact]
-    public void OffDisablesEvenWithKeys()
-    {
-        Assert.Null(KiwoomOptions.FromEnvironment(KiwoomMode.Off, Env("real")));
-        Assert.Null(KiwoomOptions.FromEnvironment(KiwoomMode.Real, Env(keys: false))); // 키가 없으면 실전 옵션이어도 연동 안 함
-
-        Assert.Equal("키움: 꺼짐(--kiwoom off)", KiwoomOptions.StatusText(KiwoomMode.Off, null));
-        Assert.Equal("키움: 키 미설정", KiwoomOptions.StatusText(KiwoomMode.Real, null));
-        Assert.Equal("키움: 모의투자", KiwoomOptions.StatusText(KiwoomMode.Auto, KiwoomOptions.FromEnvironment(KiwoomMode.Auto, Env())));
-        Assert.Equal("키움: 실전(--kiwoom real)",
-            KiwoomOptions.StatusText(KiwoomMode.Real, KiwoomOptions.FromEnvironment(KiwoomMode.Real, Env())));
-    }
 }

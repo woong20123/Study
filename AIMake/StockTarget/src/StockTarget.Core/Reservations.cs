@@ -3,7 +3,7 @@ using System.Globalization;
 namespace StockTarget.Core;
 
 /// <summary>
-/// 키움 미국주식 예약 매수(LOC) 한 건.
+/// 미국주식 LOC 예약 매수 한 건(증권사 앱에 직접 넣을 때 참고하는 주문표 한 줄).
 /// 기간(Start~End) 동안 매일 장 마감 때 종가가 Price 이하이면 체결된다(기간예약 잔량주문: 다 체결되면 끝).
 /// </summary>
 public sealed record ReservationOrder(
@@ -23,7 +23,7 @@ public sealed record ReservationOrder(
 
     public string StageText => Stage.ToText();
 
-    /// <summary>키움 API 주문단가 문자열(소수 2자리).</summary>
+    /// <summary>주문단가 문자열(소수 2자리).</summary>
     public string PriceText => Price.ToString("0.00", CultureInfo.InvariantCulture);
 }
 
@@ -45,7 +45,7 @@ public sealed record ReservationPlan(
 /// 금액          : 목표에 입력한 값, 비운 단계는 기본 매수금액(0이면 그 단계는 주문하지 않음)
 /// 매수 완료     : 사용자가 '매수 완료'로 표시한 종목은 해제할 때까지 통째로 뺀다
 /// 대상 단계     : 현재가가 주문가 이하로 이미 내려온 단계만(현재가를 주면). 나머지는 제외 목록에 사유와 함께
-/// 수량          : 금액(원) ÷ 환율 ÷ 주문가, 1주 단위 내림
+/// 수량          : 금액(원) ÷ 환율 ÷ 주문가, 1주 단위 내림(1주도 못 사면 제외)
 /// </code>
 /// 종가가 강력매수 가격 이하면 세 건이 모두 체결돼 총 체결액이 강력매수 금액이 된다.
 /// 기간이 분기 경계를 넘으면 분기마다 b가 달라 분기별로 나눠 주문한다.
@@ -195,63 +195,5 @@ public static class ReservationPlanner
         foreach (var g in days.GroupBy(TargetCalculator.QuarterLabel))
             segments.Add((g.Key, g.First(), g.Last()));
         return segments;
-    }
-}
-
-/// <summary>예약 한 건의 접수 결과.</summary>
-public sealed record ReservationResult(ReservationOrder Order, bool Submitted, string Message);
-
-/// <summary>
-/// 주문표를 키움에 접수한다. 같은 티커·단계·기간·환경으로 이미 접수한 건은 다시 보내지 않는다.
-/// 한 건이 실패해도 나머지는 계속 보낸다.
-/// </summary>
-public sealed class ReservationService(StockDatabase db, KiwoomClient kiwoom, Func<DateTimeOffset>? now = null)
-{
-    private readonly Func<DateTimeOffset> _now = now ?? (() => DateTimeOffset.Now);
-
-    /// <summary>요청 사이 간격(키움 호출 제한 대비).</summary>
-    public TimeSpan RequestDelay { get; set; } = TimeSpan.FromMilliseconds(300);
-
-    public string Env => kiwoom.Options.EnvText;
-
-    public bool IsAlreadySubmitted(ReservationOrder o) =>
-        db.FindReservation(o.Symbol, o.StageText, o.Start, o.End, Env) is not null;
-
-    public async Task<IReadOnlyList<ReservationResult>> SubmitAsync(
-        IEnumerable<ReservationOrder> orders, IProgress<ReservationResult>? progress = null, CancellationToken ct = default)
-    {
-        var results = new List<ReservationResult>();
-        var exchanges = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        foreach (var o in orders)
-        {
-            ReservationResult result;
-            if (db.FindReservation(o.Symbol, o.StageText, o.Start, o.End, Env) is { } prev)
-            {
-                result = new ReservationResult(o, false, $"이미 접수됨 (예약번호 {prev.ReservationNo})");
-            }
-            else
-            {
-                try
-                {
-                    if (!exchanges.TryGetValue(o.Symbol, out var stex))
-                    {
-                        stex = await kiwoom.GetExchangeAsync(o.Symbol, ct).ConfigureAwait(false);
-                        exchanges[o.Symbol] = stex;
-                    }
-                    var receipt = await kiwoom.ReserveBuyLocAsync(o, stex, ct).ConfigureAwait(false);
-                    db.SaveReservation(new ReservationRecord(o.Symbol, o.StageText, o.Start, o.End, o.Price, o.Quantity,
-                        o.AmountKrw, Env, receipt.ReservationNo, receipt.ScheduledDate, _now()));
-                    result = new ReservationResult(o, true, $"접수 (예약번호 {receipt.ReservationNo}, 주문예정일 {receipt.ScheduledDate})");
-                }
-                catch (Exception e) when (e is KiwoomException or HttpRequestException or TaskCanceledException)
-                {
-                    result = new ReservationResult(o, false, "실패: " + e.Message);
-                }
-                await Task.Delay(RequestDelay, ct).ConfigureAwait(false);
-            }
-            results.Add(result);
-            progress?.Report(result);
-        }
-        return results;
     }
 }

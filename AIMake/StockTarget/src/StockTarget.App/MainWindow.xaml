@@ -13,18 +13,6 @@
             </StatusBarItem>
             <StatusBarItem HorizontalAlignment="Right">
                 <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="{Binding KiwoomStatus}" Margin="0,0,16,0">
-                        <TextBlock.Style>
-                            <Style TargetType="TextBlock">
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding IsKiwoomReal}" Value="True">
-                                        <Setter Property="Foreground" Value="#C62828"/>
-                                        <Setter Property="FontWeight" Value="Bold"/>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </TextBlock.Style>
-                    </TextBlock>
                     <TextBlock Text="{Binding CloudStatus}" Margin="0,0,16,0"/>
                     <TextBlock Text="{Binding UsdKrwText}" Margin="0,0,16,0"/>
                     <TextBlock Foreground="#777" Text="{Binding DbPath, StringFormat=DB: {0}}"/>
@@ -171,7 +159,7 @@
                             <Button Content="새로 입력" Command="{Binding NewCommand}"/>
                             <Button Content="시세 새로고침(캐시 무시)" Command="{Binding RefreshCommand}"/>
                             <Button AutomationProperties.AutomationId="OpenReservation" Content="다음 주 LOC 예약..." Command="{Binding ReserveCommand}"
-                                    ToolTip="현재가가 이미 도달한 단계만 골라 다음 주(월~금) 키움 LOC 예약 매수 주문표를 만든다(나머지는 제외 목록에 사유 표시)"/>
+                                    ToolTip="현재가가 이미 도달한 단계만 골라 다음 주(월~금) LOC 예약 매수 주문표를 만든다(나머지는 제외 목록에 사유 표시). 접수는 증권사 앱에서 직접"/>
                             <TextBlock VerticalAlignment="Center" Foreground="#888" Margin="6,0,0,0"
                                        Text="배당수익률을 비우면 5년 평균을 자동 조회"/>
                         </StackPanel>
@@ -180,9 +168,9 @@
 
                 <DataGrid ItemsSource="{Binding Targets}" SelectedItem="{Binding Selected}" RowStyle="{StaticResource StatusRow}">
                     <DataGrid.Columns>
-                        <!-- 판단에 쓰는 값(현재가 · 이번 분기 매입 목표가 · 괴리 · 판정)을 티커 바로 뒤에 둔다 -->
-                        <DataGridTextColumn Header="티커" Binding="{Binding Symbol}" Width="Auto" FontWeight="SemiBold"/>
+                        <!-- 종목명 · 티커 다음에 판단에 쓰는 값(현재가 · 이번 분기 매입 목표가 · 괴리 · 판정)을 둔다 -->
                         <DataGridTextColumn Header="종목명" Binding="{Binding Name}" Width="Auto" MaxWidth="180"/>
+                        <DataGridTextColumn Header="티커" Binding="{Binding Symbol}" Width="Auto" FontWeight="SemiBold"/>
                         <DataGridTextColumn Header="현재가" Binding="{Binding Price, StringFormat=N2}" Width="Auto" ElementStyle="{StaticResource Num}" FontWeight="SemiBold"/>
                         <DataGridTextColumn Header="매입목표가" Binding="{Binding CurrentBuyPrice, StringFormat=N2}" Width="Auto" ElementStyle="{StaticResource Num}" FontWeight="SemiBold"/>
                         <DataGridTextColumn Header="괴리" Binding="{Binding GapPct, StringFormat={}{0:+0.0;-0.0}%}" Width="Auto" ElementStyle="{StaticResource Num}"/>

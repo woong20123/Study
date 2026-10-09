@@ -367,6 +367,15 @@ public class MoneyTests
         Assert.Null(Money.Shares(1_000_000, null, 222));
         Assert.Null(Money.Shares(1_000_000, 1350, 0));
     }
+
+    [Fact]
+    public void DisplaySharesIsAtLeastOne()
+    {
+        // 1주 가격이 금액보다 큰 고가주(마켈 등)도 화면에는 1주
+        Assert.Equal(1, Money.DisplayShares(1_000_000, 1350, 1_900));
+        Assert.Equal(3, Money.DisplayShares(1_000_000, 1337.18, 222.00));
+        Assert.Null(Money.DisplayShares(1_000_000, null, 1_900));
+    }
 }
 
 public sealed class StockDatabaseTests : IDisposable

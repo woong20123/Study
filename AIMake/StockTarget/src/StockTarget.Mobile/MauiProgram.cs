@@ -23,11 +23,6 @@ public static class MauiProgram
         builder.Services.AddSingleton(_ => new NaverStockNameClient());
         builder.Services.AddSingleton<StockNameService>();
 
-        var kiwoomOptions = KiwoomOptions.FromEnvironment() ?? new KiwoomOptions("none", "none", IsMock: true);
-        var kiwoomClient = new KiwoomClient(kiwoomOptions);
-        builder.Services.AddSingleton(kiwoomClient);
-        builder.Services.AddSingleton(new ReservationService(db, kiwoomClient));
-
         // ViewModels
         builder.Services.AddSingleton<MobileMainViewModel>();
         builder.Services.AddTransient<MobileTargetEditViewModel>();
@@ -35,7 +30,7 @@ public static class MauiProgram
         builder.Services.AddTransient<MobileReservationViewModel>();
 
         // Pages
-        builder.Services.AddSingleton<MainPage>();
+        builder.Services.AddTransient<MainPage>(); // 언어를 바꾸면 화면을 새로 만든다
         builder.Services.AddTransient<TargetEditPage>();
         builder.Services.AddTransient<TargetDetailPage>();
         builder.Services.AddTransient<ReservationPage>();

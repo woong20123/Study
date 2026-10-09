@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 모바일 화면 문자열. 기본(영어) = AppResources.resx, 한국어 = AppResources.ko.resx. 키 = 화면_내용 -->
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Tab_Targets" xml:space="preserve"><value>Targets</value></data>
+  <data name="Tab_Reservation" xml:space="preserve"><value>LOC Orders</value></data>
+  <data name="Common_Refresh" xml:space="preserve"><value>Refresh</value></data>
+  <data name="Status_Ready" xml:space="preserve"><value>Ready</value></data>
+  <data name="Verdict_StrongBuy" xml:space="preserve"><value>Strong buy</value></data>
+  <data name="Verdict_MustBuy" xml:space="preserve"><value>Must buy</value></data>
+  <data name="Verdict_Buy" xml:space="preserve"><value>Buy</value></data>
+  <data name="Verdict_Near" xml:space="preserve"><value>Near</value></data>
+  <data name="Verdict_Wait" xml:space="preserve"><value>Wait</value></data>
+  <data name="Verdict_None" xml:space="preserve"><value>-</value></data>
+  <data name="Main_AddTarget" xml:space="preserve"><value>+ Add</value></data>
+  <data name="Main_Empty" xml:space="preserve"><value>No target stocks yet.</value></data>
+  <data name="Main_EmptyFiltered" xml:space="preserve"><value>No stocks need buying right now.</value></data>
+  <data name="Main_OnlyBuy" xml:space="preserve"><value>Only stocks to buy ({0})</value></data>
+  <data name="Main_AddFirst" xml:space="preserve"><value>Add a stock</value></data>
+  <data name="Main_Language" xml:space="preserve"><value>한국어</value></data>
+  <data name="Main_ImportJson" xml:space="preserve"><value>Import JSON backup</value></data>
+  <data name="Main_ImportTitle" xml:space="preserve"><value>Import backup</value></data>
+  <data name="Main_ImportMessage" xml:space="preserve"><value>Replace current data with {0}?
+
+Backup ({1:yyyy-MM-dd HH:mm}): {2} targets
+Current: {3} targets
+
+Current data is backed up inside the app first.</value></data>
+  <data name="Main_ImportOk" xml:space="preserve"><value>Import</value></data>
+  <data name="Main_Imported" xml:space="preserve"><value>Imported {0} targets</value></data>
+  <data name="Main_ImportFailed" xml:space="preserve"><value>Import failed</value></data>
+  <data name="Main_PriceLabel" xml:space="preserve"><value>Price:</value></data>
+  <data name="Main_Loading" xml:space="preserve"><value>Loading...</value></data>
+  <data name="Main_TargetCount" xml:space="preserve"><value>{0} targets</value></data>
+  <data name="Main_LoadFailed" xml:space="preserve"><value>Load failed: {0}</value></data>
+  <data name="Main_UsdKrw" xml:space="preserve"><value>FX: ₩{0:N2}/$</value></data>
+  <data name="Main_UsdKrwNone" xml:space="preserve"><value>FX: —</value></data>
+  <data name="Main_DeleteTitle" xml:space="preserve"><value>Delete target</value></data>
+  <data name="Main_DeleteMessage" xml:space="preserve"><value>Delete the {0} target?</value></data>
+  <data name="Main_DeleteOk" xml:space="preserve"><value>Delete</value></data>
+  <data name="Main_DeleteCancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="Main_Deleted" xml:space="preserve"><value>{0} deleted</value></data>
+  <data name="Row_TargetYear" xml:space="preserve"><value>({0})</value></data>
+  <data name="Row_QuarterBuy" xml:space="preserve"><value>{0} buy:</value></data>
+  <data name="Row_OutOfRange" xml:space="preserve"><value>Out of range</value></data>
+  <data name="Row_FetchFailed" xml:space="preserve"><value>Fetch failed</value></data>
+  <data name="Row_DefaultSuffix" xml:space="preserve"><value> · default</value></data>
+  <data name="Row_Shares" xml:space="preserve"><value>{0:N2} × {1:N0} sh</value></data>
+  <data name="Row_CacheMin" xml:space="preserve"><value>{0}m ago</value></data>
+  <data name="Row_CacheSec" xml:space="preserve"><value>{0}s ago</value></data>
+  <data name="Row_CacheLive" xml:space="preserve"><value>Live</value></data>
+  <data name="Detail_Title" xml:space="preserve"><value>Stock detail</value></data>
+  <data name="Detail_Price" xml:space="preserve"><value>Price</value></data>
+  <data name="Detail_QuarterTarget" xml:space="preserve"><value>This quarter</value></data>
+  <data name="Detail_Gap" xml:space="preserve"><value>Gap</value></data>
+  <data name="Detail_Basis" xml:space="preserve"><value>Calculation basis</value></data>
+  <data name="Detail_TargetYear" xml:space="preserve"><value>Target year: {0}</value></data>
+  <data name="Detail_FinalTarget" xml:space="preserve"><value>Final target: ${0:N2}</value></data>
+  <data name="Detail_Return" xml:space="preserve"><value>Target return: {0:N1}%</value></data>
+  <data name="Detail_Dividend" xml:space="preserve"><value>5y dividend: {0:N2}%</value></data>
+  <data name="Detail_Growth" xml:space="preserve"><value>Required growth: {0:N2}%/yr</value></data>
+  <data name="Detail_Schedule" xml:space="preserve"><value>Quarterly buy targets</value></data>
+  <data name="Detail_Quarter" xml:space="preserve"><value>Quarter</value></data>
+  <data name="Detail_BaseDate" xml:space="preserve"><value>Base date</value></data>
+  <data name="Detail_BuyTarget" xml:space="preserve"><value>Buy target</value></data>
+  <data name="Detail_DividendHistory" xml:space="preserve"><value>5-year dividend history</value></data>
+  <data name="Detail_Period" xml:space="preserve"><value>Period</value></data>
+  <data name="Detail_DividendAmount" xml:space="preserve"><value>Dividend</value></data>
+  <data name="Detail_AvgPrice" xml:space="preserve"><value>Avg price</value></data>
+  <data name="Detail_Yield" xml:space="preserve"><value>Yield</value></data>
+  <data name="Detail_Loaded" xml:space="preserve"><value>{0} details loaded</value></data>
+  <data name="Detail_Failed" xml:space="preserve"><value>Failed to load details: {0}</value></data>
+  <data name="Edit_Title" xml:space="preserve"><value>Target settings</value></data>
+  <data name="Edit_Basic" xml:space="preserve"><value>Basics</value></data>
+  <data name="Edit_SymbolLabel" xml:space="preserve"><value>Ticker (e.g. KO, AAPL)</value></data>
+  <data name="Edit_SymbolHint" xml:space="preserve"><value>Enter ticker (e.g. AAPL, BRKb)</value></data>
+  <data name="Edit_TargetYear" xml:space="preserve"><value>Target year</value></data>
+  <data name="Edit_PriceSection" xml:space="preserve"><value>Target price</value></data>
+  <data name="Edit_DirectMode" xml:space="preserve"><value>Enter price directly</value></data>
+  <data name="Edit_TargetPrice" xml:space="preserve"><value>Target price ($)</value></data>
+  <data name="Edit_TargetPriceHint" xml:space="preserve"><value>e.g. 189.00</value></data>
+  <data name="Edit_Eps" xml:space="preserve"><value>Target EPS ($)</value></data>
+  <data name="Edit_EpsHint" xml:space="preserve"><value>e.g. 10.5</value></data>
+  <data name="Edit_Per" xml:space="preserve"><value>Target P/E (x)</value></data>
+  <data name="Edit_PerHint" xml:space="preserve"><value>e.g. 18</value></data>
+  <data name="Edit_ReturnSection" xml:space="preserve"><value>Return &amp; dividend yield</value></data>
+  <data name="Edit_Return" xml:space="preserve"><value>Target return (%)</value></data>
+  <data name="Edit_ReturnHint" xml:space="preserve"><value>e.g. 10.0</value></data>
+  <data name="Edit_Dividend" xml:space="preserve"><value>5-year dividend yield (%)</value></data>
+  <data name="Edit_DividendHint" xml:space="preserve"><value>Leave blank to calculate</value></data>
+  <data name="Edit_FetchDividend" xml:space="preserve"><value>Fetch 5y</value></data>
+  <data name="Edit_AmountSection" xml:space="preserve"><value>Buy amount per stage (KRW)</value></data>
+  <data name="Edit_AmountNote" xml:space="preserve"><value>Leave blank to use the default buy amount.</value></data>
+  <data name="Edit_BuyLabel" xml:space="preserve"><value>Buy (≤ buy target)</value></data>
+  <data name="Edit_BuyHint" xml:space="preserve"><value>e.g. 1000000</value></data>
+  <data name="Edit_MustBuyLabel" xml:space="preserve"><value>Must buy (≤ -10%)</value></data>
+  <data name="Edit_MustBuyHint" xml:space="preserve"><value>e.g. 2000000</value></data>
+  <data name="Edit_StrongBuyLabel" xml:space="preserve"><value>Strong buy (≤ -20%)</value></data>
+  <data name="Edit_StrongBuyHint" xml:space="preserve"><value>e.g. 3000000</value></data>
+  <data name="Edit_Memo" xml:space="preserve"><value>Memo</value></data>
+  <data name="Edit_MemoHint" xml:space="preserve"><value>Thesis or notes</value></data>
+  <data name="Edit_Save" xml:space="preserve"><value>Save</value></data>
+  <data name="Edit_NeedSymbolFirst" xml:space="preserve"><value>Enter a ticker first.</value></data>
+  <data name="Edit_FetchingDividend" xml:space="preserve"><value>Fetching 5-year dividend yield...</value></data>
+  <data name="Edit_DividendDone" xml:space="preserve"><value>Dividend yield: {0}%</value></data>
+  <data name="Edit_DividendFailed" xml:space="preserve"><value>Dividend lookup failed: {0}</value></data>
+  <data name="Edit_NeedSymbol" xml:space="preserve"><value>Enter a ticker.</value></data>
+  <data name="Edit_InvalidPrice" xml:space="preserve"><value>Enter a valid target price.</value></data>
+  <data name="Edit_InvalidEps" xml:space="preserve"><value>Enter a valid target EPS.</value></data>
+  <data name="Edit_InvalidPer" xml:space="preserve"><value>Enter a valid target P/E.</value></data>
+  <data name="Edit_InvalidReturn" xml:space="preserve"><value>Enter a valid target return (%).</value></data>
+  <data name="Edit_InvalidDividend" xml:space="preserve"><value>Enter a valid dividend yield (%).</value></data>
+  <data name="Edit_InvalidAmount" xml:space="preserve"><value>{0} amount is invalid: '{1}'</value></data>
+  <data name="Edit_SaveFailed" xml:space="preserve"><value>Save failed: {0}</value></data>
+  <data name="Res_Title" xml:space="preserve"><value>LOC order plan</value></data>
+  <data name="Res_Header" xml:space="preserve"><value>Next week's buy plan</value></data>
+  <data name="Res_Calculating" xml:space="preserve"><value>Calculating order plan...</value></data>
+  <data name="Res_Period" xml:space="preserve"><value>Period: {0:yyyy-MM-dd} – {1:yyyy-MM-dd} (next Mon–Fri)</value></data>
+  <data name="Res_Summary" xml:space="preserve"><value>{0} orders / {1} excluded</value></data>
+  <data name="Res_Failed" xml:space="preserve"><value>Failed to build order plan: {0}</value></data>
+  <data name="Res_Eligible" xml:space="preserve"><value>Eligible stages (price reached)</value></data>
+  <data name="Res_NoOrders" xml:space="preserve"><value>No orders meet the conditions right now.</value></data>
+  <data name="Res_ColStock" xml:space="preserve"><value>Stock · stage</value></data>
+  <data name="Res_ColPrice" xml:space="preserve"><value>LOC price</value></data>
+  <data name="Res_ColQty" xml:space="preserve"><value>Qty</value></data>
+  <data name="Res_ColAmount" xml:space="preserve"><value>Amount</value></data>
+  <data name="Res_Qty" xml:space="preserve"><value>{0:N0} sh</value></data>
+  <data name="Res_Done" xml:space="preserve"><value>Done</value></data>
+  <data name="Res_Undo" xml:space="preserve"><value>Undo</value></data>
+  <data name="Res_Excluded" xml:space="preserve"><value>Excluded &amp; reasons</value></data>
+  <data name="Res_NoExcluded" xml:space="preserve"><value>Nothing excluded.</value></data>
+  <data name="Res_BuyDoneReason" xml:space="preserve"><value>Bought — excluded until you undo</value></data>
+  <data name="Res_MarkedDone" xml:space="preserve"><value>{0} bought — excluded until you undo</value></data>
+  <data name="Res_Unmarked" xml:space="preserve"><value>{0} back in the order plan</value></data>
+</root>

@@ -15,7 +15,7 @@ public partial class App : Application
         base.OnStartup(e);
         DispatcherUnhandledException += OnUnhandled;
 
-        // 구동 옵션: --db <path>(기본 %LOCALAPPDATA%\StockTarget\stocktarget.db), --kiwoom off|mock|real
+        // 구동 옵션: --db <path>(기본 %LOCALAPPDATA%\StockTarget\stocktarget.db)
         StartupOptions options;
         try
         {
@@ -32,7 +32,7 @@ public partial class App : Application
         var db = new StockDatabase(options.DbPath ?? StockDatabase.DefaultPath);
         _client = new YahooChartClient();
         _naver = new NaverStockNameClient();
-        var vm = new MainViewModel(db, new StockService(db, _client), options.Kiwoom, new StockNameService(db, _naver));
+        var vm = new MainViewModel(db, new StockService(db, _client), new StockNameService(db, _naver));
         MainWindow = new MainWindow(vm);
         MainWindow.Show();
     }

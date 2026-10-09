@@ -6,10 +6,8 @@ using StockTarget.Core;
 namespace StockTarget.App.ViewModels;
 
 /// <summary>주문표 한 행.</summary>
-public sealed class ReservationRowViewModel(ReservationOrder order, double usdKrw, string result, string name = "") : ObservableObject
+public sealed class ReservationRowViewModel(ReservationOrder order, double usdKrw, string name = "")
 {
-    private string _result = result;
-
     public ReservationOrder Order { get; } = order;
     public string Symbol => Order.Symbol;
     public string Name { get; } = name;
@@ -21,16 +19,14 @@ public sealed class ReservationRowViewModel(ReservationOrder order, double usdKr
     public int Quantity => Order.Quantity;
     public string AmountText => Money.Text(Order.AmountKrw, usdKrw);
     public double OrderUsd => Order.OrderUsd;
-
-    public string Result { get => _result; set => Set(ref _result, value); }
 }
 
 /// <summary>제외 목록 한 행(종목명 표시용).</summary>
 public sealed record ReservationSkipRow(string Symbol, string Name, string Reason, bool BuyDone);
 
 /// <summary>
-/// 다음 주(월~금) LOC 예약 매수 주문표. 등록된 목표 전체를 보고 계단식 주문을 만들고,
-/// 사용자가 확인 버튼을 누를 때만 키움에 접수한다.
+/// 다음 주(월~금) LOC 예약 매수 주문표. 등록된 목표 전체를 보고 계단식 주문을 만든다.
+/// 증권사에 접수하지는 않는다 — 주문표를 복사해 증권사 앱에서 직접 넣을 때 참고한다.
 /// </summary>
 public sealed class ReservationViewModel : ObservableObject
 {
@@ -39,8 +35,6 @@ public sealed class ReservationViewModel : ObservableObject
     private readonly IReadOnlyList<TargetPlan> _targets;
     private readonly BuyAmounts _defaults;
     private readonly IReadOnlyDictionary<string, double> _currentPrices;
-    private readonly KiwoomMode _mode;
-    private readonly KiwoomOptions? _options;
     private ReservationPlan? _plan;
     private double? _usdKrw;
     private string _summary = "";
@@ -49,29 +43,31 @@ public sealed class ReservationViewModel : ObservableObject
 
     public ReservationViewModel(
         StockDatabase db, StockService service, IReadOnlyList<TargetPlan> targets, double? usdKrw, BuyAmounts defaults,
-        KiwoomMode mode, IReadOnlyDictionary<string, double> currentPrices)
+        IReadOnlyDictionary<string, double> currentPrices)
     {
         _currentPrices = currentPrices;
-        _mode = mode;
         _defaults = defaults;
         _db = db;
         _service = service;
         _targets = targets;
         _usdKrw = usdKrw;
-        _options = KiwoomOptions.FromEnvironment(mode);
         (Start, End) = ReservationPlanner.NextWeek(DateOnly.FromDateTime(DateTime.Today));
         RefreshCommand = new AsyncCommand(() => BuildAsync(force: true), () => !IsBusy);
-        SubmitCommand = new AsyncCommand(SubmitAsync, () => !IsBusy && _options is not null && Rows.Any(r => CanSubmit(r)));
+        CopyCommand = new RelayCommand(Copy, () => !IsBusy && Rows.Count > 0);
         MarkBuyDoneCommand = new RelayCommand<string>(s => SetBuyDone(s, true), _ => !IsBusy);
         UnmarkBuyDoneCommand = new RelayCommand<string>(s => SetBuyDone(s, false), _ => !IsBusy);
     }
 
     public ObservableCollection<ReservationRowViewModel> Rows { get; } = [];
     public ObservableCollection<ReservationSkipRow> Skips { get; } = [];
+
+    /// <summary>예전 버전에서 키움에 접수했던 이력(읽기 전용).</summary>
     public ObservableCollection<ReservationRecord> History { get; } = [];
 
     public AsyncCommand RefreshCommand { get; }
-    public AsyncCommand SubmitCommand { get; }
+
+    /// <summary>주문표를 텍스트로 클립보드에 복사한다.</summary>
+    public RelayCommand CopyCommand { get; }
 
     /// <summary>티커(CommandParameter)를 '매수 완료'로 표시해 해제할 때까지 주문표에서 뺀다.</summary>
     public RelayCommand<string> MarkBuyDoneCommand { get; }
@@ -84,16 +80,6 @@ public sealed class ReservationViewModel : ObservableObject
 
     public string PeriodText =>
         $"예약 기간 {Start:yyyy-MM-dd}(월) ~ {End:yyyy-MM-dd}(금) · 기간예약(잔량주문) · LOC · 계단식(총액 맞춤)";
-
-    public string EnvText => _mode == KiwoomMode.Off
-        ? "키움 연동 꺼짐(구동 옵션 --kiwoom off) — 주문표 계산만 가능"
-        : _options is null
-        ? $"키움 API 키 미설정 — 환경변수 {KiwoomOptions.AppKeyVariable}, {KiwoomOptions.SecretKeyVariable} 필요 (주문표 계산만 가능)"
-        : _mode == KiwoomMode.Auto
-        ? $"접수 대상: {_options.EnvText} ({_options.BaseUrl})   ·   {KiwoomOptions.EnvVariable}=real 이면 실전 (구동 옵션 --kiwoom 이 우선)"
-        : $"접수 대상: {_options.EnvText} ({_options.BaseUrl})   ·   구동 옵션 --kiwoom {(_options.IsMock ? "mock" : "real")}";
-
-    public bool IsRealEnv => _options is { IsMock: false };
 
     public string Summary { get => _summary; set => Set(ref _summary, value); }
     public string Status { get => _status; set => Set(ref _status, value); }
@@ -117,7 +103,7 @@ public sealed class ReservationViewModel : ObservableObject
             var names = _db.GetStockNames();
             Rows.Clear();
             foreach (var o in _plan.Orders)
-                Rows.Add(new ReservationRowViewModel(o, rate, InitialResult(o), names.GetValueOrDefault(o.Symbol, "")));
+                Rows.Add(new ReservationRowViewModel(o, rate, names.GetValueOrDefault(o.Symbol, "")));
             Skips.Clear();
             foreach (var s in _plan.Skips)
                 Skips.Add(new ReservationSkipRow(s.Symbol, names.GetValueOrDefault(s.Symbol, ""), s.Reason, s.BuyDone));
@@ -139,64 +125,24 @@ public sealed class ReservationViewModel : ObservableObject
         }
     }
 
-    private async Task SubmitAsync()
+    private void Copy()
     {
-        if (_options is null || _plan is null)
-            return;
-        var pending = Rows.Where(CanSubmit).ToList();
-        if (pending.Count == 0)
-            return;
-
-        var lines = pending.Select(r => $"  {r.Symbol} {r.StageText} LOC {r.Price:0.00} × {r.Quantity}주");
-        var message = $"키움 {_options.EnvText} 계좌에 미국주식 LOC 예약 매수 {pending.Count}건을 접수합니다.\n\n" +
-                      $"기간 {Start:yyyy-MM-dd} ~ {End:yyyy-MM-dd} (기간예약 · 잔량주문)\n" +
-                      string.Join("\n", lines) +
-                      $"\n\n주문가 기준 합계 {Money.UsdText(pending.Sum(r => r.OrderUsd))}" +
-                      (IsRealEnv ? "\n\n※ 실전 계좌입니다. 종가가 주문가 이하이면 실제로 매수됩니다." : "") +
-                      "\n\n접수할까요?";
-        if (MessageBox.Show(message, "LOC 예약 매수 확인", MessageBoxButton.YesNo,
-                IsRealEnv ? MessageBoxImage.Warning : MessageBoxImage.Question, MessageBoxResult.No) != MessageBoxResult.Yes)
-        {
-            Status = "접수 취소";
-            return;
-        }
-
-        IsBusy = true;
-        try
-        {
-            using var client = new KiwoomClient(_options);
-            var service = new ReservationService(_db, client);
-            var rowsByOrder = pending.ToDictionary(r => r.Order);
-            var progress = new Progress<ReservationResult>(r => rowsByOrder[r.Order].Result = r.Message);
-            var results = await service.SubmitAsync(pending.Select(r => r.Order), progress);
-            LoadHistory();
-            Status = $"{DateTime.Now:HH:mm:ss} {_options.EnvText} 접수: 성공 {results.Count(r => r.Submitted)}, " +
-                     $"실패·건너뜀 {results.Count(r => !r.Submitted)}";
-        }
-        finally
-        {
-            IsBusy = false;
-        }
+        var lines = Rows.Select(r => $"{r.Symbol}\t{r.StageText}\tLOC {r.Price:0.00}\t{r.Quantity}주\t{r.Period}");
+        var text = $"LOC 예약 매수 {Start:yyyy-MM-dd} ~ {End:yyyy-MM-dd} (기간예약 · 잔량주문)\n" +
+                   string.Join("\n", lines) +
+                   $"\n주문가 기준 합계 {Money.UsdText(Rows.Sum(r => r.OrderUsd))}";
+        Clipboard.SetText(text);
+        Status = $"주문표 {Rows.Count}건을 클립보드에 복사했습니다";
     }
 
     private async void SetBuyDone(string symbol, bool done)
     {
-        // 이미 키움에 접수한 이번 기간 예약이 있으면 취소되지 않는다는 것을 알린다
-        var submitted = Rows.Any(r => r.Symbol == symbol && r.Result.StartsWith("이미 접수됨", StringComparison.Ordinal));
         _db.SetBuyDone(symbol, done);
         await BuildAsync(force: false); // 환율은 그대로 두고 주문표만 다시 계산
         Status = done
-            ? $"{symbol} 매수 완료 — 해제할 때까지 주문표에서 제외" +
-              (submitted ? " (이미 키움에 접수한 예약은 취소되지 않습니다)" : "")
+            ? $"{symbol} 매수 완료 — 해제할 때까지 주문표에서 제외"
             : $"{symbol} 매수 완료 해제 — 다시 주문표에 넣음";
     }
-
-    private bool CanSubmit(ReservationRowViewModel r) => r.Result is "미접수" || r.Result.StartsWith("실패", StringComparison.Ordinal);
-
-    private string InitialResult(ReservationOrder o) =>
-        _options is not null && _db.FindReservation(o.Symbol, o.StageText, o.Start, o.End, _options.EnvText) is { } prev
-            ? $"이미 접수됨 (예약번호 {prev.ReservationNo})"
-            : "미접수";
 
     private void LoadHistory()
     {
