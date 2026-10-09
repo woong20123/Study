@@ -44,6 +44,8 @@
                                 <!-- Row 0: Symbol & Target Year | Verdict Badge & Gap -->
                                 <HorizontalStackLayout Grid.Row="0" Grid.Column="0" Spacing="6" VerticalOptions="Center">
                                     <Label Text="{Binding Symbol}" FontSize="18" FontAttributes="Bold" TextColor="#0F172A" />
+                                    <Label Text="{Binding Name}" FontSize="13" TextColor="#334155" VerticalOptions="Center"
+                                           LineBreakMode="TailTruncation" MaximumWidthRequest="140" />
                                     <Label Text="{Binding TargetYear, StringFormat='({0}년)'}" FontSize="13" TextColor="#64748B" VerticalOptions="Center" />
                                 </HorizontalStackLayout>
 

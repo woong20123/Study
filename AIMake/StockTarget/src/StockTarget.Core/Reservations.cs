@@ -27,8 +27,8 @@ public sealed record ReservationOrder(
     public string PriceText => Price.ToString("0.00", CultureInfo.InvariantCulture);
 }
 
-/// <summary>주문표에서 빠진 목표와 사유.</summary>
-public sealed record ReservationSkip(string Symbol, string Reason);
+/// <summary>주문표에서 빠진 목표와 사유. BuyDone이면 사용자가 '매수 완료'로 표시해 뺀 것(해제하면 다시 들어온다).</summary>
+public sealed record ReservationSkip(string Symbol, string Reason, bool BuyDone = false);
 
 public sealed record ReservationPlan(
     DateOnly Start,
@@ -43,6 +43,7 @@ public sealed record ReservationPlan(
 /// 단계별 주문가 : 매수 b · 필수매수 b × 0.90 · 강력매수 b × 0.80   (b = 그 분기 매입 목표가, 센트 단위 내림)
 /// 단계별 금액   : 매수 금액 / 필수매수 − 매수 / 강력매수 − 필수매수  (계단식 · 총액 맞춤)
 /// 금액          : 목표에 입력한 값, 비운 단계는 기본 매수금액(0이면 그 단계는 주문하지 않음)
+/// 매수 완료     : 사용자가 '매수 완료'로 표시한 종목은 해제할 때까지 통째로 뺀다
 /// 대상 단계     : 현재가가 주문가 이하로 이미 내려온 단계만(현재가를 주면). 나머지는 제외 목록에 사유와 함께
 /// 수량          : 금액(원) ÷ 환율 ÷ 주문가, 1주 단위 내림
 /// </code>
@@ -52,6 +53,8 @@ public sealed record ReservationPlan(
 public static class ReservationPlanner
 {
     private static readonly BuyStatus[] Stages = [BuyStatus.Buy, BuyStatus.MustBuy, BuyStatus.StrongBuy];
+
+    public const string BuyDoneReason = "매수 완료 — 해제할 때까지 주문표에서 제외";
 
     /// <summary>today 기준 다음 주 월요일 ~ 금요일.</summary>
     public static (DateOnly Start, DateOnly End) NextWeek(DateOnly today)
@@ -94,9 +97,10 @@ public static class ReservationPlanner
     /// 티커별 현재가. 주면 현재가 ≤ 주문가인(이미 도달한) 단계만 주문하고, 현재가가 없는 목표는 제외한다.
     /// null이면 도달 여부를 보지 않고 모든 단계를 주문한다.
     /// </param>
+    /// <param name="buyDone">'매수 완료'로 표시한 티커. 주문하지 않고 제외 목록에 넣는다.</param>
     public static ReservationPlan Plan(
         IEnumerable<TargetPlan> targets, DateOnly start, DateOnly end, double usdKrw, BuyAmounts? defaults = null,
-        IReadOnlyDictionary<string, double>? currentPrices = null)
+        IReadOnlyDictionary<string, double>? currentPrices = null, IReadOnlySet<string>? buyDone = null)
     {
         if (usdKrw <= 0)
             throw new ArgumentException("환율이 올바르지 않습니다");
@@ -107,6 +111,12 @@ public static class ReservationPlanner
         var skips = new List<ReservationSkip>();
         foreach (var t in targets)
         {
+            if (buyDone is not null && buyDone.Contains(t.Symbol))
+            {
+                skips.Add(new ReservationSkip(t.Symbol, BuyDoneReason, BuyDone: true));
+                continue;
+            }
+
             var amounts = t.EffectiveAmounts(defaults);
             if (amounts.IsEmpty)
             {

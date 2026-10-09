@@ -20,6 +20,8 @@ public static class MauiProgram
         // Core 서비스 등록
         builder.Services.AddSingleton<YahooChartClient>();
         builder.Services.AddSingleton<StockService>();
+        builder.Services.AddSingleton(_ => new NaverStockNameClient());
+        builder.Services.AddSingleton<StockNameService>();
 
         var kiwoomOptions = KiwoomOptions.FromEnvironment() ?? new KiwoomOptions("none", "none", IsMock: true);
         var kiwoomClient = new KiwoomClient(kiwoomOptions);

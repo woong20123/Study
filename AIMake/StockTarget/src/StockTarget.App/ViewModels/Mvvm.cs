@@ -62,3 +62,21 @@ public sealed class RelayCommand(Action execute, Func<bool>? canExecute = null) 
 
     public void Execute(object? parameter) => execute();
 }
+
+/// <summary>CommandParameter를 받는 명령(행마다 붙는 버튼 등).</summary>
+public sealed class RelayCommand<T>(Action<T> execute, Func<T, bool>? canExecute = null) : ICommand
+{
+    public event EventHandler? CanExecuteChanged
+    {
+        add => CommandManager.RequerySuggested += value;
+        remove => CommandManager.RequerySuggested -= value;
+    }
+
+    public bool CanExecute(object? parameter) => parameter is T p && (canExecute?.Invoke(p) ?? true);
+
+    public void Execute(object? parameter)
+    {
+        if (parameter is T p)
+            execute(p);
+    }
+}

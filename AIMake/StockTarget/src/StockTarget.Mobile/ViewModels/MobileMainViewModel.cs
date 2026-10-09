@@ -8,6 +8,7 @@ public sealed class MobileMainViewModel : ObservableObject
 {
     private readonly StockDatabase _db;
     private readonly StockService _stockService;
+    private readonly StockNameService _names;
 
     private bool _isBusy;
     private bool _isRefreshing;
@@ -56,10 +57,11 @@ public sealed class MobileMainViewModel : ObservableObject
     public AsyncCommand<MobileTargetRowViewModel> SelectTargetCommand { get; }
     public AsyncCommand<MobileTargetRowViewModel> DeleteTargetCommand { get; }
 
-    public MobileMainViewModel(StockDatabase db, StockService stockService)
+    public MobileMainViewModel(StockDatabase db, StockService stockService, StockNameService names)
     {
         _db = db;
         _stockService = stockService;
+        _names = names;
 
         RefreshCommand = new AsyncCommand(RefreshAsync);
         AddTargetCommand = new AsyncCommand(NavigateToAddAsync);
@@ -77,6 +79,7 @@ public sealed class MobileMainViewModel : ObservableObject
         {
             _defaults = _db.GetDefaultAmounts();
             var plans = _db.GetTargets();
+            var names = _names.CachedNames(); // 캐시한 한글명을 먼저 보여주고, 시세 갱신 때 7일 지난 것만 다시 받는다
             Targets.Clear();
             foreach (var plan in plans)
             {
@@ -84,6 +87,7 @@ public sealed class MobileMainViewModel : ObservableObject
                 {
                     Defaults = _defaults,
                     UsdKrw = UsdKrw,
+                    KoreanName = names.GetValueOrDefault(plan.Symbol),
                     SelectCommand = SelectTargetCommand
                 });
             }
@@ -141,6 +145,7 @@ public sealed class MobileMainViewModel : ObservableObject
             {
                 row.Error = ex.Message;
             }
+            row.KoreanName = await _names.GetNameAsync(row.Symbol);
         });
 
         await Task.WhenAll(tasks);

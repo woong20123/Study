@@ -12,6 +12,7 @@ public sealed partial class MainViewModel : ObservableObject
 {
     private readonly StockDatabase _db;
     private readonly StockService _service;
+    private readonly StockNameService? _names;
 
     private TargetRowViewModel? _selected;
     private string _status = "";
@@ -32,10 +33,12 @@ public sealed partial class MainViewModel : ObservableObject
     private string _formStrongBuyKrw = "";
     private double? _usdKrw;
 
-    public MainViewModel(StockDatabase db, StockService service, KiwoomMode kiwoomMode = KiwoomMode.Auto)
+    public MainViewModel(StockDatabase db, StockService service, KiwoomMode kiwoomMode = KiwoomMode.Auto,
+        StockNameService? names = null)
     {
         _db = db;
         _service = service;
+        _names = names;
         KiwoomMode = kiwoomMode;
         SaveCommand = new AsyncCommand(SaveAsync, () => !IsBusy);
         DeleteCommand = new AsyncCommand(DeleteAsync, () => !IsBusy && Selected is not null);
@@ -196,8 +199,9 @@ public sealed partial class MainViewModel : ObservableObject
     {
         Targets.Clear();
         LoadDefaults();
+        var names = _db.GetStockNames(); // 캐시한 한글명을 먼저 보여주고, 시세 갱신 때 7일 지난 것만 다시 받는다
         foreach (var t in _db.GetTargets())
-            Targets.Add(new TargetRowViewModel(t) { UsdKrw = UsdKrw, Defaults = Defaults });
+            Targets.Add(new TargetRowViewModel(t) { UsdKrw = UsdKrw, Defaults = Defaults, KoreanName = names.GetValueOrDefault(t.Symbol) });
         OnPropertyChanged(nameof(DefaultsSummary));
         Status = $"목표 {Targets.Count}개 로드";
         await RefreshAllAsync(force: false);
@@ -232,6 +236,7 @@ public sealed partial class MainViewModel : ObservableObject
                     row.Error = e.Message;
                     failed++;
                 }
+                await LoadNameAsync(row);
             }
             Status = $"{DateTime.Now:HH:mm:ss} 시세 갱신: 성공 {ok}(캐시 {cached}), 실패 {failed}" + (force ? " — 캐시 무시" : "");
             if (Selected is not null)
@@ -344,7 +349,15 @@ public sealed partial class MainViewModel : ObservableObject
         {
             row.Error = e.Message;
         }
+        await LoadNameAsync(row);
         await LoadDetailAsync(row, force: false);
+    }
+
+    /// <summary>한글 종목명(7일 캐시). 못 받으면 영문명이 그대로 보인다.</summary>
+    private async Task LoadNameAsync(TargetRowViewModel row)
+    {
+        if (_names is not null)
+            row.KoreanName = await _names.GetNameAsync(row.Symbol);
     }
 
     private Task DeleteAsync()

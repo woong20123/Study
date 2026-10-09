@@ -35,6 +35,8 @@ public sealed record ReservationRecord(
 /// <item>cache        : 시세·배당 조회 결과 캐시(최대 1시간)</item>
 /// <item>reservations : 키움에 접수한 LOC 예약 매수(티커·단계·기간·환경당 1건)</item>
 /// <item>settings     : 앱 설정(키·값). 기본 매수금액 등</item>
+/// <item>buy_done     : '매수 완료'로 표시한 티커(해제할 때까지 예약 주문표에서 뺀다)</item>
+/// <item>stock_names  : 네이버에서 받은 한글 종목명(찾지 못함은 name NULL). 7일 지나면 다시 조회</item>
 /// </list>
 /// </summary>
 public sealed class StockDatabase
@@ -115,6 +117,15 @@ public sealed class StockDatabase
             CREATE TABLE IF NOT EXISTS settings (
                 key   TEXT PRIMARY KEY,
                 value TEXT NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS buy_done (
+                symbol    TEXT PRIMARY KEY,
+                marked_at TEXT NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS stock_names (
+                symbol     TEXT PRIMARY KEY,
+                name       TEXT,
+                fetched_at INTEGER NOT NULL
             );
             """;
         cmd.ExecuteNonQuery();
@@ -218,8 +229,43 @@ public sealed class StockDatabase
         var n = cmd.ExecuteNonQuery();
         cmd.CommandText = "DELETE FROM price_checks WHERE symbol = $s";
         cmd.ExecuteNonQuery();
+        cmd.CommandText = "DELETE FROM buy_done WHERE symbol = $s";
+        cmd.ExecuteNonQuery();
         tx.Commit();
         return n > 0;
+    }
+
+    // --------------------------------------------------------------- buy_done
+    /// <summary>'매수 완료'로 표시한 티커.</summary>
+    public IReadOnlySet<string> GetBuyDone()
+    {
+        using var c = Open();
+        using var cmd = c.CreateCommand();
+        cmd.CommandText = "SELECT symbol FROM buy_done ORDER BY symbol";
+        using var r = cmd.ExecuteReader();
+        var set = new SortedSet<string>(StringComparer.Ordinal);
+        while (r.Read())
+            set.Add(r.GetString(0));
+        return set;
+    }
+
+    /// <summary>티커를 '매수 완료'로 표시하거나(done) 해제한다.</summary>
+    public void SetBuyDone(string symbol, bool done)
+    {
+        using var c = Open();
+        WriteBuyDone(c, null, symbol, done, _now());
+    }
+
+    private static void WriteBuyDone(SqliteConnection c, SqliteTransaction? tx, string symbol, bool done, DateTimeOffset now)
+    {
+        using var cmd = c.CreateCommand();
+        cmd.Transaction = tx;
+        cmd.CommandText = done
+            ? "INSERT INTO buy_done (symbol, marked_at) VALUES ($s, $t) ON CONFLICT(symbol) DO NOTHING"
+            : "DELETE FROM buy_done WHERE symbol = $s";
+        cmd.Parameters.AddWithValue("$s", symbol);
+        cmd.Parameters.AddWithValue("$t", now.ToString("o"));
+        cmd.ExecuteNonQuery();
     }
 
     // --------------------------------------------------------------- settings
@@ -390,9 +436,9 @@ public sealed class StockDatabase
     }
 
     // ----------------------------------------------------------------- backup
-    /// <summary>캐시를 뺀 사용자 데이터 전체(목표 · 확인 이력 · 예약 접수 이력 · 기본 매수금액).</summary>
+    /// <summary>캐시를 뺀 사용자 데이터 전체(목표 · 확인 이력 · 예약 접수 이력 · 기본 매수금액 · 매수 완료).</summary>
     public BackupData ExportBackup() =>
-        BackupData.Create(GetTargets(), GetChecks(null), GetReservations(), _now(), GetDefaultAmounts());
+        BackupData.Create(GetTargets(), GetChecks(null), GetReservations(), _now(), GetDefaultAmounts(), GetBuyDone());
 
     /// <summary>
     /// 백업으로 사용자 데이터를 통째로 바꾼다(캐시는 그대로). 한 트랜잭션이라 중간에 실패하면 아무것도 바뀌지 않는다.
@@ -404,18 +450,21 @@ public sealed class StockDatabase
         var checks = backup.ToChecks();
         var reservations = backup.ToReservations();
         var defaults = backup.ToDefaultAmounts();
+        var buyDone = backup.ToBuyDone(targets);
 
         using var c = Open();
         using var tx = c.BeginTransaction();
         using (var cmd = c.CreateCommand())
         {
             cmd.Transaction = tx;
-            cmd.CommandText = "DELETE FROM targets; DELETE FROM price_checks; DELETE FROM reservations;";
+            cmd.CommandText = "DELETE FROM targets; DELETE FROM price_checks; DELETE FROM reservations; DELETE FROM buy_done;";
             cmd.ExecuteNonQuery();
         }
         var now = _now();
         foreach (var t in targets)
             UpsertTarget(c, tx, t, now);
+        foreach (var s in buyDone)
+            WriteBuyDone(c, tx, s, true, now);
         foreach (var p in checks)
             UpsertCheck(c, tx, p);
         foreach (var r in reservations)
@@ -423,6 +472,48 @@ public sealed class StockDatabase
         if (defaults is not null)
             WriteDefaultAmounts(c, tx, defaults);
         tx.Commit();
+    }
+
+    // ------------------------------------------------------------ stock_names
+    /// <summary>캐시한 한글 종목명과 받은 뒤 지난 시간. 조회한 적이 없으면 null(찾지 못함이면 Name만 null).</summary>
+    public (string? Name, TimeSpan Age)? GetStockName(string symbol)
+    {
+        using var c = Open();
+        using var cmd = c.CreateCommand();
+        cmd.CommandText = "SELECT name, fetched_at FROM stock_names WHERE symbol = $s";
+        cmd.Parameters.AddWithValue("$s", symbol);
+        using var r = cmd.ExecuteReader();
+        if (!r.Read())
+            return null;
+        var age = TimeSpan.FromSeconds(_now().ToUnixTimeSeconds() - r.GetInt64(1));
+        return (r.IsDBNull(0) ? null : r.GetString(0), age);
+    }
+
+    public void PutStockName(string symbol, string? name)
+    {
+        using var c = Open();
+        using var cmd = c.CreateCommand();
+        cmd.CommandText = """
+            INSERT INTO stock_names (symbol, name, fetched_at) VALUES ($s, $n, $t)
+            ON CONFLICT(symbol) DO UPDATE SET name = excluded.name, fetched_at = excluded.fetched_at
+            """;
+        cmd.Parameters.AddWithValue("$s", symbol);
+        cmd.Parameters.AddWithValue("$n", (object?)name ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("$t", _now().ToUnixTimeSeconds());
+        cmd.ExecuteNonQuery();
+    }
+
+    /// <summary>캐시한 한글 종목명 전체(찾지 못한 티커는 뺀다).</summary>
+    public IReadOnlyDictionary<string, string> GetStockNames()
+    {
+        using var c = Open();
+        using var cmd = c.CreateCommand();
+        cmd.CommandText = "SELECT symbol, name FROM stock_names WHERE name IS NOT NULL";
+        using var r = cmd.ExecuteReader();
+        var map = new Dictionary<string, string>(StringComparer.Ordinal);
+        while (r.Read())
+            map[r.GetString(0)] = r.GetString(1);
+        return map;
     }
 
     // ------------------------------------------------------------------ cache

@@ -6,12 +6,13 @@ using StockTarget.Core;
 namespace StockTarget.App.ViewModels;
 
 /// <summary>주문표 한 행.</summary>
-public sealed class ReservationRowViewModel(ReservationOrder order, double usdKrw, string result) : ObservableObject
+public sealed class ReservationRowViewModel(ReservationOrder order, double usdKrw, string result, string name = "") : ObservableObject
 {
     private string _result = result;
 
     public ReservationOrder Order { get; } = order;
     public string Symbol => Order.Symbol;
+    public string Name { get; } = name;
     public BuyStatus Status => Order.Stage; // 판정 색 스타일(StatusRow) 재사용
     public string StageText => Order.StageText;
     public string Period => $"{Order.Start:MM-dd} ~ {Order.End:MM-dd}";
@@ -23,6 +24,9 @@ public sealed class ReservationRowViewModel(ReservationOrder order, double usdKr
 
     public string Result { get => _result; set => Set(ref _result, value); }
 }
+
+/// <summary>제외 목록 한 행(종목명 표시용).</summary>
+public sealed record ReservationSkipRow(string Symbol, string Name, string Reason, bool BuyDone);
 
 /// <summary>
 /// 다음 주(월~금) LOC 예약 매수 주문표. 등록된 목표 전체를 보고 계단식 주문을 만들고,
@@ -58,14 +62,22 @@ public sealed class ReservationViewModel : ObservableObject
         (Start, End) = ReservationPlanner.NextWeek(DateOnly.FromDateTime(DateTime.Today));
         RefreshCommand = new AsyncCommand(() => BuildAsync(force: true), () => !IsBusy);
         SubmitCommand = new AsyncCommand(SubmitAsync, () => !IsBusy && _options is not null && Rows.Any(r => CanSubmit(r)));
+        MarkBuyDoneCommand = new RelayCommand<string>(s => SetBuyDone(s, true), _ => !IsBusy);
+        UnmarkBuyDoneCommand = new RelayCommand<string>(s => SetBuyDone(s, false), _ => !IsBusy);
     }
 
     public ObservableCollection<ReservationRowViewModel> Rows { get; } = [];
-    public ObservableCollection<ReservationSkip> Skips { get; } = [];
+    public ObservableCollection<ReservationSkipRow> Skips { get; } = [];
     public ObservableCollection<ReservationRecord> History { get; } = [];
 
     public AsyncCommand RefreshCommand { get; }
     public AsyncCommand SubmitCommand { get; }
+
+    /// <summary>티커(CommandParameter)를 '매수 완료'로 표시해 해제할 때까지 주문표에서 뺀다.</summary>
+    public RelayCommand<string> MarkBuyDoneCommand { get; }
+
+    /// <summary>'매수 완료' 표시를 해제해 다시 주문표에 넣는다.</summary>
+    public RelayCommand<string> UnmarkBuyDoneCommand { get; }
 
     public DateOnly Start { get; }
     public DateOnly End { get; }
@@ -100,14 +112,15 @@ public sealed class ReservationViewModel : ObservableObject
                 _usdKrw = (await _service.GetUsdKrwAsync(force)).Value.Price;
             }
             var rate = _usdKrw.Value;
-            _plan = ReservationPlanner.Plan(_targets, Start, End, rate, _defaults, _currentPrices);
+            _plan = ReservationPlanner.Plan(_targets, Start, End, rate, _defaults, _currentPrices, _db.GetBuyDone());
 
+            var names = _db.GetStockNames();
             Rows.Clear();
             foreach (var o in _plan.Orders)
-                Rows.Add(new ReservationRowViewModel(o, rate, InitialResult(o)));
+                Rows.Add(new ReservationRowViewModel(o, rate, InitialResult(o), names.GetValueOrDefault(o.Symbol, "")));
             Skips.Clear();
             foreach (var s in _plan.Skips)
-                Skips.Add(s);
+                Skips.Add(new ReservationSkipRow(s.Symbol, names.GetValueOrDefault(s.Symbol, ""), s.Reason, s.BuyDone));
             LoadHistory();
 
             var totalKrw = _plan.Orders.Sum(o => o.AmountKrw);
@@ -164,6 +177,18 @@ public sealed class ReservationViewModel : ObservableObject
         {
             IsBusy = false;
         }
+    }
+
+    private async void SetBuyDone(string symbol, bool done)
+    {
+        // 이미 키움에 접수한 이번 기간 예약이 있으면 취소되지 않는다는 것을 알린다
+        var submitted = Rows.Any(r => r.Symbol == symbol && r.Result.StartsWith("이미 접수됨", StringComparison.Ordinal));
+        _db.SetBuyDone(symbol, done);
+        await BuildAsync(force: false); // 환율은 그대로 두고 주문표만 다시 계산
+        Status = done
+            ? $"{symbol} 매수 완료 — 해제할 때까지 주문표에서 제외" +
+              (submitted ? " (이미 키움에 접수한 예약은 취소되지 않습니다)" : "")
+            : $"{symbol} 매수 완료 해제 — 다시 주문표에 넣음";
     }
 
     private bool CanSubmit(ReservationRowViewModel r) => r.Result is "미접수" || r.Result.StartsWith("실패", StringComparison.Ordinal);

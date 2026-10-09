@@ -8,6 +8,7 @@ namespace StockTarget.App;
 public partial class App : Application
 {
     private YahooChartClient? _client;
+    private NaverStockNameClient? _naver;
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -30,7 +31,8 @@ public partial class App : Application
 
         var db = new StockDatabase(options.DbPath ?? StockDatabase.DefaultPath);
         _client = new YahooChartClient();
-        var vm = new MainViewModel(db, new StockService(db, _client), options.Kiwoom);
+        _naver = new NaverStockNameClient();
+        var vm = new MainViewModel(db, new StockService(db, _client), options.Kiwoom, new StockNameService(db, _naver));
         MainWindow = new MainWindow(vm);
         MainWindow.Show();
     }
@@ -38,6 +40,7 @@ public partial class App : Application
     protected override void OnExit(ExitEventArgs e)
     {
         _client?.Dispose();
+        _naver?.Dispose();
         base.OnExit(e);
     }
 

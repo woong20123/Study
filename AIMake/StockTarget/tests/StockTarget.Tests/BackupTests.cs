@@ -65,14 +65,49 @@ public sealed class BackupTests : IDisposable
         var root = doc.RootElement;
 
         Assert.Equal("stocktarget-backup", root.GetProperty("format").GetString());
-        Assert.Equal(2, root.GetProperty("version").GetInt32());
+        Assert.Equal(3, root.GetProperty("version").GetInt32());
         Assert.False(root.TryGetProperty("defaultAmounts", out _)); // 기본 매수금액이 없으면 생략
+        Assert.False(root.TryGetProperty("buyDone", out _));        // 매수 완료가 없으면 생략
         Assert.False(root.TryGetProperty("cache", out _));
         var ko = root.GetProperty("targets").EnumerateArray().First(t => t.GetProperty("symbol").GetString() == "KO");
         Assert.Equal("2026-10-08", ko.GetProperty("inputDate").GetString());
         Assert.Equal(120, ko.GetProperty("targetPrice").GetDouble());
         Assert.False(ko.TryGetProperty("mustBuyKrw", out _)); // null은 생략
         Assert.False(ko.TryGetProperty("growthPct", out _));  // 계산 값은 넣지 않음
+    }
+
+    [Fact]
+    public void BuyDoneRoundTrip()
+    {
+        var source = Fill(NewDb());
+        source.SetBuyDone("KO", true);
+        source.SetBuyDone("KO", true); // 두 번 표시해도 한 건
+        Assert.Equal(["KO"], source.GetBuyDone());
+        var backup = BackupSerializer.FromJson(BackupSerializer.ToJson(source.ExportBackup()));
+        Assert.EndsWith(" · 매수 완료 1개", backup.Summary);
+
+        var target = NewDb();
+        target.SaveTarget(Msft);
+        target.SetBuyDone("MSFT", true);
+        target.ReplaceWithBackup(backup); // 통째로 바뀐다
+        Assert.Equal(["KO"], target.GetBuyDone());
+
+        target.SetBuyDone("KO", false);
+        Assert.Empty(target.GetBuyDone());
+
+        // 목표를 지우면 매수 완료 표시도 지운다
+        target.SetBuyDone("MSFT", true);
+        target.DeleteTarget("MSFT");
+        Assert.Empty(target.GetBuyDone());
+    }
+
+    [Fact]
+    public void RestoreDropsBuyDoneWithoutTarget()
+    {
+        var db = NewDb();
+        db.ReplaceWithBackup(BackupSerializer.FromJson(
+            """{"format":"stocktarget-backup","version":3,"exportedAt":"2026-10-08T01:00:00+00:00","buyDone":["KO"]}"""));
+        Assert.Empty(db.GetBuyDone());
     }
 
     [Fact]

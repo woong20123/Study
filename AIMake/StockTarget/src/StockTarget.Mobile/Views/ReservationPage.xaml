@@ -30,7 +30,7 @@
                             <Label Text="현재 조건에 도달한 주문 건이 없습니다." TextColor="#64748B" FontSize="13" Margin="0,10" />
                         </CollectionView.EmptyView>
                         <CollectionView.Header>
-                            <Grid ColumnDefinitions="*, *, *, *" Padding="0,4" BackgroundColor="#F8FAFC">
+                            <Grid ColumnDefinitions="*, *, *, *, 64" Padding="0,4" BackgroundColor="#F8FAFC">
                                 <Label Grid.Column="0" Text="종목·단계" FontAttributes="Bold" FontSize="11" TextColor="#64748B" />
                                 <Label Grid.Column="1" Text="LOC 주문가" FontAttributes="Bold" FontSize="11" TextColor="#64748B" HorizontalOptions="End" />
                                 <Label Grid.Column="2" Text="수량" FontAttributes="Bold" FontSize="11" TextColor="#64748B" HorizontalOptions="End" />
@@ -38,15 +38,20 @@
                             </Grid>
                         </CollectionView.Header>
                         <CollectionView.ItemTemplate>
-                            <DataTemplate x:DataType="core:ReservationOrder">
-                                <Grid ColumnDefinitions="*, *, *, *" Padding="0,6">
+                            <DataTemplate x:DataType="vm:MobileOrderRow">
+                                <Grid ColumnDefinitions="*, *, *, *, 64" Padding="0,6">
                                     <VerticalStackLayout Grid.Column="0">
                                         <Label Text="{Binding Symbol}" FontSize="13" FontAttributes="Bold" TextColor="#0F172A" />
+                                        <Label Text="{Binding Name}" FontSize="11" TextColor="#334155" LineBreakMode="TailTruncation" />
                                         <Label Text="{Binding StageText}" FontSize="11" TextColor="#64748B" />
                                     </VerticalStackLayout>
                                     <Label Grid.Column="1" Text="{Binding Price, StringFormat='${0:N2}'}" FontSize="13" FontAttributes="Bold" HorizontalOptions="End" TextColor="#0969DA" />
                                     <Label Grid.Column="2" Text="{Binding Quantity, StringFormat='{0:N0}주'}" FontSize="12" HorizontalOptions="End" TextColor="#334155" />
                                     <Label Grid.Column="3" Text="{Binding AmountKrw, StringFormat='₩{0:N0}'}" FontSize="12" HorizontalOptions="End" TextColor="#0284C7" />
+                                    <Button Grid.Column="4" Text="완료" FontSize="11" Padding="6,2" HeightRequest="30" Margin="6,0,0,0"
+                                            VerticalOptions="Center"
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:MobileReservationViewModel}}, Path=MarkBuyDoneCommand, x:DataType=vm:MobileReservationViewModel}"
+                                            CommandParameter="{Binding Symbol}" />
                                 </Grid>
                             </DataTemplate>
                         </CollectionView.ItemTemplate>
@@ -63,10 +68,17 @@
                             <Label Text="제외된 종목이 없습니다." TextColor="#64748B" FontSize="13" Margin="0,10" />
                         </CollectionView.EmptyView>
                         <CollectionView.ItemTemplate>
-                            <DataTemplate x:DataType="core:ReservationSkip">
-                                <Grid ColumnDefinitions="Auto, *" Padding="0,4" ColumnSpacing="8">
-                                    <Label Grid.Column="0" Text="{Binding Symbol}" FontSize="13" FontAttributes="Bold" TextColor="#475569" />
+                            <DataTemplate x:DataType="vm:MobileSkipRow">
+                                <Grid ColumnDefinitions="Auto, *, Auto" Padding="0,4" ColumnSpacing="8">
+                                    <VerticalStackLayout Grid.Column="0">
+                                        <Label Text="{Binding Symbol}" FontSize="13" FontAttributes="Bold" TextColor="#475569" />
+                                        <Label Text="{Binding Name}" FontSize="11" TextColor="#64748B" LineBreakMode="TailTruncation" MaximumWidthRequest="110" />
+                                    </VerticalStackLayout>
                                     <Label Grid.Column="1" Text="{Binding Reason}" FontSize="12" TextColor="#64748B" />
+                                    <Button Grid.Column="2" Text="해제" FontSize="11" Padding="6,2" HeightRequest="30"
+                                            VerticalOptions="Center" IsVisible="{Binding BuyDone}"
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:MobileReservationViewModel}}, Path=UnmarkBuyDoneCommand, x:DataType=vm:MobileReservationViewModel}"
+                                            CommandParameter="{Binding Symbol}" />
                                 </Grid>
                             </DataTemplate>
                         </CollectionView.ItemTemplate>

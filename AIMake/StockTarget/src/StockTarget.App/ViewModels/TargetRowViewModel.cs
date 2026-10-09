@@ -14,6 +14,22 @@ public sealed class TargetRowViewModel(TargetPlan plan) : ObservableObject
     public TargetPlan Plan { get; private set; } = plan;
 
     public string Symbol => Plan.Symbol;
+
+    private string? _koreanName;
+
+    /// <summary>네이버에서 받은 한글 종목명. 없으면 null.</summary>
+    public string? KoreanName
+    {
+        get => _koreanName;
+        set
+        {
+            if (Set(ref _koreanName, value))
+                OnPropertyChanged(nameof(Name));
+        }
+    }
+
+    /// <summary>표시용 종목명 = 한글명, 없으면 시세의 영문명.</summary>
+    public string Name => KoreanName ?? Quote?.Name ?? "";
     public int TargetYear => Plan.TargetYear;
     public double TargetPrice => Plan.TargetPrice;
     public double ReturnPct => Plan.ReturnPct;
@@ -31,7 +47,10 @@ public sealed class TargetRowViewModel(TargetPlan plan) : ObservableObject
         set
         {
             if (Set(ref _quote, value))
+            {
                 RaiseQuoteDerived();
+                OnPropertyChanged(nameof(Name));
+            }
         }
     }
 

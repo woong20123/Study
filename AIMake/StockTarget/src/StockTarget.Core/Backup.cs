@@ -10,7 +10,7 @@ namespace StockTarget.Core;
 public sealed record BackupData
 {
     public const string FormatName = "stocktarget-backup";
-    public const int CurrentVersion = 2; // v2: 기본 매수금액 추가
+    public const int CurrentVersion = 3; // v2: 기본 매수금액 추가 · v3: 매수 완료 추가
 
     public string Format { get; init; } = FormatName;
     public int Version { get; init; } = CurrentVersion;
@@ -26,21 +26,42 @@ public sealed record BackupData
     /// </summary>
     public BackupAmounts? DefaultAmounts { get; init; }
 
+    /// <summary>'매수 완료'로 표시한 티커(v3부터). 옛 백업이나 빈 목록이면 null.</summary>
+    public List<string>? BuyDone { get; init; }
+
     [JsonIgnore]
     public string Summary =>
         $"목표 {Targets?.Count ?? 0}개 · 확인 이력 {PriceChecks?.Count ?? 0}건 · 예약 이력 {Reservations?.Count ?? 0}건" +
-        (ToDefaultAmounts() is { IsEmpty: false } ? " · 기본 매수금액" : "");
+        (ToDefaultAmounts() is { IsEmpty: false } ? " · 기본 매수금액" : "") +
+        (BuyDone is { Count: > 0 } done ? $" · 매수 완료 {done.Count}개" : "");
 
     public static BackupData Create(
         IEnumerable<TargetPlan> targets, IEnumerable<PriceCheck> checks, IEnumerable<ReservationRecord> reservations,
-        DateTimeOffset exportedAt, BuyAmounts? defaultAmounts = null) => new()
+        DateTimeOffset exportedAt, BuyAmounts? defaultAmounts = null, IEnumerable<string>? buyDone = null)
+    {
+        var done = buyDone?.ToList();
+        return new()
         {
             ExportedAt = exportedAt,
             Targets = targets.Select(BackupTarget.From).ToList(),
             PriceChecks = checks.Select(BackupCheck.From).ToList(),
             Reservations = reservations.Select(BackupReservation.From).ToList(),
             DefaultAmounts = defaultAmounts is null || defaultAmounts.IsEmpty ? null : BackupAmounts.From(defaultAmounts),
+            BuyDone = done is { Count: > 0 } ? done : null,
         };
+    }
+
+    /// <summary>복원할 '매수 완료' 티커. 복원하는 목표에 없는 티커는 버린다.</summary>
+    public IReadOnlyList<string> ToBuyDone(IEnumerable<TargetPlan> targets)
+    {
+        var symbols = targets.Select(t => t.Symbol).ToHashSet();
+        return (BuyDone ?? [])
+            .Where(s => !string.IsNullOrWhiteSpace(s))
+            .Select(StockService.Normalize)
+            .Where(symbols.Contains)
+            .Distinct()
+            .ToList();
+    }
 
     /// <summary>
     /// 복원할 기본 매수금액. v1 백업은 이 항목을 몰라 null(복원할 때 현재 설정 유지),

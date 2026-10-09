@@ -182,6 +182,7 @@
                     <DataGrid.Columns>
                         <!-- 판단에 쓰는 값(현재가 · 이번 분기 매입 목표가 · 괴리 · 판정)을 티커 바로 뒤에 둔다 -->
                         <DataGridTextColumn Header="티커" Binding="{Binding Symbol}" Width="Auto" FontWeight="SemiBold"/>
+                        <DataGridTextColumn Header="종목명" Binding="{Binding Name}" Width="Auto" MaxWidth="180"/>
                         <DataGridTextColumn Header="현재가" Binding="{Binding Price, StringFormat=N2}" Width="Auto" ElementStyle="{StaticResource Num}" FontWeight="SemiBold"/>
                         <DataGridTextColumn Header="매입목표가" Binding="{Binding CurrentBuyPrice, StringFormat=N2}" Width="Auto" ElementStyle="{StaticResource Num}" FontWeight="SemiBold"/>
                         <DataGridTextColumn Header="괴리" Binding="{Binding GapPct, StringFormat={}{0:+0.0;-0.0}%}" Width="Auto" ElementStyle="{StaticResource Num}"/>

@@ -51,6 +51,22 @@ public class ReservationPlannerTests
     }
 
     [Fact]
+    public void BuyDoneTargetIsSkipped()
+    {
+        var start = new DateOnly(2026, 10, 12);
+        var amounts = new BuyAmounts(1_000_000, 2_000_000, 3_000_000);
+        var msft = new TargetPlan("MSFT", Input, 2030, 27.5, 25, 11, 0.8, null, amounts);
+        var plan = ReservationPlanner.Plan([Ko(amounts), msft], start, start.AddDays(4), 1350,
+            buyDone: new HashSet<string> { "KO" });
+
+        Assert.All(plan.Orders, o => Assert.Equal("MSFT", o.Symbol));
+        var skip = Assert.Single(plan.Skips);
+        Assert.Equal("KO", skip.Symbol);
+        Assert.True(skip.BuyDone);
+        Assert.Equal(ReservationPlanner.BuyDoneReason, skip.Reason);
+    }
+
+    [Fact]
     public void PlanBuildsThreeLocOrdersPerTarget()
     {
         var start = new DateOnly(2026, 10, 12);

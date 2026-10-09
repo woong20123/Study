@@ -40,12 +40,35 @@
                     <DataGrid DockPanel.Dock="Bottom" ItemsSource="{Binding Skips}" MaxHeight="130" Margin="0,6,0,0">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="제외" Binding="{Binding Symbol}" Width="70" FontWeight="SemiBold"/>
+                            <DataGridTextColumn Header="종목명" Binding="{Binding Name}" Width="Auto" MaxWidth="180"/>
                             <DataGridTextColumn Header="사유" Binding="{Binding Reason}" Width="*"/>
+                            <DataGridTemplateColumn Width="Auto">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button Content="해제" Padding="8,0" Margin="2,1"
+                                                ToolTip="매수 완료 표시를 해제하고 다시 주문표에 넣습니다"
+                                                Command="{Binding DataContext.UnmarkBuyDoneCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                CommandParameter="{Binding Symbol}">
+                                            <Button.Style>
+                                                <Style TargetType="Button">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding BuyDone}" Value="True">
+                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                        </Button>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
                         </DataGrid.Columns>
                     </DataGrid>
                     <DataGrid ItemsSource="{Binding Rows}" RowStyle="{StaticResource StatusRow}">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="티커" Binding="{Binding Symbol}" Width="Auto" FontWeight="SemiBold"/>
+                            <DataGridTextColumn Header="종목명" Binding="{Binding Name}" Width="Auto" MaxWidth="180"/>
                             <DataGridTextColumn Header="단계" Binding="{Binding StageText}" Width="Auto" ElementStyle="{StaticResource StatusText}"/>
                             <DataGridTextColumn Header="기간" Binding="{Binding Period}" Width="Auto"/>
                             <DataGridTextColumn Header="매입목표가" Binding="{Binding BuyPrice, StringFormat=N3}" Width="Auto" ElementStyle="{StaticResource Num}"/>
@@ -54,6 +77,16 @@
                             <DataGridTextColumn Header="주문금액($)" Binding="{Binding OrderUsd, StringFormat=N2}" Width="Auto" ElementStyle="{StaticResource Num}"/>
                             <DataGridTextColumn Header="단계 금액" Binding="{Binding AmountText}" Width="Auto" ElementStyle="{StaticResource Num}"/>
                             <DataGridTextColumn Header="접수 결과" Binding="{Binding Result}" Width="*"/>
+                            <DataGridTemplateColumn Width="Auto">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button Content="매수 완료" Padding="8,0" Margin="2,1"
+                                                ToolTip="이 종목을 해제할 때까지 주문표에서 뺍니다(모든 단계)"
+                                                Command="{Binding DataContext.MarkBuyDoneCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                CommandParameter="{Binding Symbol}"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
                         </DataGrid.Columns>
                     </DataGrid>
                 </DockPanel>
