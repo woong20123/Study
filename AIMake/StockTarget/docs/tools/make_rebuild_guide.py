@@ -17,40 +17,76 @@ OUT = os.path.join(ROOT, 'docs', 'rebuild-guide.html')
 
 # (경로, 설명) — 복원 순서대로
 FILES = [
-    ('StockTarget.sln', '솔루션. docs 솔루션 폴더 포함'),
+    ('StockTarget.sln', '솔루션. Core · App(WPF) · Mobile(Android) · Tests, docs 솔루션 폴더 포함'),
     ('src/StockTarget.Core/StockTarget.Core.csproj', 'Core 라이브러리 프로젝트 (net9.0, Microsoft.Data.Sqlite)'),
-    ('src/StockTarget.Core/Models.cs', '레코드: 시세·배당·분할·목표·매수금액·분기 행'),
-    ('src/StockTarget.Core/Calculators.cs', '순수 계산: 목표가 역산, 5년 배당수익률, 분할 보정, 원화 매수금액 환산'),
+    ('src/StockTarget.Core/Models.cs', '레코드: 시세·배당·분할·목표·매수금액·분기 행, 판정 단계 이름 · 매수 강도(BuyLevel · Verdict)'),
+    ('src/StockTarget.Core/Calculators.cs', '순수 계산: 목표가 역산, 5년 배당수익률, 분할 보정, 원화 매수금액 환산 · 주식 수(화면용 최소 1주)'),
     ('src/StockTarget.Core/YahooChartClient.cs', 'Yahoo chart API 호출과 JSON 파싱'),
-    ('src/StockTarget.Core/StockDatabase.cs', 'SQLite 스키마·목표·확인 이력·캐시·설정(기본 매수금액)'),
+    ('src/StockTarget.Core/StockDatabase.cs', 'SQLite 스키마·목표·확인 이력·캐시·설정(기본 매수금액)·예전 키움 접수 이력'),
     ('src/StockTarget.Core/StockService.cs', '캐시 우선 조회, 분할 보정, USD/KRW 환율, 확인 이력 기록'),
-    ('src/StockTarget.Core/Reservations.cs', '다음 주 계단식 LOC 예약 주문표, 접수·중복 방지'),
-    ('src/StockTarget.Core/KiwoomClient.cs', '키움 REST API: 토큰, 거래소구분, 미국주식 예약 매수'),
-    ('src/StockTarget.Core/StartupOptions.cs', '구동 옵션 --db, --kiwoom off|mock|real'),
-    ('src/StockTarget.Core/Backup.cs', '기기 간 백업 JSON 형식(v2, 기본 매수금액 포함)과 검증'),
+    ('src/StockTarget.Core/StockNames.cs', '네이버 한글 종목명 조회 · 7일 캐시'),
+    ('src/StockTarget.Core/Reservations.cs', '다음 주 계단식 LOC 예약 주문표(접수 없음, 주문표 계산만)'),
+    ('src/StockTarget.Core/StartupOptions.cs', '구동 옵션 --db'),
+    ('src/StockTarget.Core/Backup.cs', '기기 간 백업 JSON 형식(v3: 기본 매수금액 · 매수 완료 포함)과 검증'),
     ('src/StockTarget.Core/Cloud.cs', 'Google OAuth(PKCE) · Firebase 로그인 · Realtime Database 저장/읽기'),
     ('src/StockTarget.App/StockTarget.App.csproj', 'WPF 앱 프로젝트 (net9.0-windows, DPAPI 패키지)'),
     ('src/StockTarget.App/AssemblyInfo.cs', 'WPF 템플릿 기본 파일'),
-    ('src/StockTarget.App/App.xaml', '앱 리소스: 두 창이 함께 쓰는 표·판정 색 스타일'),
+    ('src/StockTarget.App/App.xaml', '앱 리소스: 표 스타일, 판정 색(한국어: 빨강 매수 · 하늘색 대기), 판정 칸 신호 막대 템플릿'),
     ('src/StockTarget.App/App.xaml.cs', '시작: DB·서비스·뷰모델 구성, --db 인자'),
     ('src/StockTarget.App/MainWindow.xaml', '화면 레이아웃'),
     ('src/StockTarget.App/MainWindow.xaml.cs', '화면 코드 비하인드'),
-    ('src/StockTarget.App/ReservationWindow.xaml', 'LOC 예약 매수 주문표 창'),
+    ('src/StockTarget.App/ReservationWindow.xaml', 'LOC 예약 매수 주문표 창(주문표 복사)'),
     ('src/StockTarget.App/ReservationWindow.xaml.cs', '예약 창 코드 비하인드'),
     ('src/StockTarget.App/ViewModels/Mvvm.cs', 'ObservableObject, AsyncCommand, RelayCommand'),
+    ('src/StockTarget.App/ViewModels/StatusConverters.cs', '판정 칸 색 · 신호 막대 표시/불투명도 변환기'),
     ('src/StockTarget.App/ViewModels/TargetRowViewModel.cs', '목표 목록 한 행'),
     ('src/StockTarget.App/ViewModels/MainViewModel.cs', '메인 화면 뷰모델'),
     ('src/StockTarget.App/ViewModels/MainViewModel.Backup.cs', '데이터 메뉴: JSON 백업·복원, Firebase 저장·복원'),
     ('src/StockTarget.App/ViewModels/MainViewModel.Defaults.cs', '기본 매수금액 입력·저장, 목표 입력칸 기본값 채움'),
     ('src/StockTarget.App/Services/CloudAuth.cs', '브라우저 Google 로그인(루프백), 로그인 정보 DPAPI 저장'),
-    ('src/StockTarget.App/ViewModels/ReservationViewModel.cs', '예약 창 뷰모델: 주문표 계산·접수 확인'),
+    ('src/StockTarget.App/ViewModels/ReservationViewModel.cs', '예약 창 뷰모델: 주문표 계산 · 복사 · 매수 완료'),
+    ('src/StockTarget.Mobile/StockTarget.Mobile.csproj', 'Android 앱 프로젝트 (.NET MAUI, net9.0-android, Core 참조)'),
+    ('src/StockTarget.Mobile/App.xaml', 'MAUI 앱 리소스'),
+    ('src/StockTarget.Mobile/App.xaml.cs', '시작: 저장한 언어 적용, 셸 창'),
+    ('src/StockTarget.Mobile/AppShell.xaml', '탭 셸(목표 종목, LOC 예약 탭은 주석 처리)'),
+    ('src/StockTarget.Mobile/AppShell.xaml.cs', '셸 라우트 등록'),
+    ('src/StockTarget.Mobile/MauiProgram.cs', 'DI 구성: DB · 서비스 · 뷰모델 · 페이지'),
+    ('src/StockTarget.Mobile/Platforms/Android/AndroidManifest.xml', 'Android 매니페스트(인터넷 권한)'),
+    ('src/StockTarget.Mobile/Platforms/Android/MainActivity.cs', 'Android 진입 액티비티'),
+    ('src/StockTarget.Mobile/Platforms/Android/MainApplication.cs', 'Android Application'),
+    ('src/StockTarget.Mobile/Resources/AppIcon/appicon.svg', '앱 아이콘 배경'),
+    ('src/StockTarget.Mobile/Resources/AppIcon/appiconfg.svg', '앱 아이콘 전경'),
+    ('src/StockTarget.Mobile/Resources/Splash/splash.svg', '스플래시 이미지'),
+    ('src/StockTarget.Mobile/Resources/Styles/Colors.xaml', 'MAUI 색 리소스'),
+    ('src/StockTarget.Mobile/Resources/Styles/Styles.xaml', 'MAUI 기본 스타일'),
+    ('src/StockTarget.Mobile/Resources/Strings/AppResources.resx', '화면 문자열(영어, 기본)'),
+    ('src/StockTarget.Mobile/Resources/Strings/AppResources.ko.resx', '화면 문자열(한국어)'),
+    ('src/StockTarget.Mobile/Localization/L.cs', '문자열 조회 · 언어 전환(저장) · 판정 문구, XAML {loc:Tr}'),
+    ('src/StockTarget.Mobile/Converters/StatusToColorConverter.cs', '언어별 판정 색(StatusPalette) · 신호 막대 변환기 · 단계 색 확장'),
+    ('src/StockTarget.Mobile/ViewModels/ObservableObject.cs', '모바일 ObservableObject'),
+    ('src/StockTarget.Mobile/ViewModels/RelayCommand.cs', '모바일 AsyncCommand · RelayCommand'),
+    ('src/StockTarget.Mobile/ViewModels/MobileMainViewModel.cs', '메인: 목록 · 필터 · 알림 · JSON 백업 가져오기'),
+    ('src/StockTarget.Mobile/ViewModels/MobileTargetRowViewModel.cs', '목록 카드 한 행: 판정 · 게이지 · 금액(영어는 달러)'),
+    ('src/StockTarget.Mobile/ViewModels/MobileTargetDetailViewModel.cs', '종목 상세'),
+    ('src/StockTarget.Mobile/ViewModels/MobileTargetEditViewModel.cs', '목표 입력 · 수정(영어는 달러 입력 → 원화 저장)'),
+    ('src/StockTarget.Mobile/ViewModels/MobileReservationViewModel.cs', 'LOC 예약 주문표(모바일)'),
+    ('src/StockTarget.Mobile/Views/PriceGaugeDrawable.cs', '카드의 가격 게이지(매입기준 대비 −30% ~ +30%)'),
+    ('src/StockTarget.Mobile/Views/MainPage.xaml', '메인 화면: 상단 한 줄 · 카드 목록'),
+    ('src/StockTarget.Mobile/Views/MainPage.xaml.cs', '언어 버튼 · 필터 문구 탭'),
+    ('src/StockTarget.Mobile/Views/TargetDetailPage.xaml', '종목 상세 화면'),
+    ('src/StockTarget.Mobile/Views/TargetDetailPage.xaml.cs', '상세 코드 비하인드'),
+    ('src/StockTarget.Mobile/Views/TargetEditPage.xaml', '목표 입력 화면'),
+    ('src/StockTarget.Mobile/Views/TargetEditPage.xaml.cs', '입력 코드 비하인드'),
+    ('src/StockTarget.Mobile/Views/ReservationPage.xaml', 'LOC 예약 화면'),
+    ('src/StockTarget.Mobile/Views/ReservationPage.xaml.cs', '예약 코드 비하인드'),
     ('tests/StockTarget.Tests/StockTarget.Tests.csproj', 'xUnit 테스트 프로젝트'),
-    ('tests/StockTarget.Tests/CoreTests.cs', '단위 테스트 63개 + 실데이터 테스트 2개'),
-    ('tests/StockTarget.Tests/ReservationTests.cs', '예약 주문표(도달 단계) · 키움 요청(가짜 서버) · 구동 옵션 테스트 33개'),
-    ('tests/StockTarget.Tests/BackupTests.cs', '백업 왕복 · 기본 매수금액 · Google/Firebase 요청(가짜 서버) 테스트 19개'),
+    ('tests/StockTarget.Tests/CoreTests.cs', '계산 · 판정 · 매수금액 · 주식 수 단위 테스트 + 실데이터 테스트 2개'),
+    ('tests/StockTarget.Tests/ReservationTests.cs', '예약 주문표(도달 단계 · 계단식) · 구동 옵션 테스트'),
+    ('tests/StockTarget.Tests/BackupTests.cs', '백업 왕복 · 기본 매수금액 · Google/Firebase 요청(가짜 서버) 테스트'),
+    ('tests/StockTarget.Tests/StockNameTests.cs', '한글 종목명 조회 · 클래스주 검색어 테스트'),
 ]
 
-LANG = {'.cs': 'C#', '.xaml': 'XAML', '.csproj': 'XML', '.sln': 'sln'}
+LANG = {'.cs': 'C#', '.xaml': 'XAML', '.csproj': 'XML', '.sln': 'sln', '.xml': 'XML', '.resx': 'XML', '.svg': 'SVG'}
 
 
 def read(rel):
@@ -193,14 +229,15 @@ TEMPLATE = r'''<!doctype html>
     <li>목표 연도의 <strong>EPS × PER</strong>로 목표 주가를 정하고, <strong>목표 수익률 − 최근 5년 평균 배당수익률</strong>을 필요 주가 상승률로 삼아
       입력 시점부터 목표 연도까지 <strong>분기별 매입 목표가</strong>를 역산한다.</li>
     <li>미국 주식 시세·배당·분할은 Yahoo Finance chart API에서 받고, 조회 결과는 최대 1시간 캐시한다.</li>
-    <li>목표·분기 확인 이력·캐시는 SQLite에 저장하고, WPF 화면에서 목록·분기 일정·5년 배당·확인 이력을 본다.</li>
+    <li>목표·분기 확인 이력·캐시는 SQLite에 저장하고, WPF 화면에서 목록·분기 일정·5년 배당·확인 이력을 본다. 같은 Core를 쓰는 Android 앱(MAUI)도 있다(한국어/영어, 가격 게이지 카드).</li>
   </ul>
   <div class="table-wrap"><table>
     <thead><tr><th>프로젝트</th><th>대상</th><th>역할</th></tr></thead>
     <tbody>
       <tr><td><code>StockTarget.Core</code></td><td>net9.0 클래스 라이브러리</td><td>계산(순수 함수), Yahoo 조회, SQLite 저장, 서비스</td></tr>
       <tr><td><code>StockTarget.App</code></td><td>net9.0-windows WPF</td><td>화면(MVVM, 외부 MVVM 라이브러리 없음)</td></tr>
-      <tr><td><code>StockTarget.Tests</code></td><td>net9.0 xUnit</td><td>단위 테스트 115개 + 실데이터 테스트 2개</td></tr>
+      <tr><td><code>StockTarget.Mobile</code></td><td>net9.0-android .NET MAUI</td><td>Android 화면(한국어/영어, 필터, JSON 가져오기, 가격 게이지)</td></tr>
+      <tr><td><code>StockTarget.Tests</code></td><td>net9.0 xUnit</td><td>단위 테스트 133개 + 실데이터 테스트 2개</td></tr>
     </tbody>
   </table></div>
 
@@ -212,6 +249,7 @@ TEMPLATE = r'''<!doctype html>
       <tr><td>.NET SDK</td><td>9.0 이상</td><td><code>dotnet --list-sdks</code></td></tr>
       <tr><td>NuGet</td><td><code>api.nuget.org</code> 접근 (Microsoft.Data.Sqlite, xUnit 패키지)</td><td><code>dotnet restore</code></td></tr>
       <tr><td>네트워크</td><td><code>query2.finance.yahoo.com</code> HTTPS 접근</td><td>앱 실행 후 현재가 표시 여부</td></tr>
+      <tr><td>.NET MAUI Android 워크로드 · Android SDK</td><td>솔루션 전체 빌드에 필요(<code>StockTarget.Mobile</code>). 없으면 Core · App · Tests만 빌드</td><td><code>dotnet workload install maui-android</code></td></tr>
       <tr><td>(선택) Visual Studio 2022</td><td>.NET 데스크톱 개발 워크로드</td><td><code>StockTarget.sln</code> 열기</td></tr>
     </tbody>
   </table></div>
@@ -255,11 +293,13 @@ dotnet run --project src/StockTarget.App</code></pre>
   - 기준일: 첫 분기는 입력일, 이후는 각 분기 첫날 (1/1, 4/1, 7/1, 10/1)
 
 판정 (현재가 vs 이번 분기 매입 목표가 b, 경계값은 해당 단계 포함)  — TargetCalculator.Classify
-  - 현재가 ≤ b × 0.80   → 강력매수  (파란색)     StrongBuyPct = 20
-  - 현재가 ≤ b × 0.90   → 필수매수  (하늘색)     MustBuyPct   = 10
-  - 현재가 ≤ b          → 매수      (녹색)
-  - 현재가 ≤ b × 1.03   → 매입 대기 (연한 녹색)  NearPct      = 3
-  - 그 위               → 대기      (회색)
+  - 현재가 ≤ b × 0.80   → 매수 3단계 (StrongBuy)  StrongBuyPct = 20
+  - 현재가 ≤ b × 0.90   → 매수 2단계 (MustBuy)    MustBuyPct   = 10
+  - 현재가 ≤ b          → 매수 1단계 (Buy)
+  - 현재가 ≤ b × 1.03   → 매입 대기 (Near)        NearPct      = 3
+  - 그 위               → 대기 (Wait)
+  화면 판정은 Verdict(): 매수 1~3단계 → "매수" + 신호 막대 1~3칸, 매입 대기 · 대기 → "대기"
+  색: 한국어(윈도우 · 모바일) 빨강 매수(단계가 높을수록 진하게) · 하늘색 대기, 영어(모바일) 초록 매수 · 호박색 대기
 
 5년 평균 배당수익률 = 1년 구간 5개 각각의 (구간 배당금 합계 ÷ 구간 일별 종가 평균) 의 평균
   - 구간: 마지막 거래일 end 기준 (end-1년, end], (end-2년, end-1년], ...  (달력 연도 아님)
@@ -272,19 +312,17 @@ dotnet run --project src/StockTarget.App</code></pre>
   - 분할비율 = numerator ÷ denominator (10:1 → 10, 1:10 역분할 → 0.1)
 
 매수 단계별 매수금액 (원화 입력 → 달러 표시)  — BuyAmounts, Money
-  - 단계: 매수 BuyKrw / 필수매수 MustBuyKrw / 강력매수 StrongBuyKrw (비우면 null)
+  - 단계: 매수 1단계 BuyKrw / 2단계 MustBuyKrw / 3단계 StrongBuyKrw (비우면 null)
   - 입력 해석: 쉼표·₩·원·공백 제거, 끝의 만(×10,000)·억(×100,000,000), 음수·문자는 ArgumentException
   - 환율: Yahoo KRW=X 현재가(1달러당 원), 시세 캐시와 동일. 달러 = 원화 ÷ 환율
   - 목록 '매수금액' 열: 현재 판정 단계 금액 "₩1,000,000 ($747.67)", 매입 대기·대기면 빈칸
 
-다음 주 LOC 예약 매수  — ReservationPlanner, ReservationService, KiwoomClient
+다음 주 LOC 예약 매수 주문표  — ReservationPlanner (증권사 접수 없음, 주문표 복사)
   - 기간: 실행일 기준 다음 주 월~금 (월요일에 실행해도 그다음 주), 분기 경계를 넘으면 분기별로 나눔
-  - 주문가: 매수 b / 필수매수 b × 0.90 / 강력매수 b × 0.80, 센트 단위 내림
-  - 금액: 매수 / 필수매수 − 매수 / 강력매수 − 필수매수 (계단식, 비운 단계는 건너뜀)
-  - 수량: 금액 ÷ 환율 ÷ 주문가, 1주 단위 내림. 0주면 제외
-  - 키움: au10001 토큰 → usa10098 거래소(ND/NY/NA) → ust21200 (rsrv_ord_tp=2 기간예약 잔량주문, trde_tp=30 LOC)
-  - 키: 환경변수 KIWOOM_APPKEY, KIWOOM_SECRETKEY, KIWOOM_ENV(real이면 실전, 기본 모의투자)
-  - 중복 방지: reservations 테이블에 (티커, 단계, 시작일, 종료일, 환경)이 있으면 다시 보내지 않음
+  - 주문가: 매수 1단계 b / 2단계 b × 0.90 / 3단계 b × 0.80, 센트 단위 내림
+  - 금액: 1단계 / 2단계 − 1단계 / 3단계 − 2단계 (계단식, 비운 단계는 건너뜀)
+  - 수량: 금액 ÷ 환율 ÷ 주문가, 1주 단위 내림. 0주면 제외(화면의 주식 수 표시는 최소 1주, Money.DisplayShares)
+  - 키움 실주문 접수(KiwoomClient · ReservationService · --kiwoom)는 2026-10-09 제거. reservations 테이블 · 백업 항목은 예전 이력 호환용으로 유지
 
 백업 · Firebase 동기화  — BackupData, FirebaseClient, GoogleLoopbackSignIn
   - JSON v1: format "stocktarget-backup", targets / priceChecks / reservations (캐시 제외, null 생략, camelCase)
@@ -349,7 +387,7 @@ CREATE TABLE IF NOT EXISTS cache (
       <tr><td>목표 주가</td><td>KO, EPS 10.5, PER 18</td><td class="num">189.00</td></tr>
       <tr><td>2026Q4 매입 목표가</td><td>목표 수익률 10%, 배당 2.92% (g = 7.08%)</td><td class="num">141.51 (배당 2.92063…%면 141.52)</td></tr>
       <tr><td>2030Q4 매입 목표가</td><td>같음</td><td class="num">185.81</td></tr>
-      <tr><td>판정 경계</td><td>매입 목표가 100</td><td class="num">80 강력매수 · 80.01/90 필수매수 · 90.01/100 매수 · 103 매입 대기 · 103.01 대기</td></tr>
+      <tr><td>판정 경계</td><td>매입 목표가 100</td><td class="num">80 매수 3단계 · 80.01/90 매수 2단계 · 90.01/100 매수 1단계 · 103 매입 대기(화면 "대기") · 103.01 대기</td></tr>
       <tr><td>매수금액 환산</td><td>₩1,350,000, 환율 1,350</td><td class="num">₩1,350,000 ($1,000.00)</td></tr>
       <tr><td>매수금액 입력</td><td><code>100만</code> / <code>150만원</code> / <code>1.5억</code></td><td class="num">1,000,000 / 1,500,000 / 150,000,000</td></tr>
       <tr><td>목표 주가 직접 입력</td><td>직접 입력 150 vs EPS 6 × PER 25</td><td class="num">같은 분기 일정</td></tr>

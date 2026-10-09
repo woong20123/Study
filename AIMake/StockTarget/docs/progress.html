@@ -122,7 +122,7 @@
       <tr><td>5</td><td>목표 EPS·PER·수익률 → 분기별 매입 목표가 (배당률 차감)</td><td><code>TargetCalculator</code></td><td><span class="tag ok">완료</span></td></tr>
       <tr><td>6</td><td>C#으로 작성, SQLite 저장, 저장 데이터를 보는 뷰</td><td>.NET 9 WPF 앱(사용자 선택), DB는 <code>%LOCALAPPDATA%\StockTarget\stocktarget.db</code></td><td><span class="tag ok">완료</span></td></tr>
       <tr><td>7</td><td>작업 진행 문서를 HTML로 프로젝트에 추가</td><td>이 문서 (<code>docs/progress.html</code>, 솔루션 폴더 <code>docs</code>)</td><td><span class="tag ok">완료</span></td></tr>
-      <tr><td>8</td><td>다른 곳에서 재구성할 때 필요한 정보·코드 문서</td><td><a href="rebuild-guide.html"><code>docs/rebuild-guide.html</code></a> — 전체 소스 18개 + 복원 스크립트 생성 버튼. 생성기 <code>docs/tools/make_rebuild_guide.py</code></td><td><span class="tag ok">완료</span></td></tr>
+      <tr><td>8</td><td>다른 곳에서 재구성할 때 필요한 정보·코드 문서</td><td><a href="rebuild-guide.html"><code>docs/rebuild-guide.html</code></a> — 전체 소스 67개(Core · WPF · Android · 테스트) + 복원 스크립트 생성 버튼. 생성기 <code>docs/tools/make_rebuild_guide.py</code></td><td><span class="tag ok">완료</span></td></tr>
       <tr><td>9</td><td>현재가·분기 매입 목표가를 맨 앞으로, 매수(녹색)/매입 대기 5% 이내(연한 녹색, #14에서 3%로 변경)/대기(회색)</td><td><code>TargetCalculator.Classify</code> + <code>BuyStatus</code>, 목록·확인 이력 공용 행 스타일</td><td><span class="tag ok">완료</span></td></tr>
       <tr><td>10</td><td>−10% 이하 필수매수(하늘색), −20% 이하 강력매수(파란색) 추가</td><td><code>BuyStatus.MustBuy</code>/<code>StrongBuy</code>, 상수 <code>MustBuyPct</code>=10, <code>StrongBuyPct</code>=20</td><td><span class="tag ok">완료</span></td></tr>
       <tr><td>11</td><td>분기 일정 · 5년 배당 내역 · 확인 이력 영역을 작게</td><td>오른쪽 패널 고정 폭 440px(최소 360, 구분선으로 조절), 탭 표 열 폭 축소, 요약 문구를 짧은 줄로 정리</td><td><span class="tag ok">완료</span></td></tr>
