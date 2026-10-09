@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:StockTarget.Mobile.ViewModels"
              xmlns:loc="clr-namespace:StockTarget.Mobile.Localization"
+             xmlns:conv="clr-namespace:StockTarget.Mobile.Converters"
              x:Class="StockTarget.Mobile.Views.TargetEditPage"
              x:DataType="vm:MobileTargetEditViewModel"
              Title="{loc:Tr Edit_Title}">
@@ -81,13 +82,16 @@
                     <Label Text="{loc:Tr Edit_AmountSection}" FontSize="16" FontAttributes="Bold" TextColor="#0F172A" />
                     <Label Text="{loc:Tr Edit_AmountNote}" FontSize="11" TextColor="#64748B" />
 
-                    <Label Text="{loc:Tr Edit_BuyLabel}" FontSize="12" TextColor="#16A34A" FontAttributes="Bold" />
+                    <Label Text="{loc:Tr Edit_BuyLabel}" FontSize="12" FontAttributes="Bold"
+                           TextColor="{conv:StageColor Stage=Buy}" />
                     <Entry Text="{Binding BuyKrw}" Placeholder="{loc:Tr Edit_BuyHint}" />
 
-                    <Label Text="{loc:Tr Edit_MustBuyLabel}" FontSize="12" TextColor="#0284C7" FontAttributes="Bold" />
+                    <Label Text="{loc:Tr Edit_MustBuyLabel}" FontSize="12" FontAttributes="Bold"
+                           TextColor="{conv:StageColor Stage=MustBuy}" />
                     <Entry Text="{Binding MustBuyKrw}" Placeholder="{loc:Tr Edit_MustBuyHint}" />
 
-                    <Label Text="{loc:Tr Edit_StrongBuyLabel}" FontSize="12" TextColor="#1D4ED8" FontAttributes="Bold" />
+                    <Label Text="{loc:Tr Edit_StrongBuyLabel}" FontSize="12" FontAttributes="Bold"
+                           TextColor="{conv:StageColor Stage=StrongBuy}" />
                     <Entry Text="{Binding StrongBuyKrw}" Placeholder="{loc:Tr Edit_StrongBuyHint}" />
                 </VerticalStackLayout>
             </Border>

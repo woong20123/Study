@@ -274,9 +274,9 @@ public sealed partial class MainViewModel : ObservableObject
             var ret = ParseDouble(FormReturn, "목표 수익률");
             // 기본 매수금액과 같거나 비운 단계는 저장하지 않는다(기본값을 따라가 기본값을 바꾸면 함께 바뀐다)
             var amounts = new BuyAmounts(
-                Money.ParseKrw(FormBuyKrw, "매수"),
-                Money.ParseKrw(FormMustBuyKrw, "필수매수"),
-                Money.ParseKrw(FormStrongBuyKrw, "강력매수")).ExceptDefaults(Defaults);
+                Money.ParseKrw(FormBuyKrw, "매수 1단계"),
+                Money.ParseKrw(FormMustBuyKrw, "매수 2단계"),
+                Money.ParseKrw(FormStrongBuyKrw, "매수 3단계")).ExceptDefaults(Defaults);
 
             IsBusy = true;
             double div;

@@ -145,9 +145,9 @@ public sealed partial class MainViewModel
     }
 
     private BuyAmounts ParseDefaults() => new(
-        Money.ParseKrw(DefaultBuyKrw, "기본 매수"),
-        Money.ParseKrw(DefaultMustBuyKrw, "기본 필수매수"),
-        Money.ParseKrw(DefaultStrongBuyKrw, "기본 강력매수"));
+        Money.ParseKrw(DefaultBuyKrw, "기본 매수 1단계"),
+        Money.ParseKrw(DefaultMustBuyKrw, "기본 매수 2단계"),
+        Money.ParseKrw(DefaultStrongBuyKrw, "기본 매수 3단계"));
 
     private BuyAmounts? TryParseDefaults()
     {

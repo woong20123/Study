@@ -12,6 +12,9 @@
     <ContentPage.Resources>
         <conv:StatusToBgColorConverter x:Key="StatusToBg" />
         <conv:StatusToTextColorConverter x:Key="StatusToText" />
+        <conv:StatusToBadgeTextColorConverter x:Key="StatusToBadgeText" />
+        <conv:StatusToBarOpacityConverter x:Key="StatusToBar" />
+        <conv:StatusIsBuyConverter x:Key="StatusIsBuy" />
     </ContentPage.Resources>
 
     <ScrollView>
@@ -26,8 +29,22 @@
                         </VerticalStackLayout>
                         <Border Grid.Column="1" BackgroundColor="{Binding TargetRow.Status, Converter={StaticResource StatusToBg}}"
                                 Padding="8,3" StrokeShape="RoundRectangle 6" StrokeThickness="0">
-                            <Label Text="{Binding TargetRow.Verdict}" FontSize="13" FontAttributes="Bold"
-                                   TextColor="{Binding TargetRow.Status, Converter={StaticResource StatusToText}}" />
+                            <HorizontalStackLayout Spacing="5">
+                                <Label Text="{Binding TargetRow.Verdict}" FontSize="13" FontAttributes="Bold" VerticalOptions="Center"
+                                       TextColor="{Binding TargetRow.Status, Converter={StaticResource StatusToBadgeText}}" />
+                                <HorizontalStackLayout Spacing="2" VerticalOptions="Center" HeightRequest="12"
+                                                       IsVisible="{Binding TargetRow.Status, Converter={StaticResource StatusIsBuy}}">
+                                    <BoxView WidthRequest="3.5" HeightRequest="5" CornerRadius="1" VerticalOptions="End"
+                                             Color="{Binding TargetRow.Status, Converter={StaticResource StatusToBadgeText}}"
+                                             Opacity="{Binding TargetRow.Status, Converter={StaticResource StatusToBar}, ConverterParameter=1}" />
+                                    <BoxView WidthRequest="3.5" HeightRequest="8.5" CornerRadius="1" VerticalOptions="End"
+                                             Color="{Binding TargetRow.Status, Converter={StaticResource StatusToBadgeText}}"
+                                             Opacity="{Binding TargetRow.Status, Converter={StaticResource StatusToBar}, ConverterParameter=2}" />
+                                    <BoxView WidthRequest="3.5" HeightRequest="12" CornerRadius="1" VerticalOptions="End"
+                                             Color="{Binding TargetRow.Status, Converter={StaticResource StatusToBadgeText}}"
+                                             Opacity="{Binding TargetRow.Status, Converter={StaticResource StatusToBar}, ConverterParameter=3}" />
+                                </HorizontalStackLayout>
+                            </HorizontalStackLayout>
                         </Border>
                     </Grid>
 
@@ -42,8 +59,7 @@
                         </VerticalStackLayout>
                         <VerticalStackLayout Grid.Column="2">
                             <Label Text="{loc:Tr Detail_Gap}" FontSize="12" TextColor="#64748B" />
-                            <Label Text="{Binding TargetRow.GapText}" FontSize="15" FontAttributes="Bold"
-                                   TextColor="{Binding TargetRow.Status, Converter={StaticResource StatusToText}}" />
+                            <Label Text="{Binding TargetRow.GapText}" FontSize="15" FontAttributes="Bold" TextColor="#334155" />
                         </VerticalStackLayout>
                     </Grid>
 

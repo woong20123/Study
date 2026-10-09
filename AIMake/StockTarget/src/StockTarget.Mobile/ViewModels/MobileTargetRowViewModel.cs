@@ -52,7 +52,6 @@ public sealed class MobileTargetRowViewModel(TargetPlan plan) : ObservableObject
     public ScheduleRow? CurrentRow => TargetCalculator.CurrentRow(Plan, DateOnly.FromDateTime(DateTime.Today));
     public double? CurrentBuyPrice => CurrentRow?.BuyPrice;
     public string CurrentQuarter => CurrentRow?.Quarter ?? L.Get("Row_OutOfRange");
-    public string QuarterBuyLabel => L.Format("Row_QuarterBuy", CurrentQuarter);
 
     public Quote? Quote
     {
@@ -125,14 +124,38 @@ public sealed class MobileTargetRowViewModel(TargetPlan plan) : ObservableObject
 
     public string GapText => GapPct is { } g ? $"{(g >= 0 ? "+" : "")}{g:N1}%" : "";
 
+    /// <summary>목록 카드 제목 옆 작은 티커. 종목명이 없어 제목이 티커면 비운다.</summary>
+    public string TickerText => Name.Length > 0 ? Symbol : "";
+
+    private Views.PriceGaugeDrawable? _gauge;
+
+    /// <summary>
+    /// 목록 카드의 가격 게이지(매입 목표가 대비 현재가 위치). 괴리 · 판정이 그대로면 같은 객체를 돌려줘 다시 그리지 않고,
+    /// 바뀌었을 때만 새로 만들어 GraphicsView가 다시 그리게 한다.
+    /// </summary>
+    public IDrawable Gauge
+    {
+        get
+        {
+            var gap = Error is null ? GapPct : null;
+            if (_gauge is null || _gauge.GapPct != gap || _gauge.Status != Status)
+                _gauge = new Views.PriceGaugeDrawable(gap, Status);
+            return _gauge;
+        }
+    }
+
     public BuyStatus Status => Error is not null ? BuyStatus.None : TargetCalculator.Classify(Price, CurrentBuyPrice);
 
-    public string Verdict => Error is not null ? L.Get("Row_FetchFailed") : L.Verdict(Status);
+    public string Verdict => Error is not null ? L.Get("Row_FetchFailed") : L.VerdictShort(Status);
 
     public string BuyAmountText =>
         Error is null && Amounts.For(Status) is { } krw && krw > 0
-            ? Money.Text(krw, UsdKrw) + (Plan.BuyAmounts.IsDefault(Status, Defaults) ? L.Get("Row_DefaultSuffix") : "")
+            ? AmountText(krw) + (Plan.BuyAmounts.IsDefault(Status, Defaults) ? L.Get("Row_DefaultSuffix") : "")
             : "";
+
+    /// <summary>금액 표시: 한국어 "₩1,000,000 ($745.77)", 영어는 달러만 "$745.77"(환율 전이면 빈칸).</summary>
+    private string AmountText(double krw) =>
+        L.IsKorean ? Money.Text(krw, UsdKrw) : Money.KrwToUsd(krw, UsdKrw) is { } usd ? Money.UsdText(usd) : "";
 
     public string BuySharesText =>
         Error is null && Amounts.For(Status) is { } krw && krw > 0 && SharesText(Status, krw) is { } text ? text : "";
@@ -150,7 +173,7 @@ public sealed class MobileTargetRowViewModel(TargetPlan plan) : ObservableObject
             return null;
         if (StagePrice(stage) is not { } price || Money.DisplayShares(krw, UsdKrw, price) is not { } n)
             return null;
-        return L.Format("Row_Shares", price, n);
+        return L.Format(n == 1 ? "Row_Share1" : "Row_Shares", price, n);
     }
 
     public void Update(TargetPlan plan)
@@ -164,6 +187,7 @@ public sealed class MobileTargetRowViewModel(TargetPlan plan) : ObservableObject
         OnPropertyChanged(nameof(Name));
         OnPropertyChanged(nameof(Title));
         OnPropertyChanged(nameof(Subtitle));
+        OnPropertyChanged(nameof(TickerText));
     }
 
     private void RaiseDerived()
@@ -173,6 +197,7 @@ public sealed class MobileTargetRowViewModel(TargetPlan plan) : ObservableObject
         OnPropertyChanged(nameof(BuyPriceText));
         OnPropertyChanged(nameof(GapPct));
         OnPropertyChanged(nameof(GapText));
+        OnPropertyChanged(nameof(Gauge));
         OnPropertyChanged(nameof(Status));
         OnPropertyChanged(nameof(Verdict));
         OnPropertyChanged(nameof(BuyAmountText));

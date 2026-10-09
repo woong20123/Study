@@ -117,10 +117,10 @@ public sealed class TargetRowViewModel(TargetPlan plan) : ObservableObject
 
     public bool? BuyCondition => Price is { } p && CurrentBuyPrice is { } b ? p <= b : null;
 
-    /// <summary>매수(≤ 매입 목표가) / 매입 대기(3% 이내) / 대기(3% 초과).</summary>
+    /// <summary>매수 3·2·1단계(−20% · −10% · ≤ 매입 목표가) / 매입 대기(3% 이내) / 대기(3% 초과). 화면에는 매수 · 대기 두 가지로 보인다.</summary>
     public BuyStatus Status => Error is not null ? BuyStatus.None : TargetCalculator.Classify(Price, CurrentBuyPrice);
 
-    public string Verdict => Error is not null ? "조회 실패" : Status.ToText();
+    public string Verdict => Error is not null ? "조회 실패" : Status.VerdictText();
 
     /// <summary>
     /// 현재 판정 단계의 매수금액 "₩1,000,000 ($747.12)", 기본 매수금액이면 뒤에 "· 기본".

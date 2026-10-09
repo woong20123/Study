@@ -16,31 +16,35 @@
     <ContentPage.Resources>
         <conv:StatusToBgColorConverter x:Key="StatusToBg" />
         <conv:StatusToTextColorConverter x:Key="StatusToText" />
+        <conv:StatusToBadgeTextColorConverter x:Key="StatusToBadgeText" />
+        <conv:StatusToBarOpacityConverter x:Key="StatusToBar" />
+        <conv:StatusIsBuyConverter x:Key="StatusIsBuy" />
     </ContentPage.Resources>
 
-    <Grid RowDefinitions="Auto, *">
-        <!-- Top Summary Bar -->
-        <Border Grid.Row="0" Margin="12,8,12,4" Padding="12,8" BackgroundColor="#F1F5F9" StrokeThickness="0">
-            <Grid ColumnDefinitions="*, Auto, Auto" RowDefinitions="Auto, Auto">
-                <Label Grid.Column="0" Text="{Binding Status}" VerticalOptions="Center" FontSize="13" TextColor="#475569" LineBreakMode="TailTruncation" />
-                <Label Grid.Column="1" Text="{Binding UsdKrwText}" VerticalOptions="Center" Margin="8,0" FontSize="13" TextColor="#2563EB" FontAttributes="Bold" />
-                <Button Grid.Column="2" Text="{loc:Tr Main_AddTarget}" Command="{Binding AddTargetCommand}" FontSize="12" Padding="10,6" HeightRequest="34" CornerRadius="6" />
-
-                <!-- 필터: 매수가 필요한 종목(매수 · 필수매수 · 강력매수)만 보기 -->
-                <HorizontalStackLayout Grid.Row="1" Grid.ColumnSpan="3" Spacing="6" Margin="0,4,0,0">
-                    <Switch IsToggled="{Binding OnlyBuy}" VerticalOptions="Center" OnColor="#86EFAC" ThumbColor="#16A34A" />
-                    <Label Text="{Binding OnlyBuyText}" VerticalOptions="Center" FontSize="13" TextColor="#0F172A">
-                        <Label.GestureRecognizers>
-                            <TapGestureRecognizer Tapped="OnOnlyBuyLabelTapped" />
-                        </Label.GestureRecognizers>
-                    </Label>
-                </HorizontalStackLayout>
+    <Grid RowDefinitions="Auto, Auto, *">
+        <!-- 상단 한 줄: 필터 | 종목추가 -->
+        <Border Grid.Row="0" Margin="12,8,12,2" Padding="10,4" BackgroundColor="#F1F5F9" StrokeThickness="0" StrokeShape="RoundRectangle 10">
+            <Grid ColumnDefinitions="Auto, *, Auto" ColumnSpacing="6">
+                <!-- 필터: 매수가 필요한 종목(매수 1~3단계)만 보기 -->
+                <Switch Grid.Column="0" IsToggled="{Binding OnlyBuy}" VerticalOptions="Center" OnColor="#86EFAC" ThumbColor="#16A34A" />
+                <Label Grid.Column="1" Text="{Binding OnlyBuyText}" VerticalOptions="Center" FontSize="13" TextColor="#0F172A"
+                       LineBreakMode="TailTruncation">
+                    <Label.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnOnlyBuyLabelTapped" />
+                    </Label.GestureRecognizers>
+                </Label>
+                <Button Grid.Column="2" Text="{loc:Tr Main_AddTarget}" Command="{Binding AddTargetCommand}" FontSize="12" Padding="10,4" HeightRequest="32" CornerRadius="6" VerticalOptions="Center" />
             </Grid>
         </Border>
 
-        <!-- Target List with Pull-to-Refresh -->
-        <RefreshView Grid.Row="1" IsRefreshing="{Binding IsRefreshing}" Command="{Binding RefreshCommand}">
-            <CollectionView ItemsSource="{Binding VisibleTargets}" Margin="12,4" SelectionMode="None">
+        <!-- 알림(불러오는 중 · 실패 · 완료)이 있을 때만 -->
+        <Label Grid.Row="1" Text="{Binding Status}" IsVisible="{Binding HasStatus}" Margin="16,0,16,2" FontSize="12" TextColor="#475569"
+               LineBreakMode="TailTruncation" />
+
+        <!-- 목표 목록(당겨서 새로고침). Always = 세로 스크롤바를 켠다. 안드로이드는 켜 둔 스크롤바도
+             스크롤이 멈추면 자동으로 흐려져 사라지므로(시스템 기본 페이드) 끌어 스크롤할 때만 보인다 -->
+        <RefreshView Grid.Row="2" IsRefreshing="{Binding IsRefreshing}" Command="{Binding RefreshCommand}">
+            <CollectionView ItemsSource="{Binding VisibleTargets}" SelectionMode="None" VerticalScrollBarVisibility="Always">
                 <CollectionView.EmptyView>
                     <VerticalStackLayout Spacing="10" HorizontalOptions="Center" VerticalOptions="Center" Margin="0,50">
                         <Label Text="{Binding EmptyText}" HorizontalOptions="Center" FontSize="16" TextColor="#64748B" />
@@ -51,44 +55,66 @@
 
                 <CollectionView.ItemTemplate>
                     <DataTemplate x:DataType="vm:MobileTargetRowViewModel">
-                        <Border Margin="0,4" Padding="14">
+                        <Border Margin="12,3" Padding="10,8" StrokeShape="RoundRectangle 10">
                             <Border.GestureRecognizers>
                                 <TapGestureRecognizer Command="{Binding SelectCommand}"
                                                       CommandParameter="{Binding .}" />
                             </Border.GestureRecognizers>
 
-                            <Grid RowDefinitions="Auto, Auto, Auto" ColumnDefinitions="*, Auto" RowSpacing="6">
-                                <!-- Row 0: 종목명(크게) · 티커 · 목표 연도 | 괴리 · 판정 -->
-                                <VerticalStackLayout Grid.Row="0" Grid.Column="0" Spacing="0" VerticalOptions="Center">
-                                    <Label Text="{Binding Title}" FontSize="18" FontAttributes="Bold" TextColor="#0F172A"
-                                           LineBreakMode="TailTruncation" />
-                                    <Label Text="{Binding Subtitle}" FontSize="12" TextColor="#64748B" />
-                                </VerticalStackLayout>
+                            <Grid RowDefinitions="Auto, Auto, Auto" ColumnDefinitions="*, Auto" RowSpacing="4">
+                                <!-- 1줄: 종목명 · 티커 | 괴리 · 판정 -->
+                                <Label Grid.Row="0" Grid.Column="0" VerticalOptions="Center" LineBreakMode="TailTruncation">
+                                    <Label.FormattedText>
+                                        <FormattedString>
+                                            <Span Text="{Binding Title}" FontSize="15" FontAttributes="Bold" TextColor="#0F172A" />
+                                            <Span Text="  " />
+                                            <Span Text="{Binding TickerText}" FontSize="11" TextColor="#64748B" />
+                                        </FormattedString>
+                                    </Label.FormattedText>
+                                </Label>
 
                                 <HorizontalStackLayout Grid.Row="0" Grid.Column="1" Spacing="6" VerticalOptions="Center">
-                                    <Label Text="{Binding GapText}" FontSize="14" FontAttributes="Bold" VerticalOptions="Center"
-                                           TextColor="{Binding Status, Converter={StaticResource StatusToText}}" />
+                                    <!-- 괴리율은 색 없이: 한국 앱에서 빨강은 보통 상승(+)이라 마이너스가 빨가면 헷갈린다 -->
+                                    <Label Text="{Binding GapText}" FontSize="13" FontAttributes="Bold" VerticalOptions="Center" TextColor="#334155" />
+                                    <!-- 판정 배지: "매수" + 강도 신호 막대(1~3칸) 또는 "대기" -->
                                     <Border BackgroundColor="{Binding Status, Converter={StaticResource StatusToBg}}"
-                                            Padding="8,2" StrokeShape="RoundRectangle 6" StrokeThickness="0">
-                                        <Label Text="{Binding Verdict}" FontSize="12" FontAttributes="Bold"
-                                               TextColor="{Binding Status, Converter={StaticResource StatusToText}}" />
+                                            Padding="6,1" StrokeShape="RoundRectangle 5" StrokeThickness="0">
+                                        <HorizontalStackLayout Spacing="4">
+                                            <Label Text="{Binding Verdict}" FontSize="11" FontAttributes="Bold" VerticalOptions="Center"
+                                                   TextColor="{Binding Status, Converter={StaticResource StatusToBadgeText}}" />
+                                            <HorizontalStackLayout Spacing="1.5" VerticalOptions="Center" HeightRequest="10"
+                                                                   IsVisible="{Binding Status, Converter={StaticResource StatusIsBuy}}">
+                                                <BoxView WidthRequest="3" HeightRequest="4" CornerRadius="1" VerticalOptions="End"
+                                                         Color="{Binding Status, Converter={StaticResource StatusToBadgeText}}"
+                                                         Opacity="{Binding Status, Converter={StaticResource StatusToBar}, ConverterParameter=1}" />
+                                                <BoxView WidthRequest="3" HeightRequest="7" CornerRadius="1" VerticalOptions="End"
+                                                         Color="{Binding Status, Converter={StaticResource StatusToBadgeText}}"
+                                                         Opacity="{Binding Status, Converter={StaticResource StatusToBar}, ConverterParameter=2}" />
+                                                <BoxView WidthRequest="3" HeightRequest="10" CornerRadius="1" VerticalOptions="End"
+                                                         Color="{Binding Status, Converter={StaticResource StatusToBadgeText}}"
+                                                         Opacity="{Binding Status, Converter={StaticResource StatusToBar}, ConverterParameter=3}" />
+                                            </HorizontalStackLayout>
+                                        </HorizontalStackLayout>
                                     </Border>
                                 </HorizontalStackLayout>
 
-                                <!-- Row 1: Prices Comparison -->
-                                <Grid Grid.Row="1" Grid.ColumnSpan="2" ColumnDefinitions="Auto, Auto, *, Auto" ColumnSpacing="8">
-                                    <Label Grid.Column="0" Text="{loc:Tr Main_PriceLabel}" FontSize="13" TextColor="#64748B" />
-                                    <Label Grid.Column="1" Text="{Binding PriceText}" FontSize="14" FontAttributes="Bold" TextColor="#0F172A" />
+                                <!-- 2줄: 가격 게이지(매입 목표가 대비 −30% ~ +30%) -->
+                                <GraphicsView Grid.Row="1" Grid.ColumnSpan="2" HeightRequest="14" Drawable="{Binding Gauge}" />
 
-                                    <Label Grid.Column="2" HorizontalOptions="End" Text="{Binding QuarterBuyLabel}" FontSize="13" TextColor="#64748B" />
-                                    <Label Grid.Column="3" Text="{Binding BuyPriceText}" FontSize="14" FontAttributes="Bold" TextColor="#0F172A" />
-                                </Grid>
-
-                                <!-- Row 2: Buy Amount & Quantity -->
-                                <Grid Grid.Row="2" Grid.ColumnSpan="2" ColumnDefinitions="*, Auto" Margin="0,4,0,0">
-                                    <Label Grid.Column="0" Text="{Binding BuyAmountText}" FontSize="12" TextColor="#0284C7" FontAttributes="Bold" LineBreakMode="TailTruncation" />
-                                    <Label Grid.Column="1" Text="{Binding BuySharesText}" FontSize="12" TextColor="#16A34A" FontAttributes="Bold" />
-                                </Grid>
+                                <!-- 3줄: 현재가 · 매입가 | 매수 단계일 때만 단가 × 주식 수 -->
+                                <!-- 이름 · 숫자 같은 색, 숫자만 굵게 -->
+                                <Label Grid.Row="2" Grid.Column="0" FontSize="11" LineBreakMode="TailTruncation">
+                                    <Label.FormattedText>
+                                        <FormattedString>
+                                            <Span Text="{loc:Tr Row_NowLabel}" TextColor="#0F172A" />
+                                            <Span Text="{Binding PriceText}" TextColor="#0F172A" FontAttributes="Bold" />
+                                            <Span Text="{loc:Tr Row_BuyLabel}" TextColor="#0F172A" />
+                                            <Span Text="{Binding BuyPriceText}" TextColor="#0F172A" FontAttributes="Bold" />
+                                        </FormattedString>
+                                    </Label.FormattedText>
+                                </Label>
+                                <Label Grid.Row="2" Grid.Column="1" Text="{Binding BuySharesText}" FontSize="11" FontAttributes="Bold"
+                                       TextColor="{Binding Status, Converter={StaticResource StatusToText}}" />
                             </Grid>
                         </Border>
                     </DataTemplate>

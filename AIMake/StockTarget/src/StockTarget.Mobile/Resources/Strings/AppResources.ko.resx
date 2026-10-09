@@ -9,16 +9,16 @@
   <data name="Tab_Reservation" xml:space="preserve"><value>LOC 예약</value></data>
   <data name="Common_Refresh" xml:space="preserve"><value>새로고침</value></data>
   <data name="Status_Ready" xml:space="preserve"><value>준비</value></data>
-  <data name="Verdict_StrongBuy" xml:space="preserve"><value>강력매수</value></data>
-  <data name="Verdict_MustBuy" xml:space="preserve"><value>필수매수</value></data>
+  <data name="Verdict_StrongBuy" xml:space="preserve"><value>매수 3단계</value></data>
+  <data name="Verdict_MustBuy" xml:space="preserve"><value>매수 2단계</value></data>
   <data name="Verdict_Buy" xml:space="preserve"><value>매수</value></data>
-  <data name="Verdict_Near" xml:space="preserve"><value>매입 대기</value></data>
+  <data name="Verdict_Buy1" xml:space="preserve"><value>매수 1단계</value></data>
   <data name="Verdict_Wait" xml:space="preserve"><value>대기</value></data>
   <data name="Verdict_None" xml:space="preserve"><value>-</value></data>
   <data name="Main_AddTarget" xml:space="preserve"><value>+ 종목추가</value></data>
   <data name="Main_Empty" xml:space="preserve"><value>등록된 목표 종목이 없습니다.</value></data>
   <data name="Main_EmptyFiltered" xml:space="preserve"><value>지금 매수가 필요한 종목이 없습니다.</value></data>
-  <data name="Main_OnlyBuy" xml:space="preserve"><value>매수 필요 종목만 보기 ({0})</value></data>
+  <data name="Main_OnlyBuy" xml:space="preserve"><value>매수 필요만 ({0})</value></data>
   <data name="Main_AddFirst" xml:space="preserve"><value>종목 추가하기</value></data>
   <data name="Main_Language" xml:space="preserve"><value>English</value></data>
   <data name="Main_ImportJson" xml:space="preserve"><value>JSON 백업 가져오기</value></data>
@@ -32,23 +32,21 @@
   <data name="Main_ImportOk" xml:space="preserve"><value>가져오기</value></data>
   <data name="Main_Imported" xml:space="preserve"><value>목표 {0}개를 가져왔습니다</value></data>
   <data name="Main_ImportFailed" xml:space="preserve"><value>가져오기 실패</value></data>
-  <data name="Main_PriceLabel" xml:space="preserve"><value>현재가:</value></data>
   <data name="Main_Loading" xml:space="preserve"><value>데이터 로딩 중...</value></data>
-  <data name="Main_TargetCount" xml:space="preserve"><value>총 {0}개 목표 종목</value></data>
   <data name="Main_LoadFailed" xml:space="preserve"><value>로딩 실패: {0}</value></data>
-  <data name="Main_UsdKrw" xml:space="preserve"><value>환율: ₩{0:N2}/$</value></data>
-  <data name="Main_UsdKrwNone" xml:space="preserve"><value>환율: —</value></data>
   <data name="Main_DeleteTitle" xml:space="preserve"><value>목표 삭제</value></data>
   <data name="Main_DeleteMessage" xml:space="preserve"><value>{0} 목표를 삭제하시겠습니까?</value></data>
   <data name="Main_DeleteOk" xml:space="preserve"><value>삭제</value></data>
   <data name="Main_DeleteCancel" xml:space="preserve"><value>취소</value></data>
   <data name="Main_Deleted" xml:space="preserve"><value>{0} 삭제됨</value></data>
   <data name="Row_TargetYear" xml:space="preserve"><value>({0}년)</value></data>
-  <data name="Row_QuarterBuy" xml:space="preserve"><value>{0} 매입가:</value></data>
   <data name="Row_OutOfRange" xml:space="preserve"><value>범위 밖</value></data>
   <data name="Row_FetchFailed" xml:space="preserve"><value>조회 실패</value></data>
   <data name="Row_DefaultSuffix" xml:space="preserve"><value> · 기본</value></data>
   <data name="Row_Shares" xml:space="preserve"><value>{0:N2} × {1:N0}주</value></data>
+  <data name="Row_Share1" xml:space="preserve"><value>{0:N2} × {1:N0}주</value></data>
+  <data name="Row_NowLabel" xml:space="preserve"><value>현재가 </value></data>
+  <data name="Row_BuyLabel" xml:space="preserve"><value> · 매입기준 </value></data>
   <data name="Row_CacheMin" xml:space="preserve"><value>{0}분 전</value></data>
   <data name="Row_CacheSec" xml:space="preserve"><value>{0}초 전</value></data>
   <data name="Row_CacheLive" xml:space="preserve"><value>실시간</value></data>
@@ -94,11 +92,11 @@
   <data name="Edit_FetchDividend" xml:space="preserve"><value>5년조회</value></data>
   <data name="Edit_AmountSection" xml:space="preserve"><value>단계별 매수금액 (원)</value></data>
   <data name="Edit_AmountNote" xml:space="preserve"><value>비워두면 '기본 매수금액'이 적용됩니다.</value></data>
-  <data name="Edit_BuyLabel" xml:space="preserve"><value>매수 (≤ 매입 목표가)</value></data>
+  <data name="Edit_BuyLabel" xml:space="preserve"><value>매수 1단계 (≤ 매입 목표가)</value></data>
   <data name="Edit_BuyHint" xml:space="preserve"><value>예: 100만 또는 1000000</value></data>
-  <data name="Edit_MustBuyLabel" xml:space="preserve"><value>필수매수 (-10% 이하)</value></data>
+  <data name="Edit_MustBuyLabel" xml:space="preserve"><value>매수 2단계 (-10% 이하)</value></data>
   <data name="Edit_MustBuyHint" xml:space="preserve"><value>예: 200만</value></data>
-  <data name="Edit_StrongBuyLabel" xml:space="preserve"><value>강력매수 (-20% 이하)</value></data>
+  <data name="Edit_StrongBuyLabel" xml:space="preserve"><value>매수 3단계 (-20% 이하)</value></data>
   <data name="Edit_StrongBuyHint" xml:space="preserve"><value>예: 300만</value></data>
   <data name="Edit_Memo" xml:space="preserve"><value>메모</value></data>
   <data name="Edit_MemoHint" xml:space="preserve"><value>투자 근거 또는 메모</value></data>

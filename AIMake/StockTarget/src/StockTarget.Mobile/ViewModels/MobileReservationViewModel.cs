@@ -13,6 +13,9 @@ public sealed record MobileOrderRow(ReservationOrder Order, string Name)
     public double Price => Order.Price;
     public string QuantityText => L.Format("Res_Qty", Order.Quantity);
     public double AmountKrw => Order.AmountKrw;
+
+    /// <summary>단계 금액: 한국어는 원화, 영어는 달러만.</summary>
+    public string AmountText => L.IsKorean ? $"₩{Order.AmountKrw:N0}" : Money.UsdText(Order.AmountUsd);
 }
 
 /// <summary>제외 목록 한 행. 종목명을 크게, 없으면 티커.</summary>

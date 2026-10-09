@@ -1,6 +1,7 @@
 <Application x:Class="StockTarget.App.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:StockTarget.App.ViewModels"
              ShutdownMode="OnMainWindowClose">
     <!-- 두 창(MainWindow, ReservationWindow)이 함께 쓰는 스타일 -->
     <Application.Resources>
@@ -33,18 +34,16 @@
             <Setter Property="Margin" Value="0,0,6,0"/>
         </Style>
 
-        <!-- 판정 색 (Status = Core.BuyStatus)
-             강력매수(파란색, -20% 이하) / 필수매수(하늘색, -10% 이하) / 매수(녹색) / 매입 대기(연한 녹색, +3% 이내) / 대기(회색) -->
-        <SolidColorBrush x:Key="StrongBuyBg" Color="#90CAF9"/>
-        <SolidColorBrush x:Key="StrongBuyFg" Color="#0D47A1"/>
-        <SolidColorBrush x:Key="MustBuyBg" Color="#D9F0FC"/>
-        <SolidColorBrush x:Key="MustBuyFg" Color="#0277BD"/>
-        <SolidColorBrush x:Key="BuyBg" Color="#C8E6C9"/>
-        <SolidColorBrush x:Key="BuyFg" Color="#1B5E20"/>
-        <SolidColorBrush x:Key="NearBg" Color="#EDF7EE"/>
-        <SolidColorBrush x:Key="NearFg" Color="#388E3C"/>
-        <SolidColorBrush x:Key="WaitBg" Color="#F1F2F4"/>
-        <SolidColorBrush x:Key="WaitFg" Color="#6B7280"/>
+        <!-- 판정 색 (Status = Core.BuyStatus). 한국 증권 앱 관례: 매수 = 빨강(강도가 셀수록 진하게), 대기 = 하늘색(매도 쪽 = 파랑 관례).
+             매수 3단계(−20% 이하) / 매수 2단계(−10% 이하) / 매수 1단계(≤ 매입 목표가) / 매입 대기 · 대기(하늘색, 화면에는 '대기') -->
+        <SolidColorBrush x:Key="StrongBuyBg" Color="#FECACA"/>
+        <SolidColorBrush x:Key="StrongBuyFg" Color="#B91C1C"/>
+        <SolidColorBrush x:Key="MustBuyBg" Color="#FEE2E2"/>
+        <SolidColorBrush x:Key="MustBuyFg" Color="#DC2626"/>
+        <SolidColorBrush x:Key="BuyBg" Color="#FEF2F2"/>
+        <SolidColorBrush x:Key="BuyFg" Color="#EF4444"/>
+        <SolidColorBrush x:Key="WaitBg" Color="#F5F9FF"/>
+        <SolidColorBrush x:Key="WaitFg" Color="#2563EB"/>
 
         <Style x:Key="StatusRow" TargetType="DataGridRow">
             <Style.Triggers>
@@ -58,7 +57,7 @@
                     <Setter Property="Background" Value="{StaticResource BuyBg}"/>
                 </DataTrigger>
                 <DataTrigger Binding="{Binding Status}" Value="Near">
-                    <Setter Property="Background" Value="{StaticResource NearBg}"/>
+                    <Setter Property="Background" Value="{StaticResource WaitBg}"/>
                 </DataTrigger>
                 <DataTrigger Binding="{Binding Status}" Value="Wait">
                     <Setter Property="Background" Value="{StaticResource WaitBg}"/>
@@ -81,12 +80,48 @@
                     <Setter Property="Foreground" Value="{StaticResource BuyFg}"/>
                 </DataTrigger>
                 <DataTrigger Binding="{Binding Status}" Value="Near">
-                    <Setter Property="Foreground" Value="{StaticResource NearFg}"/>
+                    <Setter Property="Foreground" Value="{StaticResource WaitFg}"/>
                 </DataTrigger>
                 <DataTrigger Binding="{Binding Status}" Value="Wait">
                     <Setter Property="Foreground" Value="{StaticResource WaitFg}"/>
                 </DataTrigger>
             </Style.Triggers>
         </Style>
+
+        <vm:StatusToVerdictBrushConverter x:Key="StatusToVerdictBrush"/>
+        <vm:StatusToBarsVisibilityConverter x:Key="StatusToBarsVisibility"/>
+        <vm:StatusToBarOpacityConverter x:Key="StatusToBarOpacity"/>
+
+        <!-- 신호 막대 한 칸. 켜짐 여부는 StatusToBarOpacity(ConverterParameter = 켜지는 최소 단계)로 정한다 -->
+        <Style x:Key="SignalBar" TargetType="Rectangle">
+            <Setter Property="Width" Value="3"/>
+            <Setter Property="Margin" Value="1,0,0,0"/>
+            <Setter Property="VerticalAlignment" Value="Bottom"/>
+            <Setter Property="RadiusX" Value="1"/>
+            <Setter Property="RadiusY" Value="1"/>
+        </Style>
+
+        <!-- 판정 칸: "매수" + 강도 신호 막대(1~3칸) 또는 "대기". Verdict · Status 를 가진 행에 쓴다.
+             글자 · 막대는 칸의 TextElement.Foreground 하나를 따르고, 행을 선택하면 선택 글자색(흰색)으로 바뀐다 -->
+        <DataTemplate x:Key="VerdictCell">
+            <StackPanel x:Name="Panel" Orientation="Horizontal" VerticalAlignment="Center"
+                        TextElement.Foreground="{Binding Status, Converter={StaticResource StatusToVerdictBrush}}">
+                <TextBlock Text="{Binding Verdict}" FontWeight="SemiBold" Margin="4,0,3,0"/>
+                <StackPanel Orientation="Horizontal" Height="11" VerticalAlignment="Center" ToolTip="매수 강도 1~3단계"
+                            Visibility="{Binding Status, Converter={StaticResource StatusToBarsVisibility}}">
+                    <Rectangle Height="5" Style="{StaticResource SignalBar}" Fill="{Binding Path=(TextElement.Foreground), ElementName=Panel}"
+                               Opacity="{Binding Status, Converter={StaticResource StatusToBarOpacity}, ConverterParameter=1}"/>
+                    <Rectangle Height="8" Style="{StaticResource SignalBar}" Fill="{Binding Path=(TextElement.Foreground), ElementName=Panel}"
+                               Opacity="{Binding Status, Converter={StaticResource StatusToBarOpacity}, ConverterParameter=2}"/>
+                    <Rectangle Height="11" Style="{StaticResource SignalBar}" Fill="{Binding Path=(TextElement.Foreground), ElementName=Panel}"
+                               Opacity="{Binding Status, Converter={StaticResource StatusToBarOpacity}, ConverterParameter=3}"/>
+                </StackPanel>
+            </StackPanel>
+            <DataTemplate.Triggers>
+                <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=DataGridRow}}" Value="True">
+                    <Setter TargetName="Panel" Property="TextElement.Foreground" Value="{DynamicResource {x:Static SystemColors.HighlightTextBrushKey}}"/>
+                </DataTrigger>
+            </DataTemplate.Triggers>
+        </DataTemplate>
     </Application.Resources>
 </Application>

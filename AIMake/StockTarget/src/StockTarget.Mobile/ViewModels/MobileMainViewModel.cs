@@ -13,7 +13,7 @@ public sealed class MobileMainViewModel : ObservableObject
 
     private bool _isBusy;
     private bool _isRefreshing;
-    private string _status = L.Get("Status_Ready");
+    private string _status = "";
     private double? _usdKrw;
     private BuyAmounts _defaults = BuyAmounts.Empty;
 
@@ -70,10 +70,26 @@ public sealed class MobileMainViewModel : ObservableObject
         set => Set(ref _isRefreshing, value);
     }
 
+    /// <summary>상단 줄 아래 알림(불러오는 중 · 실패 · 완료). 평소에는 비어 있어 줄이 보이지 않는다.</summary>
     public string Status
     {
         get => _status;
-        set => Set(ref _status, value);
+        set
+        {
+            if (Set(ref _status, value))
+                OnPropertyChanged(nameof(HasStatus));
+        }
+    }
+
+    public bool HasStatus => !string.IsNullOrEmpty(Status);
+
+    /// <summary>완료 알림을 잠깐 보여주고 지운다(그사이 다른 알림으로 바뀌었으면 그대로 둔다).</summary>
+    private async void Flash(string message)
+    {
+        Status = message;
+        await Task.Delay(TimeSpan.FromSeconds(3));
+        if (Status == message)
+            Status = "";
     }
 
     public double? UsdKrw
@@ -83,14 +99,11 @@ public sealed class MobileMainViewModel : ObservableObject
         {
             if (Set(ref _usdKrw, value))
             {
-                OnPropertyChanged(nameof(UsdKrwText));
                 foreach (var row in Targets)
                     row.UsdKrw = value;
             }
         }
     }
-
-    public string UsdKrwText => UsdKrw is { } r ? L.Format("Main_UsdKrw", r) : L.Get("Main_UsdKrwNone");
 
     public AsyncCommand RefreshCommand { get; }
     public AsyncCommand AddTargetCommand { get; }
@@ -141,7 +154,7 @@ public sealed class MobileMainViewModel : ObservableObject
 
             await RefreshQuotesAsync(force: false);
             if (id == _loadId)
-                Status = L.Format("Main_TargetCount", Targets.Count);
+                Status = ""; // 평소에는 알림 줄을 숨긴다
         }
         catch (Exception ex)
         {
@@ -250,7 +263,8 @@ public sealed class MobileMainViewModel : ObservableObject
 
             _db.ReplaceWithBackup(backup);
             await LoadInitialDataAsync();
-            Status = L.Format("Main_Imported", targets.Count);
+            if (!HasStatus) // 다시 불러오다 실패했으면 그 알림을 덮지 않는다
+                Flash(L.Format("Main_Imported", targets.Count));
         }
         catch (Exception e) when (e is BackupFormatException or IOException or ArgumentException)
         {
@@ -267,6 +281,6 @@ public sealed class MobileMainViewModel : ObservableObject
         _db.DeleteTarget(row.Symbol);
         Targets.Remove(row);
         ApplyFilter();
-        Status = L.Format("Main_Deleted", row.Title);
+        Flash(L.Format("Main_Deleted", row.Title));
     }
 }

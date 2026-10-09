@@ -122,10 +122,10 @@ public class ReservationPlannerTests
     }
 
     [Theory]
-    [InlineData(100.0, new BuyStatus[0], "매수 · 필수매수 · 강력매수 미도달: 현재가 100.00 > 주문가 89.84 · 80.86 · 71.87 (+11.3%)")]
-    [InlineData(89.84, new[] { BuyStatus.Buy }, "필수매수 · 강력매수 미도달: 현재가 89.84 > 주문가 80.86 · 71.87 (+11.1%)")] // 주문가와 같으면 도달
-    [InlineData(85.82, new[] { BuyStatus.Buy }, "필수매수 · 강력매수 미도달: 현재가 85.82 > 주문가 80.86 · 71.87 (+6.1%)")]
-    [InlineData(75.0, new[] { BuyStatus.Buy, BuyStatus.MustBuy }, "강력매수 미도달: 현재가 75.00 > 주문가 71.87 (+4.4%)")]
+    [InlineData(100.0, new BuyStatus[0], "매수 1단계 · 매수 2단계 · 매수 3단계 미도달: 현재가 100.00 > 주문가 89.84 · 80.86 · 71.87 (+11.3%)")]
+    [InlineData(89.84, new[] { BuyStatus.Buy }, "매수 2단계 · 매수 3단계 미도달: 현재가 89.84 > 주문가 80.86 · 71.87 (+11.1%)")] // 주문가와 같으면 도달
+    [InlineData(85.82, new[] { BuyStatus.Buy }, "매수 2단계 · 매수 3단계 미도달: 현재가 85.82 > 주문가 80.86 · 71.87 (+6.1%)")]
+    [InlineData(75.0, new[] { BuyStatus.Buy, BuyStatus.MustBuy }, "매수 3단계 미도달: 현재가 75.00 > 주문가 71.87 (+4.4%)")]
     [InlineData(70.0, new[] { BuyStatus.Buy, BuyStatus.MustBuy, BuyStatus.StrongBuy }, null)]
     public void PlanKeepsOnlyStagesReachedByCurrentPrice(double current, BuyStatus[] expected, string? skip)
     {

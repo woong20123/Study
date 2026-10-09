@@ -10,7 +10,7 @@ public sealed record PriceCheck(string Symbol, DateOnly CheckDate, string Quarte
     public double GapPct => BuyPrice > 0 ? (Price / BuyPrice - 1) * 100 : 0;
     public bool BuyCondition => Price <= BuyPrice;
     public BuyStatus Status => TargetCalculator.Classify(Price, BuyPrice);
-    public string StatusText => Status.ToText();
+    public string Verdict => Status.VerdictText();
 }
 
 /// <summary>예전 버전에서 키움에 접수한 LOC 예약 매수 한 건. 지금은 새로 쌓지 않고 기존 이력 · 백업 호환을 위해 남긴다.</summary>

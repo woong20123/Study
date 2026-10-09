@@ -46,7 +46,7 @@
                                     </VerticalStackLayout>
                                     <Label Grid.Column="1" Text="{Binding Price, StringFormat='${0:N2}'}" FontSize="13" FontAttributes="Bold" HorizontalOptions="End" TextColor="#0969DA" />
                                     <Label Grid.Column="2" Text="{Binding QuantityText}" FontSize="12" HorizontalOptions="End" TextColor="#334155" />
-                                    <Label Grid.Column="3" Text="{Binding AmountKrw, StringFormat='₩{0:N0}'}" FontSize="12" HorizontalOptions="End" TextColor="#0284C7" />
+                                    <Label Grid.Column="3" Text="{Binding AmountText}" FontSize="12" HorizontalOptions="End" TextColor="#0284C7" />
                                     <Button Grid.Column="4" Text="{loc:Tr Res_Done}" FontSize="11" Padding="6,2" HeightRequest="30" Margin="6,0,0,0"
                                             VerticalOptions="Center"
                                             Command="{Binding Source={RelativeSource AncestorType={x:Type vm:MobileReservationViewModel}}, Path=MarkBuyDoneCommand, x:DataType=vm:MobileReservationViewModel}"

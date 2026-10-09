@@ -50,13 +50,21 @@ public static class L
     public static string Format(string key, params object?[] args) =>
         string.Format(CultureInfo.CurrentCulture, Get(key), args);
 
-    /// <summary>판정·매수 단계 이름.</summary>
+    /// <summary>목록 · 상세의 판정: 매수 단계면 "매수"(강도는 신호 막대 · 색으로), 매입 대기는 "대기"에 합친다.</summary>
+    public static string VerdictShort(BuyStatus s) => Get(s.Verdict() switch // 합치는 규칙은 Core(BuyStatusText.Verdict) 한 곳에 둔다
+    {
+        BuyStatus.Buy => "Verdict_Buy",
+        BuyStatus.Wait => "Verdict_Wait",
+        _ => "Verdict_None",
+    });
+
+    /// <summary>매수 단계 이름(매수 1~3단계 · 대기). 금액 칸 · 예약 주문표에 쓴다.</summary>
     public static string Verdict(BuyStatus s) => Get(s switch
     {
         BuyStatus.StrongBuy => "Verdict_StrongBuy",
         BuyStatus.MustBuy => "Verdict_MustBuy",
-        BuyStatus.Buy => "Verdict_Buy",
-        BuyStatus.Near => "Verdict_Near",
+        BuyStatus.Buy => "Verdict_Buy1",
+        BuyStatus.Near => "Verdict_Wait", // 매입 대기는 대기에 합친다
         BuyStatus.Wait => "Verdict_Wait",
         _ => "Verdict_None",
     });

@@ -156,12 +156,41 @@ public enum BuyStatus
 
 public static class BuyStatusText
 {
+    /// <summary>단계 이름(금액 칸 · 예약 주문표 · 상세). 매수 강도는 1~3단계, 매입 대기는 대기에 합친다.</summary>
     public static string ToText(this BuyStatus s) => s switch
     {
-        BuyStatus.StrongBuy => "강력매수",
-        BuyStatus.MustBuy => "필수매수",
+        BuyStatus.StrongBuy => "매수 3단계",
+        BuyStatus.MustBuy => "매수 2단계",
+        BuyStatus.Buy => "매수 1단계",
+        BuyStatus.Near => "대기",
+        BuyStatus.Wait => "대기",
+        _ => "-",
+    };
+
+    /// <summary>매수 강도. 강력매수 3 · 필수매수 2 · 매수 1 · 그 밖(매입 대기 · 대기 · 없음) 0.</summary>
+    public static int BuyLevel(this BuyStatus s) => s switch
+    {
+        BuyStatus.StrongBuy => 3,
+        BuyStatus.MustBuy => 2,
+        BuyStatus.Buy => 1,
+        _ => 0,
+    };
+
+    /// <summary>
+    /// 목록에 보이는 판정 = 없음 · 매수 · 대기 세 가지. 매수 단계(1~3)는 Buy로, 매입 대기는 Wait로 합친다(강도는 표식 · 색으로).
+    /// 화면별 문구(윈도우 <see cref="VerdictText"/>, 모바일 리소스)는 모두 이 결과를 쓴다.
+    /// </summary>
+    public static BuyStatus Verdict(this BuyStatus s) => s switch
+    {
+        BuyStatus.None => BuyStatus.None,
+        _ when s.BuyLevel() > 0 => BuyStatus.Buy,
+        _ => BuyStatus.Wait,
+    };
+
+    /// <summary>목록 판정 문구: "매수" · "대기" · "-".</summary>
+    public static string VerdictText(this BuyStatus s) => s.Verdict() switch
+    {
         BuyStatus.Buy => "매수",
-        BuyStatus.Near => "매입 대기",
         BuyStatus.Wait => "대기",
         _ => "-",
     };

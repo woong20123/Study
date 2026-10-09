@@ -9,16 +9,16 @@
   <data name="Tab_Reservation" xml:space="preserve"><value>LOC Orders</value></data>
   <data name="Common_Refresh" xml:space="preserve"><value>Refresh</value></data>
   <data name="Status_Ready" xml:space="preserve"><value>Ready</value></data>
-  <data name="Verdict_StrongBuy" xml:space="preserve"><value>Strong buy</value></data>
-  <data name="Verdict_MustBuy" xml:space="preserve"><value>Must buy</value></data>
+  <data name="Verdict_StrongBuy" xml:space="preserve"><value>Buy 3</value></data>
+  <data name="Verdict_MustBuy" xml:space="preserve"><value>Buy 2</value></data>
   <data name="Verdict_Buy" xml:space="preserve"><value>Buy</value></data>
-  <data name="Verdict_Near" xml:space="preserve"><value>Near</value></data>
+  <data name="Verdict_Buy1" xml:space="preserve"><value>Buy 1</value></data>
   <data name="Verdict_Wait" xml:space="preserve"><value>Wait</value></data>
   <data name="Verdict_None" xml:space="preserve"><value>-</value></data>
   <data name="Main_AddTarget" xml:space="preserve"><value>+ Add</value></data>
   <data name="Main_Empty" xml:space="preserve"><value>No target stocks yet.</value></data>
   <data name="Main_EmptyFiltered" xml:space="preserve"><value>No stocks need buying right now.</value></data>
-  <data name="Main_OnlyBuy" xml:space="preserve"><value>Only stocks to buy ({0})</value></data>
+  <data name="Main_OnlyBuy" xml:space="preserve"><value>To buy only ({0})</value></data>
   <data name="Main_AddFirst" xml:space="preserve"><value>Add a stock</value></data>
   <data name="Main_Language" xml:space="preserve"><value>한국어</value></data>
   <data name="Main_ImportJson" xml:space="preserve"><value>Import JSON backup</value></data>
@@ -32,23 +32,21 @@ Current data is backed up inside the app first.</value></data>
   <data name="Main_ImportOk" xml:space="preserve"><value>Import</value></data>
   <data name="Main_Imported" xml:space="preserve"><value>Imported {0} targets</value></data>
   <data name="Main_ImportFailed" xml:space="preserve"><value>Import failed</value></data>
-  <data name="Main_PriceLabel" xml:space="preserve"><value>Price:</value></data>
   <data name="Main_Loading" xml:space="preserve"><value>Loading...</value></data>
-  <data name="Main_TargetCount" xml:space="preserve"><value>{0} targets</value></data>
   <data name="Main_LoadFailed" xml:space="preserve"><value>Load failed: {0}</value></data>
-  <data name="Main_UsdKrw" xml:space="preserve"><value>FX: ₩{0:N2}/$</value></data>
-  <data name="Main_UsdKrwNone" xml:space="preserve"><value>FX: —</value></data>
   <data name="Main_DeleteTitle" xml:space="preserve"><value>Delete target</value></data>
   <data name="Main_DeleteMessage" xml:space="preserve"><value>Delete the {0} target?</value></data>
   <data name="Main_DeleteOk" xml:space="preserve"><value>Delete</value></data>
   <data name="Main_DeleteCancel" xml:space="preserve"><value>Cancel</value></data>
   <data name="Main_Deleted" xml:space="preserve"><value>{0} deleted</value></data>
   <data name="Row_TargetYear" xml:space="preserve"><value>({0})</value></data>
-  <data name="Row_QuarterBuy" xml:space="preserve"><value>{0} buy:</value></data>
   <data name="Row_OutOfRange" xml:space="preserve"><value>Out of range</value></data>
   <data name="Row_FetchFailed" xml:space="preserve"><value>Fetch failed</value></data>
   <data name="Row_DefaultSuffix" xml:space="preserve"><value> · default</value></data>
-  <data name="Row_Shares" xml:space="preserve"><value>{0:N2} × {1:N0} sh</value></data>
+  <data name="Row_Shares" xml:space="preserve"><value>{0:N2} × {1:N0} shares</value></data>
+  <data name="Row_Share1" xml:space="preserve"><value>{0:N2} × {1:N0} share</value></data>
+  <data name="Row_NowLabel" xml:space="preserve"><value>Price </value></data>
+  <data name="Row_BuyLabel" xml:space="preserve"><value> · Buy basis </value></data>
   <data name="Row_CacheMin" xml:space="preserve"><value>{0}m ago</value></data>
   <data name="Row_CacheSec" xml:space="preserve"><value>{0}s ago</value></data>
   <data name="Row_CacheLive" xml:space="preserve"><value>Live</value></data>
@@ -92,14 +90,14 @@ Current data is backed up inside the app first.</value></data>
   <data name="Edit_Dividend" xml:space="preserve"><value>5-year dividend yield (%)</value></data>
   <data name="Edit_DividendHint" xml:space="preserve"><value>Leave blank to calculate</value></data>
   <data name="Edit_FetchDividend" xml:space="preserve"><value>Fetch 5y</value></data>
-  <data name="Edit_AmountSection" xml:space="preserve"><value>Buy amount per stage (KRW)</value></data>
-  <data name="Edit_AmountNote" xml:space="preserve"><value>Leave blank to use the default buy amount.</value></data>
-  <data name="Edit_BuyLabel" xml:space="preserve"><value>Buy (≤ buy target)</value></data>
-  <data name="Edit_BuyHint" xml:space="preserve"><value>e.g. 1000000</value></data>
-  <data name="Edit_MustBuyLabel" xml:space="preserve"><value>Must buy (≤ -10%)</value></data>
-  <data name="Edit_MustBuyHint" xml:space="preserve"><value>e.g. 2000000</value></data>
-  <data name="Edit_StrongBuyLabel" xml:space="preserve"><value>Strong buy (≤ -20%)</value></data>
-  <data name="Edit_StrongBuyHint" xml:space="preserve"><value>e.g. 3000000</value></data>
+  <data name="Edit_AmountSection" xml:space="preserve"><value>Buy amount per stage (USD)</value></data>
+  <data name="Edit_AmountNote" xml:space="preserve"><value>Leave blank to use the default buy amount. Amounts are converted at today's exchange rate.</value></data>
+  <data name="Edit_BuyLabel" xml:space="preserve"><value>Buy 1 (≤ buy target)</value></data>
+  <data name="Edit_BuyHint" xml:space="preserve"><value>e.g. 750</value></data>
+  <data name="Edit_MustBuyLabel" xml:space="preserve"><value>Buy 2 (≤ -10%)</value></data>
+  <data name="Edit_MustBuyHint" xml:space="preserve"><value>e.g. 1,500</value></data>
+  <data name="Edit_StrongBuyLabel" xml:space="preserve"><value>Buy 3 (≤ -20%)</value></data>
+  <data name="Edit_StrongBuyHint" xml:space="preserve"><value>e.g. 2,250</value></data>
   <data name="Edit_Memo" xml:space="preserve"><value>Memo</value></data>
   <data name="Edit_MemoHint" xml:space="preserve"><value>Thesis or notes</value></data>
   <data name="Edit_Save" xml:space="preserve"><value>Save</value></data>

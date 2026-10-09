@@ -127,12 +127,26 @@ public class BuyStatusTests
     [Fact]
     public void Texts()
     {
-        Assert.Equal("강력매수", BuyStatus.StrongBuy.ToText());
-        Assert.Equal("필수매수", BuyStatus.MustBuy.ToText());
-        Assert.Equal("매수", BuyStatus.Buy.ToText());
-        Assert.Equal("매입 대기", BuyStatus.Near.ToText());
+        Assert.Equal("매수 3단계", BuyStatus.StrongBuy.ToText());
+        Assert.Equal("매수 2단계", BuyStatus.MustBuy.ToText());
+        Assert.Equal("매수 1단계", BuyStatus.Buy.ToText());
+        Assert.Equal("대기", BuyStatus.Near.ToText()); // 매입 대기는 대기에 합친다
         Assert.Equal("대기", BuyStatus.Wait.ToText());
         Assert.Equal("-", BuyStatus.None.ToText());
+    }
+
+    [Theory]
+    [InlineData(BuyStatus.StrongBuy, 3, BuyStatus.Buy, "매수")]
+    [InlineData(BuyStatus.MustBuy, 2, BuyStatus.Buy, "매수")]
+    [InlineData(BuyStatus.Buy, 1, BuyStatus.Buy, "매수")]
+    [InlineData(BuyStatus.Near, 0, BuyStatus.Wait, "대기")] // 매입 대기는 대기에 합친다
+    [InlineData(BuyStatus.Wait, 0, BuyStatus.Wait, "대기")]
+    [InlineData(BuyStatus.None, 0, BuyStatus.None, "-")]
+    public void VerdictMergesStagesIntoBuyAndWait(BuyStatus s, int level, BuyStatus verdict, string text)
+    {
+        Assert.Equal(level, s.BuyLevel());
+        Assert.Equal(verdict, s.Verdict());
+        Assert.Equal(text, s.VerdictText());
     }
 
     [Fact]
@@ -143,7 +157,7 @@ public class BuyStatusTests
         Assert.Equal(BuyStatus.MustBuy, new PriceCheck("X", new DateOnly(2026, 10, 8), "2026Q4", 85, 100).Status);
         Assert.Equal(BuyStatus.Near, new PriceCheck("X", new DateOnly(2026, 10, 8), "2026Q4", 102, 100).Status); // +2% → 매입 대기(3% 이내)
         Assert.Equal(BuyStatus.Wait, new PriceCheck("X", new DateOnly(2026, 10, 8), "2026Q4", 104, 100).Status); // +4% → 대기
-        Assert.Equal("대기", new PriceCheck("AAPL", new DateOnly(2026, 10, 8), "2026Q4", 336.67, 245.14).StatusText);
+        Assert.Equal("대기", new PriceCheck("AAPL", new DateOnly(2026, 10, 8), "2026Q4", 336.67, 245.14).Verdict);
     }
 }
 
