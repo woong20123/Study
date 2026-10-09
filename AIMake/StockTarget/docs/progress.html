@@ -69,8 +69,8 @@
   <h1>StockTarget 작업 진행</h1>
   <div class="meta">
     <span>위치: <code>E:\work\tools\StockTarget</code></span>
-    <span>.NET 9 · WPF · SQLite</span>
-    <span>작성일: 2026-10-08 (매수금액 · 목표 주가 직접 입력 · 매입 대기 3% · 키움 LOC 예약 매수 · 백업/Firebase 동기화 반영)</span>
+    <span>.NET 9 · WPF · .NET MAUI(Android) · SQLite</span>
+    <span>작성일: 2026-10-08, 갱신: 2026-10-09 (키움 접수 제거 · 모바일 다국어 · 필터 · JSON 가져오기 · 가격 게이지 · 판정 표기 개편 · 영어판 달러 표시)</span>
     <span>재구성: <a href="rebuild-guide.html">rebuild-guide.html</a></span>
   </div>
 
@@ -80,11 +80,12 @@
     <ul>
       <li>계산 결과가 Python 버전과 일치한다 — KO 2026Q4 매입 목표가 <strong>141.52</strong>, AAPL 5년 평균 배당수익률 <strong>0.49%</strong>.</li>
       <li>테스트: 단위 90개 + 실데이터 2개 통과, UI 자동화로 "입력 → 저장 → 조회 → 이력 기록" 흐름 확인.</li>
-      <li>판정은 5단계: <strong>강력매수</strong>(매입 목표가 −20% 이하, 파란색) / <strong>필수매수</strong>(−10% 이하, 하늘색) / <strong>매수</strong>(≤ 매입 목표가, 녹색) / <strong>매입 대기</strong>(+3% 이내, 연한 녹색) / <strong>대기</strong>(+3% 초과, 회색).</li>
+      <li>판정은 화면에 <strong>매수</strong> · <strong>대기</strong> 두 가지로 보이고, 매수 강도는 <strong>신호 막대 1~3칸</strong>과 색 진하기로 나타낸다(매수 1단계 ≤ 매입 목표가 · 2단계 −10% 이하 · 3단계 −20% 이하, 매입 대기 +3% 이내는 대기에 합침). 색은 한국어 빨강 매수 · 하늘색 대기, 영어 초록 매수 · 호박색 대기(12장).</li>
       <li>매수 단계별 매수금액을 <strong>원화로 입력</strong>하면 USD/KRW 환율(Yahoo <code>KRW=X</code>)로 환산해 <strong>원화·달러</strong>로 표시한다.</li>
       <li>목표 주가는 <strong>EPS × PER</strong> 계산 또는 <strong>직접 입력</strong> 중에서 선택한다.</li>
-      <li><strong>다음 주 LOC 예약 매수</strong>: 등록 목표의 단계별 매수금액으로 계단식 LOC 주문표를 만들고, 확인 후 키움 REST API <code>ust21200</code>(기간예약 · 잔량주문)으로 접수한다(10장).
-        <span class="tag warn">미결</span> 실제 키움 서버 접수는 아직 해 보지 않았다(API 키 미설정, 요청 형식은 가짜 서버로 검증).</li>
+      <li><strong>다음 주 LOC 예약 매수 주문표</strong>: 등록 목표의 단계별 매수금액으로 계단식 LOC 주문표를 만들고 <strong>복사</strong>해 증권사 앱에서 직접 주문할 때 참고한다(10장).
+        <span class="tag bad">제거</span> 키움 REST API 실주문 접수는 2026-10-09에 앱에서 뺐다(예전 접수 이력은 보존).</li>
+      <li><strong>Android 앱</strong>(<code>StockTarget.Mobile</code>): 한국어/영어 전환, 매수 필요 종목 필터, JSON 백업 가져오기, 매입기준 대비 가격 게이지 카드. 영어판은 금액을 달러로 표시 · 입력한다(12장).</li>
       <li><strong>백업 · 동기화</strong>: 사용자 데이터를 JSON으로 내보내고 복원한다. Google 로그인 후 <strong>본인 Firebase 프로젝트</strong>의 <code>users/{uid}</code>에 저장 · 복원해 기기 간에 옮긴다(11장).
         <span class="tag warn">미결</span> 실제 Firebase 프로젝트 연결은 미확인(설정값 필요, 요청 형식은 가짜 서버로 검증).</li>
       <li>미결: 분할 당일 전일 종가 보정은 실제 분할 사례가 없어 단위 테스트로만 검증했다.</li>
@@ -105,6 +106,7 @@
       <li><a href="#todo">한계와 다음 작업</a></li>
       <li><a href="#kiwoom">키움 LOC 예약 매수</a></li>
       <li><a href="#backup">백업 · Firebase 동기화</a></li>
+      <li><a href="#mobile">2026-10-09 변경: 모바일 화면 · 판정 표기 · 키움 접수 제거</a></li>
     </ol>
   </nav>
 
@@ -127,13 +129,22 @@
       <tr><td>12</td><td>매수 단계별 매수금액을 원화로 입력, 원화·달러로 표시</td><td><code>BuyAmounts</code>(매수·필수매수·강력매수), <code>Money</code>(입력 해석·환산), 환율 <code>StockService.GetUsdKrwAsync</code>(<code>KRW=X</code>, 1시간 캐시). 입력칸 아래 달러 미리보기, 목록 <strong>매수금액</strong> 열, 요약에 단계별 금액·주식 수</td><td><span class="tag ok">완료</span></td></tr>
       <tr><td>13</td><td>목표 주가를 EPS × PER 대신 직접 입력하는 선택 조건</td><td><code>TargetPlan.TargetPriceInput</code>(있으면 우선), 입력 폼 라디오 버튼 <code>EPS × PER</code> / <code>직접 입력</code></td><td><span class="tag ok">완료</span></td></tr>
       <tr><td>14</td><td>매입 대기 범위를 5% → 3% 이내로</td><td><code>TargetCalculator.NearPct</code> = 3</td><td><span class="tag ok">완료</span></td></tr>
-      <tr><td>15</td><td>등록 목록 기준 다음 주(월~금) 키움증권 API로 미국주식 LOC 예약 매수</td><td><code>ReservationPlanner</code>(주문표) · <code>KiwoomClient</code>(<code>au10001</code> · <code>usa10098</code> · <code>ust21200</code>) · <code>ReservationService</code>(중복 방지) · <code>ReservationWindow</code>. 기간예약(잔량주문) · LOC · 계단식(총액 맞춤)</td><td><span class="tag ok">구현</span> <span class="tag warn">실접수 미확인</span></td></tr>
+      <tr><td>15</td><td>등록 목록 기준 다음 주(월~금) 키움증권 API로 미국주식 LOC 예약 매수</td><td><code>ReservationPlanner</code>(주문표) · <code>KiwoomClient</code>(<code>au10001</code> · <code>usa10098</code> · <code>ust21200</code>) · <code>ReservationService</code>(중복 방지) · <code>ReservationWindow</code>. 기간예약(잔량주문) · LOC · 계단식(총액 맞춤)</td><td><span class="tag bad">접수 제거</span> 주문표만 유지(#22)</td></tr>
       <tr><td>16</td><td>데이터를 JSON으로 추출 · 복원, 기기 간 호환을 위해 Firebase에 저장, Google 로그인으로 고유 키</td><td><code>BackupData</code>/<code>BackupSerializer</code>(형식 v1), <code>StockDatabase.ExportBackup</code>/<code>ReplaceWithBackup</code>, <code>FirebaseClient</code>(Auth · Realtime Database REST), <code>GoogleLoopbackSignIn</code>(PKCE), <code>CloudSessionStore</code>(DPAPI). 메뉴 <strong>데이터</strong></td><td><span class="tag ok">구현</span> <span class="tag warn">실연결 미확인</span></td></tr>
       <tr><td>17</td><td>기본으로 쓸 매수금액을 입력해 관리. 평소에는 기본 매수금액을 쓰고, 입력값이 다를 때만 목표에 저장</td><td>DB <code>settings</code> 테이블(<code>StockDatabase.GetDefaultAmounts</code>/<code>SaveDefaultAmounts</code>), <code>BuyAmounts.WithDefaults</code>(비운 단계 = 기본값) · <code>ExceptDefaults</code>(기본값과 같은 단계는 저장 안 함). 화면 위쪽 <strong>기본 매수금액</strong> 영역, 목표 입력칸은 기본값으로 채워지고 단계마다 <code>· 기본</code> / <code>· 개별 저장</code> 표시. 예약 주문표 · 백업(형식 v2) · Firebase에도 반영</td><td><span class="tag ok">완료</span></td></tr>
       <tr><td>18</td><td>매수금액 옆에 매수단가별로 살 주식 수를 내림해서 표시</td><td>매수단가 = 이번 분기 매입 목표가 × (1 − 단계 할인율) = LOC 주문가(<code>ReservationPlanner.LimitPrice</code>), 주식 수 = 단계 금액 ÷ 환율 ÷ 매수단가 내림(<code>Money.Shares</code>). 목록 <strong>매수단가 × 수량</strong> 열(현재 판정 단계), 요약의 단계별 줄, 목표 입력칸 아래 둘째 줄</td><td><span class="tag ok">완료</span></td></tr>
-      <tr><td>19</td><td>구동 옵션으로 키움증권 연동 기능 제어</td><td><code>--kiwoom off|mock|real</code>(<code>StartupOptions</code>, <code>KiwoomMode</code>). off = 주문표 계산만 · 접수 불가, mock/real = <code>KIWOOM_ENV</code>보다 우선, 옵션 없음 = 기존처럼 환경변수. 상태 표시줄에 <code>키움: …</code>(실전은 빨간색), 잘못된 옵션이면 오류 창 후 종료</td><td><span class="tag ok">완료</span></td></tr>
+      <tr><td>19</td><td>구동 옵션으로 키움증권 연동 기능 제어</td><td><code>--kiwoom off|mock|real</code>(<code>StartupOptions</code>, <code>KiwoomMode</code>). off = 주문표 계산만 · 접수 불가, mock/real = <code>KIWOOM_ENV</code>보다 우선, 옵션 없음 = 기존처럼 환경변수. 상태 표시줄에 <code>키움: …</code>(실전은 빨간색), 잘못된 옵션이면 오류 창 후 종료</td><td><span class="tag bad">제거</span> 옵션 삭제(#22)</td></tr>
       <tr><td>20</td><td>주문표에는 주문 가능한 목록만 표시</td><td>현재가 ≤ 그 단계 LOC 주문가인(이미 도달한) 단계만 주문(<code>ReservationPlanner.Plan</code>의 <code>currentPrices</code>, 메인 화면의 현재가 사용). 미도달 단계는 제외 목록에 <code>필수매수 · 강력매수 미도달: 현재가 85.82 &gt; 주문가 80.86 · 71.87 (+6.1%)</code>, 시세 조회 실패 목표는 <code>현재가 없음</code>. 계단식 금액은 그대로</td><td><span class="tag ok">완료</span></td></tr>
       <tr><td>21</td><td>WPF 데스크톱 앱과 코어 로직을 공유하는 Android 모바일 앱 구성</td><td><code>StockTarget.Core</code>를 그대로 참조하는 .NET MAUI(<code>net9.0-android</code>) 프로젝트 <code>StockTarget.Mobile</code> 추가. 모바일 카드 리스트, 당겨서 새로고침, 5단계 판정 색상, 종목 상세/수정 및 LOC 예약 화면 구현</td><td><span class="tag ok">완료</span></td></tr>
+      <tr><td>22</td><td>키움에 실제로 주문하는 기능 제외</td><td><code>KiwoomClient</code> · <code>ReservationService</code> · <code>--kiwoom</code> 옵션 · 상태 표시줄 키움 표시 삭제. 예약 창 접수 버튼 → <strong>주문표 복사</strong>. DB <code>reservations</code> · 백업 형식은 예전 이력 호환을 위해 유지(읽기 전용 탭 "예전 키움 접수 이력")</td><td><span class="tag ok">완료</span></td></tr>
+      <tr><td>23</td><td>고가주(마켈 등)가 0주로 보이지 않게 최소 1주</td><td>화면 표시만 <code>Money.DisplayShares</code>(최소 1주). 예약 주문표는 1주 미만 단계를 그대로 제외(실제 금액 초과 주문 방지)</td><td><span class="tag ok">완료</span></td></tr>
+      <tr><td>24</td><td>모바일 한국어/영어 전환 옵션</td><td><code>Localization/L.cs</code> + <code>AppResources(.ko).resx</code>, 툴바 언어 버튼, 선택 언어 저장(<code>Preferences</code>), 셸 재생성으로 즉시 반영</td><td><span class="tag ok">완료</span></td></tr>
+      <tr><td>25</td><td>모바일 JSON 백업 가져오기</td><td>⋮ 메뉴 <strong>JSON 백업 가져오기</strong>(<code>FilePicker</code> → <code>BackupSerializer</code> → 확인 → 현재 데이터 자동 백업 → <code>ReplaceWithBackup</code>). 데스크톱 내보내기 파일과 같은 형식</td><td><span class="tag ok">완료</span></td></tr>
+      <tr><td>26</td><td>모바일: 매수가 필요한 종목만 보는 필터</td><td>상단 스위치 <strong>매수 필요만 (N)</strong>, 매수 1~3단계만 표시, 상태 저장</td><td><span class="tag ok">완료</span></td></tr>
+      <tr><td>27</td><td>윈도우: 목표 추가 시 5년 배당 내역이 중복 출력</td><td>저장 직후 오른쪽 패널 갱신이 두 번 겹쳐 목록이 두 번 채워짐 → 마지막 갱신만 반영(<code>_detailLoadId</code>). 목록에서 종목명을 티커 앞으로</td><td><span class="tag ok">수정</span></td></tr>
+      <tr><td>28</td><td>모바일 메인 화면 정리 · 카드 그래프화</td><td>상단 한 줄(필터 · 종목추가), 환율 · 목표 개수 문구 제거, 카드 = 종목명 · 판정 / 가격 게이지 / "현재가 · 매입기준" 한 줄(약 84dp). HTML 목업으로 검토 후 A안 적용</td><td><span class="tag ok">완료</span></td></tr>
+      <tr><td>29</td><td>판정 표기를 "매수" + 강도 표식으로, 언어별 색, 단계 이름 변경</td><td>Core <code>BuyLevel()</code> · <code>Verdict()</code> · <code>VerdictText()</code>, 신호 막대 1~3칸(모바일 BoxView · 윈도우 <code>VerdictCell</code>), 단계 이름 매수 1 · 2 · 3단계, 대기 색 한국어 하늘색 · 영어 호박색</td><td><span class="tag ok">완료</span></td></tr>
+      <tr><td>30</td><td>영어판 원화 표시를 모두 달러로, 특히 단계별 매수금액</td><td>목록 · 상세 · 예약 주문표 금액과 입력 화면 <strong>Buy amount per stage (USD)</strong>. 저장은 원화(환율 환산), 손대지 않은 칸은 원래 원화 값 유지</td><td><span class="tag ok">완료</span> <span class="tag warn">달러 입력 저장 미확인</span></td></tr>
     </tbody>
     <caption>Python 버전(<code>E:\work\tools\stock_price\</code>)은 CLI로 그대로 남아 있다. C# 앱은 별도 DB를 쓴다.</caption>
   </table></div>
@@ -384,12 +395,19 @@ src\StockTarget.App\bin\Debug\net9.0-windows\StockTarget.App.exe --db D:\temp\te
     <li>분할 당일 보정은 실제 사례 없이 단위 테스트로만 검증(<span class="tag warn">미결</span>).</li>
     <li>필요 주가 상승률은 요청대로 단순 차감(10% − 2.92%). 배당 재투자 복리식((1.10 ÷ 1.0292) − 1 = 6.88%)은 옵션으로 추가 가능.</li>
     <li>Python 버전 <code>targets.json</code>의 목표는 C# DB로 옮기지 않았다(필요하면 가져오기 기능 추가).</li>
-    <li>키움 예약: 실제 서버 접수 미확인(<span class="tag warn">미결</span>), 예약 조회(<code>ust21205</code>) · 취소(<code>ust21203</code>)는 앱에 없음(키움 HTS/MTS에서 확인 · 취소).</li>
+    <li>키움 예약 접수는 제거됨(2026-10-09). 주문표를 복사해 증권사 앱에서 직접 주문한다.</li>
+    <li>모바일 영어판에서 달러로 입력한 금액을 저장하는 흐름은 에뮬레이터에서 직접 입력해 확인하지 않았다(<span class="tag warn">미결</span>). 금액은 원화로 저장되므로 환율에 따라 달러 표시가 조금씩 달라진다.</li>
+    <li>윈도우 앱 판정 칸 신호 막대 · 선택 행 흰 글씨는 화면으로 확인하지 못했다(<span class="tag warn">미결</span>).</li>
     <li>후보: 현재 EPS·필요 성장률 표시, 목표 이력(버전) 보관, 매수 조건 충족 시 Teams 알림, 단일 exe 배포(<code>dotnet publish -r win-x64 --self-contained</code>).</li>
   </ul>
 
   <!-- 10 -->
   <h2 id="kiwoom">10. 키움 LOC 예약 매수</h2>
+  <div class="panel warn">
+    <p><strong>2026-10-09 변경</strong> — 키움 실주문 접수 기능(<code>KiwoomClient</code> · <code>ReservationService</code> · <code>--kiwoom</code> 옵션)은 앱에서 제거했다.
+      주문표 계산(<code>ReservationPlanner</code>)과 <strong>주문표 복사</strong>만 남아 있고, 아래 API 표와 접수 흐름은 예전 버전 기록이다.
+      예전에 접수한 이력은 DB · 백업에 그대로 두고 예약 창의 "예전 키움 접수 이력" 탭에서 읽기 전용으로 본다. 단계 이름은 매수 1 · 2 · 3단계로 바뀌었다(12장).</p>
+  </div>
   <div class="flow">
     <div class="box">등록 목표<br>단계별 매수금액(원)</div><span class="arrow">→</span>
     <div class="box"><code>ReservationPlanner</code><br>계단식 LOC 주문표</div><span class="arrow">→</span>
@@ -489,6 +507,53 @@ src\StockTarget.App\bin\Debug\net9.0-windows\StockTarget.App.exe --db D:\temp\te
     </tbody>
     <caption>날짜는 <code>yyyy-MM-dd</code>, 시각은 ISO 8601. Realtime Database는 빈 배열을 저장하지 않으므로 읽을 때 없으면 빈 목록으로 본다. 근거: <code>Backup.cs</code>, <code>BackupTests.cs</code>.</caption>
   </table></div>
+
+  <!-- 12 -->
+  <h2 id="mobile">12. 2026-10-09 변경: 모바일 화면 · 판정 표기 · 키움 접수 제거</h2>
+  <div class="panel info">
+    <p>UI 구조는 HTML 목업(4개 버전)으로 먼저 검토한 뒤 적용했다. 테스트 <strong>135개 통과</strong>, 모바일 화면은 Android 에뮬레이터(Pixel_API34) · 실기기(무선 디버깅)에 Release로 설치해 확인했다.</p>
+  </div>
+
+  <h3>판정 표기</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>내부 단계 (<code>BuyStatus</code>)</th><th>조건 (매입기준 대비)</th><th>화면 판정</th><th>강도 표식</th><th>단계 이름 (금액 칸 · 주문표)</th></tr></thead>
+    <tbody>
+      <tr><td><code>StrongBuy</code></td><td>−20% 이하</td><td>매수 / Buy</td><td>신호 막대 3칸 · 가장 진한 색</td><td>매수 3단계 / Buy 3</td></tr>
+      <tr><td><code>MustBuy</code></td><td>−10% 이하</td><td>매수 / Buy</td><td>신호 막대 2칸</td><td>매수 2단계 / Buy 2</td></tr>
+      <tr><td><code>Buy</code></td><td>≤ 매입기준</td><td>매수 / Buy</td><td>신호 막대 1칸 · 연한 색</td><td>매수 1단계 / Buy 1</td></tr>
+      <tr><td><code>Near</code> · <code>Wait</code></td><td>매입기준 초과</td><td>대기 / Wait</td><td>없음</td><td>대기 / Wait</td></tr>
+    </tbody>
+    <caption>합치는 규칙은 Core 한 곳(<code>BuyStatusText.Verdict()</code>)에 두고 윈도우 · 모바일이 함께 쓴다. 괴리율 숫자는 색 없이 진한 회색(한국 앱에서 빨강 = 상승이라 마이너스가 빨가면 헷갈림). 근거: <code>Models.cs</code>, <code>CoreTests.VerdictMergesStagesIntoBuyAndWait</code>.</caption>
+  </table></div>
+
+  <h3>언어별 색</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>언어</th><th>매수 (1 → 3단계로 갈수록 진하게)</th><th>대기</th><th>근거</th></tr></thead>
+    <tbody>
+      <tr><td>한국어 (윈도우 앱 포함)</td><td>빨강 <code>#FEE2E2</code> → <code>#DC2626</code></td><td>하늘색 <code>#EFF6FF</code> / 글자 <code>#2563EB</code></td><td>한국 증권 앱: 매수 · 상승 빨강, 매도 · 하락 파랑</td></tr>
+      <tr><td>English</td><td>초록 <code>#DCFCE7</code> → <code>#16A34A</code></td><td>호박색 <code>#FFFBEB</code> / 글자 <code>#B45309</code></td><td>서양 앱: 매수 · 상승 초록, 빨강은 손실이라 대기에 쓰지 않음</td></tr>
+    </tbody>
+    <caption>모바일 <code>Converters/StatusToColorConverter.cs</code>(<code>StatusPalette</code>), 윈도우 <code>App.xaml</code> 브러시 · <code>ViewModels/StatusConverters.cs</code>.</caption>
+  </table></div>
+
+  <h3>모바일 메인 화면</h3>
+  <ul>
+    <li>상단 한 줄: <strong>매수 필요만 (N)</strong> 스위치 · <strong>+ 종목추가</strong>. 환율 · "총 N개 목표 종목"은 없애고, 불러오는 중 · 실패 · 가져오기 완료 같은 알림만 그 아래 잠깐 보인다.</li>
+    <li>카드(약 136dp → 84dp): 1줄 종목명 · 티커 / 괴리율 · 판정 배지, 2줄 <strong>가격 게이지</strong>(매입기준 대비 −30% ~ +30%, 구간 색 = 판정 색, 동그라미 = 현재가, 세로선 = 매입기준), 3줄 <strong>현재가 · 매입기준</strong>(숫자 굵게)과 매수 단계일 때 단가 × 주식 수. 목표 연도 · 분기 · 매수금액은 상세 화면으로.</li>
+    <li>툴바: 언어 버튼(한국어 ↔ English, 저장됨), ⋮ 메뉴 <strong>JSON 백업 가져오기</strong>.</li>
+    <li>테스트 샘플 <code>stocktarget-sample-stages.json</code>: KO(1단계) · PEP(2단계) · NKE(3단계) · MKL(대기). PEP · NKE 목표 주가는 2026-10-09 시세에서 단계가 나오도록 역산한 테스트 값.</li>
+  </ul>
+
+  <h3>영어판 금액</h3>
+  <p>금액은 지금처럼 원화로 저장한다(백업 · 윈도우 앱과 호환). 영어 화면은 현재 환율로 바꾼 <strong>달러만</strong> 보여 주고(목록 · 상세 · 예약 주문표), 입력 화면 <strong>Buy amount per stage (USD)</strong>는 달러로 입력받아 원화로 바꿔 저장한다. 미리 채운 칸을 고치지 않으면 원래 원화 값을 그대로 저장해 환율 왕복 반올림으로 기본 매수금액과 어긋나지 않게 했다.</p>
+
+  <h3>코드 리뷰 반영 (2회)</h3>
+  <ul>
+    <li>최소 1주가 키움 실주문에 들어가 금액을 넘겨 주문할 수 있던 문제 → 화면 표시 전용 <code>DisplayShares</code>로 분리.</li>
+    <li>윈도우 신호 막대 색 바인딩 경로(<code>(TextElement.Foreground)</code>), 조회 실패 색, 선택 행 글자색.</li>
+    <li>언어 전환 · 가져오기 중 불러오기가 겹칠 때 상태 문구가 꼬이거나 실패 알림이 덮이던 문제, 숫자 표기를 선택 언어에 맞춤.</li>
+    <li>판정 색 · 게이지 캐시, 미사용 속성 · 문자열 정리.</li>
+  </ul>
 </main>
 <script>
   function toggleTheme() {
