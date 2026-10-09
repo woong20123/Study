@@ -1,0 +1,11 @@
+{
+  "context-usage": {
+    "Stop": [
+      {
+        "type": "command",
+        "command": "py scripts/show_context.py",
+        "timeout": 10
+      }
+    ]
+  }
+}
