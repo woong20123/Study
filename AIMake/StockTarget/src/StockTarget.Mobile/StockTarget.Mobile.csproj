@@ -15,9 +15,10 @@
 		<!-- App Identifier -->
 		<ApplicationId>com.stocktarget.mobile</ApplicationId>
 
-		<!-- Versions -->
-		<ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
-		<ApplicationVersion>1</ApplicationVersion>
+		<!-- 버전: 표시 버전 major.minor.patch, 내부 빌드 번호 = major*10000 + minor*100 + patch(항상 올라가야 업데이트 설치됨).
+		     휴대폰에 올릴 때 scripts/Deploy-Phone.ps1이 patch를 하나 올린다 -->
+		<ApplicationDisplayVersion>1.0.0</ApplicationDisplayVersion>
+		<ApplicationVersion>10000</ApplicationVersion>
 
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">24.0</SupportedOSPlatformVersion>
 		<MauiEnableXamlCBindingWithSourceCompilation>true</MauiEnableXamlCBindingWithSourceCompilation>
