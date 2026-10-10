@@ -5,6 +5,7 @@
   <resheader name="version"><value>2.0</value></resheader>
   <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="App_Name" xml:space="preserve"><value>매수타점</value></data>
   <data name="Tab_Targets" xml:space="preserve"><value>목표 종목</value></data>
   <data name="Tab_Reservation" xml:space="preserve"><value>LOC 예약</value></data>
   <data name="Common_Refresh" xml:space="preserve"><value>새로고침</value></data>
@@ -20,7 +21,7 @@
   <data name="Main_EmptyFiltered" xml:space="preserve"><value>지금 매수가 필요한 종목이 없습니다.</value></data>
   <data name="Main_OnlyBuy" xml:space="preserve"><value>매수 필요만 ({0})</value></data>
   <data name="Main_AddFirst" xml:space="preserve"><value>종목 추가하기</value></data>
-  <data name="Main_Language" xml:space="preserve"><value>English</value></data>
+  <data name="Main_Language" xml:space="preserve"><value>언어</value></data>
   <data name="Main_ImportJson" xml:space="preserve"><value>JSON 백업 가져오기</value></data>
   <data name="Main_ImportTitle" xml:space="preserve"><value>백업 가져오기</value></data>
   <data name="Main_ImportMessage" xml:space="preserve"><value>{0}의 백업으로 현재 데이터를 바꿉니다.
@@ -133,4 +134,30 @@
   <data name="Res_BuyDoneReason" xml:space="preserve"><value>매수 완료 — 해제할 때까지 주문표에서 제외</value></data>
   <data name="Res_MarkedDone" xml:space="preserve"><value>{0} 매수 완료 — 해제할 때까지 주문표에서 제외</value></data>
   <data name="Res_Unmarked" xml:space="preserve"><value>{0} 매수 완료 해제 — 다시 주문표에 넣음</value></data>
+  <data name="Main_BuyDone" xml:space="preserve"><value>매수 완료 ({0})</value></data>
+  <data name="Row_BuyDone" xml:space="preserve"><value>✓ 매수 완료</value></data>
+  <data name="BuyDone_Title" xml:space="preserve"><value>매수 완료 관리</value></data>
+  <data name="BuyDone_Help" xml:space="preserve"><value>매수한 종목을 켜 두면 '매수 필요만' 목록에서 빠집니다. 다음 분기가 되면 자동으로 꺼집니다.</value></data>
+  <data name="BuyDone_Summary" xml:space="preserve"><value>매수 완료 {0} / {1}개</value></data>
+  <data name="BuyDone_Empty" xml:space="preserve"><value>지금 매수가 필요한 종목이 없습니다.</value></data>
+  <data name="Detail_Edit" xml:space="preserve"><value>수정</value></data>
+  <data name="Detail_Delete" xml:space="preserve"><value>삭제</value></data>
+  <data name="Detail_BuyDone" xml:space="preserve"><value>매수 완료</value></data>
+  <data name="Detail_BuyDoneHint" xml:space="preserve"><value>켜면 '매수 필요만'에서 빠지고, 다음 분기에 자동으로 꺼집니다</value></data>
+  <data name="Alert_Settings" xml:space="preserve"><value>알림 설정</value></data>
+  <data name="Alert_WeeklyTitle" xml:space="preserve"><value>주간 예약 알림</value></data>
+  <data name="Alert_WeeklyDesc" xml:space="preserve"><value>매주 일요일 저녁 8시 — 다음 주 LOC 예약을 넣을 매수 필요 종목을 알려 줍니다.</value></data>
+  <data name="Alert_DailyTitle" xml:space="preserve"><value>매수 단계 알림</value></data>
+  <data name="Alert_DailyDesc" xml:space="preserve"><value>매일 아침 7시(미국장 마감 후) — 매수 단계에 새로 들어오거나 더 깊어진 종목을 알려 줍니다. 매수 완료 종목은 빼고 알립니다.</value></data>
+  <data name="Alert_Note" xml:space="preserve"><value>휴대폰 배터리 절약 기능 때문에 몇 분에서 수십 분 늦게 올 수 있습니다.</value></data>
+  <data name="Alert_Test" xml:space="preserve"><value>테스트 알림 보내기</value></data>
+  <data name="Alert_TestSent" xml:space="preserve"><value>테스트 알림을 보냈습니다.</value></data>
+  <data name="Alert_PermissionDenied" xml:space="preserve"><value>알림 권한이 꺼져 있습니다. 휴대폰 설정 → 앱 → 매수타점에서 알림을 허용해 주세요.</value></data>
+  <data name="Notif_ChannelName" xml:space="preserve"><value>매수 알림</value></data>
+  <data name="Notif_StageOneTitle" xml:space="preserve"><value>{0} {1} 도달</value></data>
+  <data name="Notif_StageOneBody" xml:space="preserve"><value>현재가 ${0:N2} · 매입기준 ${1:N2} ({2})</value></data>
+  <data name="Notif_StageManyTitle" xml:space="preserve"><value>매수 단계에 들어온 종목 {0}개</value></data>
+  <data name="Notif_WeeklyTitle" xml:space="preserve"><value>다음 주 LOC 예약을 확인하세요</value></data>
+  <data name="Notif_WeeklyBody" xml:space="preserve"><value>매수 필요 {0}개: {1}</value></data>
+  <data name="Notif_WeeklyNoData" xml:space="preserve"><value>시세를 받지 못했습니다. 앱에서 매수 필요 종목을 확인하세요.</value></data>
 </root>

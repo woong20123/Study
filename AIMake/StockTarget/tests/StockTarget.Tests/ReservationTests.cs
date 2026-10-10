@@ -6,7 +6,7 @@ public class ReservationPlannerTests
 {
     private static readonly DateOnly Input = new(2026, 10, 8);
 
-    // 목표 주가 120 직접 입력, 수익률 10%, 배당 2.92% → 2026Q4 매입 목표가 약 89.84
+    // 목표 주가 120 직접 입력, 수익률 10%, 배당 2.92% → 2026Q4 매입 목표가 약 89.73(기준일 10-01)
     private static TargetPlan Ko(BuyAmounts? amounts) =>
         new("KO", Input, 2030, 0, 0, 10, 2.92, null, amounts, 120);
 
@@ -82,11 +82,11 @@ public class ReservationPlannerTests
             Assert.True(o.OrderUsd <= o.AmountUsd);                 // 1주 단위 내림
             Assert.True(o.OrderUsd + o.Price > o.AmountUsd);        // 한 주 더 사면 금액 초과
         });
-        // b ≈ 89.849 → 주문가 89.84 / 80.86 / 71.87, $740.74 ÷ 주문가 = 8.2 / 9.2 / 10.3 → 8 / 9 / 10주
+        // b ≈ 89.73 (기준일 10-01) → 주문가 89.73 / 80.75 / 71.78, $740.74 ÷ 주문가 = 8.3 / 9.2 / 10.3 → 8 / 9 / 10주
         Assert.Equal([Math.Floor(b * 100) / 100, Math.Floor(b * 90) / 100, Math.Floor(b * 80) / 100], plan.Orders.Select(o => o.Price));
-        Assert.Equal([89.84, 80.86, 71.87], plan.Orders.Select(o => o.Price));
+        Assert.Equal([89.73, 80.75, 71.78], plan.Orders.Select(o => o.Price));
         Assert.Equal([8, 9, 10], plan.Orders.Select(o => o.Quantity));
-        Assert.Equal("89.84", plan.Orders[0].PriceText);
+        Assert.Equal("89.73", plan.Orders[0].PriceText);
     }
 
     [Fact]
@@ -94,7 +94,7 @@ public class ReservationPlannerTests
     {
         var start = new DateOnly(2026, 10, 12);
         var msft = new TargetPlan("MSFT", Input, 2030, 27.5, 25, 11, 0.8); // 실제 DB 상태: 매수금액 없음
-        var tiny = Ko(new BuyAmounts(BuyKrw: 50_000));                    // $37 < 1주 $89.86
+        var tiny = Ko(new BuyAmounts(BuyKrw: 50_000));                    // $37 < 1주 $89.73
         var plan = ReservationPlanner.Plan([msft, tiny], start, start.AddDays(4), 1350);
 
         Assert.Empty(plan.Orders);
@@ -122,10 +122,10 @@ public class ReservationPlannerTests
     }
 
     [Theory]
-    [InlineData(100.0, new BuyStatus[0], "매수 1단계 · 매수 2단계 · 매수 3단계 미도달: 현재가 100.00 > 주문가 89.84 · 80.86 · 71.87 (+11.3%)")]
-    [InlineData(89.84, new[] { BuyStatus.Buy }, "매수 2단계 · 매수 3단계 미도달: 현재가 89.84 > 주문가 80.86 · 71.87 (+11.1%)")] // 주문가와 같으면 도달
-    [InlineData(85.82, new[] { BuyStatus.Buy }, "매수 2단계 · 매수 3단계 미도달: 현재가 85.82 > 주문가 80.86 · 71.87 (+6.1%)")]
-    [InlineData(75.0, new[] { BuyStatus.Buy, BuyStatus.MustBuy }, "매수 3단계 미도달: 현재가 75.00 > 주문가 71.87 (+4.4%)")]
+    [InlineData(100.0, new BuyStatus[0], "매수 1단계 · 매수 2단계 · 매수 3단계 미도달: 현재가 100.00 > 주문가 89.73 · 80.75 · 71.78 (+11.4%)")]
+    [InlineData(89.73, new[] { BuyStatus.Buy }, "매수 2단계 · 매수 3단계 미도달: 현재가 89.73 > 주문가 80.75 · 71.78 (+11.1%)")] // 주문가와 같으면 도달
+    [InlineData(85.82, new[] { BuyStatus.Buy }, "매수 2단계 · 매수 3단계 미도달: 현재가 85.82 > 주문가 80.75 · 71.78 (+6.3%)")]
+    [InlineData(75.0, new[] { BuyStatus.Buy, BuyStatus.MustBuy }, "매수 3단계 미도달: 현재가 75.00 > 주문가 71.78 (+4.5%)")]
     [InlineData(70.0, new[] { BuyStatus.Buy, BuyStatus.MustBuy, BuyStatus.StrongBuy }, null)]
     public void PlanKeepsOnlyStagesReachedByCurrentPrice(double current, BuyStatus[] expected, string? skip)
     {
@@ -155,7 +155,7 @@ public class ReservationPlannerTests
     [Fact]
     public void UnreachedReasonNamesQuarterWhenPeriodIsSplit()
     {
-        // 분기 경계 주: Q4(b≈89.85)에는 도달, Q1(b가 더 높음)에도 도달 / 현재가 95면 둘 다 미도달
+        // 분기 경계 주: Q4(b≈89.73)에는 도달, Q1(b가 더 높음)에도 도달 / 현재가 95면 둘 다 미도달
         var plan = ReservationPlanner.Plan([Ko(new BuyAmounts(BuyKrw: 1_000_000))],
             new DateOnly(2026, 12, 28), new DateOnly(2027, 1, 1), 1350, currentPrices: new Dictionary<string, double> { ["KO"] = 95 });
         Assert.Empty(plan.Orders);

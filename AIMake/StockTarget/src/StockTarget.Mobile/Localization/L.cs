@@ -19,22 +19,50 @@ public static class L
     private static readonly CultureInfo DeviceUICulture = CultureInfo.CurrentUICulture;
     private static readonly CultureInfo DeviceCulture = CultureInfo.CurrentCulture;
 
-    /// <summary>저장한 언어("ko" · "en")를 적용한다. 화면을 만들기 전에 부른다.</summary>
+    /// <summary>
+    /// 고를 수 있는 언어(코드, 그 언어로 쓴 이름). 언어를 늘리려면 Resources/Strings/AppResources.{코드}.resx를 만들고 여기에 한 줄 더한다.
+    /// 영어(en)는 기본 AppResources.resx다.
+    /// </summary>
+    public static readonly IReadOnlyList<(string Code, string Name)> Languages =
+    [
+        ("ko", "한국어"),
+        ("en", "English"),
+    ];
+
+    /// <summary>저장한 언어 코드를 적용한다. 화면을 만들기 전에 부른다.</summary>
     public static void ApplySavedLanguage() => Apply(Preferences.Default.Get(LanguageKey, ""));
 
-    /// <summary>한국어 ↔ 영어로 바꾸고 저장한다. 이미 만든 화면은 호출한 쪽에서 새로 만든다.</summary>
-    public static void ToggleLanguage()
+    /// <summary>지금 화면 언어의 코드. 목록에 없는 기기 언어면 영어(기본 리소스로 보이므로).</summary>
+    public static string CurrentCode
     {
-        var code = IsKorean ? "en" : "ko";
+        get
+        {
+            var code = _ui.TwoLetterISOLanguageName;
+            return Languages.Any(l => l.Code == code) ? code : "en";
+        }
+    }
+
+    /// <summary>언어를 바꾸고 저장한다. 이미 만든 화면은 호출한 쪽에서 새로 만든다.</summary>
+    public static void SetLanguage(string code)
+    {
         Preferences.Default.Set(LanguageKey, code);
         Apply(code);
     }
+
+    /// <summary>
+    /// 고른 화면 언어 · 표기 형식. CultureInfo.CurrentUICulture만 믿지 않는다: async 메서드 안에서 바꾼 값은
+    /// 그 메서드가 끝나면 원래대로 돌아가서(실행 컨텍스트), 나중에 만드는 화면이 옛 언어로 보인다.
+    /// </summary>
+    private static CultureInfo _ui = DeviceUICulture;
+    private static CultureInfo _format = DeviceCulture;
 
     private static void Apply(string code)
     {
         // 숫자 · 날짜 표기도 고른 언어에 맞춘다(독일어 기기에서 영어를 골라도 1,350.25)
         var ui = code == "" ? DeviceUICulture : CultureInfo.GetCultureInfo(code);
         var format = code == "" ? DeviceCulture : ui;
+        _ui = ui;
+        _format = format;
         CultureInfo.CurrentUICulture = ui;
         CultureInfo.CurrentCulture = format;
         CultureInfo.DefaultThreadCurrentUICulture = ui; // await 뒤 다른 스레드에서도 같은 언어
@@ -42,13 +70,13 @@ public static class L
     }
 
     /// <summary>기기 언어가 한국어인지(한글 종목명 · 한국식 표기를 쓸지).</summary>
-    public static bool IsKorean => CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "ko";
+    public static bool IsKorean => _ui.TwoLetterISOLanguageName == "ko";
 
     /// <summary>키에 해당하는 문자열. 없는 키면 키를 그대로 돌려줘 화면에서 바로 보이게 한다.</summary>
-    public static string Get(string key) => Resources.GetString(key, CultureInfo.CurrentUICulture) ?? key;
+    public static string Get(string key) => Resources.GetString(key, _ui) ?? key;
 
     public static string Format(string key, params object?[] args) =>
-        string.Format(CultureInfo.CurrentCulture, Get(key), args);
+        string.Format(_format, Get(key), args);
 
     /// <summary>목록 · 상세의 판정: 매수 단계면 "매수"(강도는 신호 막대 · 색으로), 매입 대기는 "대기"에 합친다.</summary>
     public static string VerdictShort(BuyStatus s) => Get(s.Verdict() switch // 합치는 규칙은 Core(BuyStatusText.Verdict) 한 곳에 둔다

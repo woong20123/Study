@@ -256,6 +256,36 @@ public sealed class StockDatabase
         WriteBuyDone(c, null, symbol, done, _now());
     }
 
+    /// <summary>
+    /// 지난 분기에 표시한 '매수 완료'를 지운다(분기가 바뀌면 매입 목표가도 바뀌어 다시 살 차례가 된다).
+    /// 분기는 이 기기의 현지 날짜로 나눈다(화면의 '이번 분기'와 같게). 지운 개수를 돌려준다.
+    /// </summary>
+    public int ClearStaleBuyDone()
+    {
+        var current = TargetCalculator.QuarterLabel(LocalDate(_now()));
+        using var c = Open();
+        var stale = new List<string>();
+        using (var cmd = c.CreateCommand())
+        {
+            cmd.CommandText = "SELECT symbol, marked_at FROM buy_done";
+            using var r = cmd.ExecuteReader();
+            while (r.Read())
+            {
+                // 읽을 수 없는 시각은 지난 분기로 본다(계속 남아 있는 것보다 다시 표시하는 편이 낫다)
+                var quarter = DateTimeOffset.TryParse(r.GetString(1), CultureInfo.InvariantCulture, DateTimeStyles.None, out var at)
+                    ? TargetCalculator.QuarterLabel(LocalDate(at))
+                    : null;
+                if (quarter != current)
+                    stale.Add(r.GetString(0));
+            }
+        }
+        foreach (var s in stale)
+            WriteBuyDone(c, null, s, false, _now());
+        return stale.Count;
+    }
+
+    private static DateOnly LocalDate(DateTimeOffset t) => DateOnly.FromDateTime(t.ToLocalTime().DateTime);
+
     private static void WriteBuyDone(SqliteConnection c, SqliteTransaction? tx, string symbol, bool done, DateTimeOffset now)
     {
         using var cmd = c.CreateCommand();

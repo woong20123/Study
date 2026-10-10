@@ -1,3 +1,4 @@
+using Plugin.MauiMtAdmob;
 using StockTarget.Core;
 using StockTarget.Mobile.ViewModels;
 using StockTarget.Mobile.Views;
@@ -10,7 +11,8 @@ public static class MauiProgram
     {
         var builder = MauiApp.CreateBuilder();
         builder
-            .UseMauiApp<App>();
+            .UseMauiApp<App>()
+            .UseMauiMTAdmob(); // 메인 화면 하단 AdMob 배너
 
         // SQLite DB 경로: Android 내부 앱 데이터 저장소
         var dbPath = Path.Combine(FileSystem.AppDataDirectory, "stocktarget.db");
@@ -28,12 +30,16 @@ public static class MauiProgram
         builder.Services.AddTransient<MobileTargetEditViewModel>();
         builder.Services.AddTransient<MobileTargetDetailViewModel>();
         builder.Services.AddTransient<MobileReservationViewModel>();
+        builder.Services.AddTransient<MobileBuyDoneViewModel>();
+        builder.Services.AddTransient<AlertSettingsViewModel>();
 
         // Pages
         builder.Services.AddTransient<MainPage>(); // 언어를 바꾸면 화면을 새로 만든다
         builder.Services.AddTransient<TargetEditPage>();
         builder.Services.AddTransient<TargetDetailPage>();
         builder.Services.AddTransient<ReservationPage>();
+        builder.Services.AddTransient<BuyDonePage>();
+        builder.Services.AddTransient<AlertSettingsPage>();
 
         return builder.Build();
     }

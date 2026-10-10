@@ -20,6 +20,27 @@
         <Setter Property="FontAttributes" Value="Bold" />
     </Style>
 
+    <!-- 스위치: 켜짐은 초록, 꺼짐은 회색 손잡이. 초록을 늘 쓰면 꺼져도 켜진 것처럼 보이고, 너무 밝은 회색은 밝은 배경에 묻힌다 -->
+    <Style TargetType="Switch">
+        <Setter Property="OnColor" Value="#86EFAC" />
+        <Setter Property="VisualStateManager.VisualStateGroups">
+            <VisualStateGroupList>
+                <VisualStateGroup x:Name="CommonStates">
+                    <VisualState x:Name="On">
+                        <VisualState.Setters>
+                            <Setter Property="ThumbColor" Value="#16A34A" />
+                        </VisualState.Setters>
+                    </VisualState>
+                    <VisualState x:Name="Off">
+                        <VisualState.Setters>
+                            <Setter Property="ThumbColor" Value="#94A3B8" />
+                        </VisualState.Setters>
+                    </VisualState>
+                </VisualStateGroup>
+            </VisualStateGroupList>
+        </Setter>
+    </Style>
+
     <Style TargetType="Entry">
         <Setter Property="TextColor" Value="{StaticResource TextPrimary}" />
         <Setter Property="PlaceholderColor" Value="{StaticResource TextSecondary}" />

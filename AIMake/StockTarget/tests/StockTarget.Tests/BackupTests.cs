@@ -102,6 +102,27 @@ public sealed class BackupTests : IDisposable
     }
 
     [Fact]
+    public void ClearStaleBuyDoneKeepsOnlyThisQuarter()
+    {
+        // 분기 한가운데 날짜만 써서 기기 시간대와 상관없게 한다
+        var now = new DateTimeOffset(2026, 8, 15, 12, 0, 0, TimeSpan.Zero); // 2026Q3
+        var path = Path.Combine(Path.GetTempPath(), $"stocktarget_bak_{Guid.NewGuid():N}.db");
+        _paths.Add(path);
+        var db = new StockDatabase(path, () => now);
+        db.SaveTarget(Ko);
+        db.SaveTarget(Msft);
+        db.SetBuyDone("KO", true);
+
+        Assert.Equal(0, db.ClearStaleBuyDone()); // 같은 분기면 그대로
+        Assert.Equal(["KO"], db.GetBuyDone());
+
+        now = new DateTimeOffset(2026, 11, 15, 12, 0, 0, TimeSpan.Zero); // 2026Q4
+        db.SetBuyDone("MSFT", true);
+        Assert.Equal(1, db.ClearStaleBuyDone()); // 지난 분기 KO만 지운다
+        Assert.Equal(["MSFT"], db.GetBuyDone());
+    }
+
+    [Fact]
     public void RestoreDropsBuyDoneWithoutTarget()
     {
         var db = NewDb();

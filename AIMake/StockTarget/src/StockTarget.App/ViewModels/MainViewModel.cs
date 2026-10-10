@@ -43,6 +43,7 @@ public sealed partial class MainViewModel : ObservableObject
         RefreshCommand = new AsyncCommand(() => RefreshAllAsync(force: true), () => !IsBusy);
         NewCommand = new RelayCommand(ClearForm);
         ReserveCommand = new RelayCommand(OpenReservation, () => !IsBusy && Targets.Count > 0);
+        BuyDoneCommand = new RelayCommand(OpenBuyDone, () => !IsBusy && Targets.Count > 0);
         DbPath = db.Path;
         InitBackupCommands();
         InitDefaults();
@@ -60,6 +61,7 @@ public sealed partial class MainViewModel : ObservableObject
     public AsyncCommand RefreshCommand { get; }
     public RelayCommand NewCommand { get; }
     public RelayCommand ReserveCommand { get; }
+    public RelayCommand BuyDoneCommand { get; }
 
     public string DbPath { get; }
 
@@ -190,8 +192,13 @@ public sealed partial class MainViewModel : ObservableObject
         Targets.Clear();
         LoadDefaults();
         var names = _db.GetStockNames(); // 캐시한 한글명을 먼저 보여주고, 시세 갱신 때 7일 지난 것만 다시 받는다
+        _db.ClearStaleBuyDone(); // 지난 분기의 매수 완료는 풀린다(다음 분기엔 다시 살 차례)
+        var buyDone = _db.GetBuyDone();
         foreach (var t in _db.GetTargets())
-            Targets.Add(new TargetRowViewModel(t) { UsdKrw = UsdKrw, Defaults = Defaults, KoreanName = names.GetValueOrDefault(t.Symbol) });
+            Targets.Add(new TargetRowViewModel(t)
+            {
+                UsdKrw = UsdKrw, Defaults = Defaults, KoreanName = names.GetValueOrDefault(t.Symbol), IsBuyDone = buyDone.Contains(t.Symbol)
+            });
         OnPropertyChanged(nameof(DefaultsSummary));
         Status = $"목표 {Targets.Count}개 로드";
         await RefreshAllAsync(force: false);
@@ -378,6 +385,30 @@ public sealed partial class MainViewModel : ObservableObject
         var vm = new ReservationViewModel(_db, _service, Targets.Select(r => r.Plan).ToList(), UsdKrw, Defaults,
             Targets.Where(r => r.Error is null && r.Price is > 0).ToDictionary(r => r.Symbol, r => r.Price!.Value));
         new ReservationWindow(vm) { Owner = Application.Current.MainWindow }.ShowDialog();
+        SyncBuyDone(); // 주문표 창에서 매수 완료를 표시 · 해제했을 수 있다
+    }
+
+    private void OpenBuyDone()
+    {
+        var vm = new BuyDoneViewModel(this);
+        new BuyDoneWindow(vm) { Owner = Application.Current.MainWindow }.ShowDialog();
+    }
+
+    /// <summary>종목을 '매수 완료'로 표시하거나 해제해 저장한다.</summary>
+    public void SetBuyDone(TargetRowViewModel row, bool done)
+    {
+        if (row.IsBuyDone == done)
+            return;
+        _db.SetBuyDone(row.Symbol, done);
+        row.IsBuyDone = done;
+        Status = done ? $"{row.Symbol} 매수 완료 표시" : $"{row.Symbol} 매수 완료 해제";
+    }
+
+    private void SyncBuyDone()
+    {
+        var done = _db.GetBuyDone();
+        foreach (var row in Targets)
+            row.IsBuyDone = done.Contains(row.Symbol);
     }
 
     private void ClearForm()

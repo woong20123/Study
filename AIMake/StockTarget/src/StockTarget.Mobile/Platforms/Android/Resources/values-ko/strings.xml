@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 한국어 기기의 홈 화면 앱 이름 -->
+<resources>
+	<string name="app_name">매수타점</string>
+</resources>

@@ -4,12 +4,16 @@
              xmlns:vm="clr-namespace:StockTarget.Mobile.ViewModels"
              xmlns:conv="clr-namespace:StockTarget.Mobile.Converters"
              xmlns:loc="clr-namespace:StockTarget.Mobile.Localization"
+             xmlns:ads="clr-namespace:Plugin.MauiMtAdmob.Controls;assembly=Plugin.MauiMtAdmob"
+             xmlns:root="clr-namespace:StockTarget.Mobile"
              x:Class="StockTarget.Mobile.Views.MainPage"
              x:DataType="vm:MobileMainViewModel"
-             Title="StockTarget">
+             Title="{loc:Tr App_Name}">
 
     <ContentPage.ToolbarItems>
+        <ToolbarItem Text="{Binding BuyDoneText}" Command="{Binding ManageBuyDoneCommand}" />
         <ToolbarItem Text="{loc:Tr Main_Language}" Clicked="OnLanguageClicked" />
+        <ToolbarItem Text="{loc:Tr Alert_Settings}" Command="{Binding AlertSettingsCommand}" Order="Secondary" />
         <ToolbarItem Text="{loc:Tr Main_ImportJson}" Command="{Binding ImportJsonCommand}" Order="Secondary" />
     </ContentPage.ToolbarItems>
 
@@ -21,12 +25,12 @@
         <conv:StatusIsBuyConverter x:Key="StatusIsBuy" />
     </ContentPage.Resources>
 
-    <Grid RowDefinitions="Auto, Auto, *">
+    <Grid RowDefinitions="Auto, Auto, *, Auto">
         <!-- 상단 한 줄: 필터 | 종목추가 -->
         <Border Grid.Row="0" Margin="12,8,12,2" Padding="10,4" BackgroundColor="#F1F5F9" StrokeThickness="0" StrokeShape="RoundRectangle 10">
             <Grid ColumnDefinitions="Auto, *, Auto" ColumnSpacing="6">
                 <!-- 필터: 매수가 필요한 종목(매수 1~3단계)만 보기 -->
-                <Switch Grid.Column="0" IsToggled="{Binding OnlyBuy}" VerticalOptions="Center" OnColor="#86EFAC" ThumbColor="#16A34A" />
+                <Switch Grid.Column="0" IsToggled="{Binding OnlyBuy}" VerticalOptions="Center" />
                 <Label Grid.Column="1" Text="{Binding OnlyBuyText}" VerticalOptions="Center" FontSize="13" TextColor="#0F172A"
                        LineBreakMode="TailTruncation">
                     <Label.GestureRecognizers>
@@ -74,6 +78,8 @@
                                 </Label>
 
                                 <HorizontalStackLayout Grid.Row="0" Grid.Column="1" Spacing="6" VerticalOptions="Center">
+                                    <!-- 매수 완료로 표시한 종목 -->
+                                    <Label Text="{loc:Tr Row_BuyDone}" IsVisible="{Binding IsBuyDone}" FontSize="11" FontAttributes="Bold" VerticalOptions="Center" TextColor="#16A34A" />
                                     <!-- 괴리율은 색 없이: 한국 앱에서 빨강은 보통 상승(+)이라 마이너스가 빨가면 헷갈린다 -->
                                     <Label Text="{Binding GapText}" FontSize="13" FontAttributes="Bold" VerticalOptions="Center" TextColor="#334155" />
                                     <!-- 판정 배지: "매수" + 강도 신호 막대(1~3칸) 또는 "대기" -->
@@ -121,6 +127,10 @@
                 </CollectionView.ItemTemplate>
             </CollectionView>
         </RefreshView>
+
+        <!-- 하단 AdMob 배너(ID는 AdIds.cs) -->
+        <ads:MTAdView Grid.Row="3" AdsId="{x:Static root:AdIds.Banner}" AdSize="AnchoredAdaptive" BackgroundColor="Transparent"
+                      AdsLoaded="OnAdLoaded" AdsFailedToLoad="OnAdFailed" />
     </Grid>
 
 </ContentPage>

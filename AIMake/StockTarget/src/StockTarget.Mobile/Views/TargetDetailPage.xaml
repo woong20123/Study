@@ -9,6 +9,11 @@
              x:DataType="vm:MobileTargetDetailViewModel"
              Title="{loc:Tr Detail_Title}">
 
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="{loc:Tr Detail_Edit}" Command="{Binding EditCommand}" />
+        <ToolbarItem Text="{loc:Tr Detail_Delete}" Command="{Binding DeleteCommand}" />
+    </ContentPage.ToolbarItems>
+
     <ContentPage.Resources>
         <conv:StatusToBgColorConverter x:Key="StatusToBg" />
         <conv:StatusToTextColorConverter x:Key="StatusToText" />
@@ -64,6 +69,17 @@
                     </Grid>
 
                     <Label Grid.Row="2" Text="{Binding TargetRow.BuyAmountText}" FontSize="13" TextColor="#0284C7" FontAttributes="Bold" />
+                </Grid>
+            </Border>
+
+            <!-- 매수 완료: 매수 단계이거나 이미 표시한 종목만 -->
+            <Border Padding="16,8" IsVisible="{Binding ShowBuyDone}">
+                <Grid ColumnDefinitions="*, Auto">
+                    <VerticalStackLayout Grid.Column="0" VerticalOptions="Center">
+                        <Label Text="{loc:Tr Detail_BuyDone}" FontSize="15" FontAttributes="Bold" />
+                        <Label Text="{loc:Tr Detail_BuyDoneHint}" FontSize="11" TextColor="#64748B" />
+                    </VerticalStackLayout>
+                    <Switch Grid.Column="1" IsToggled="{Binding IsBuyDone}" VerticalOptions="Center" />
                 </Grid>
             </Border>
 

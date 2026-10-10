@@ -122,6 +122,25 @@ public sealed class TargetRowViewModel(TargetPlan plan) : ObservableObject
 
     public string Verdict => Error is not null ? "조회 실패" : Status.VerdictText();
 
+    /// <summary>지금 매수 단계(1~3단계)인지.</summary>
+    public bool NeedsBuy => Status is BuyStatus.Buy or BuyStatus.MustBuy or BuyStatus.StrongBuy;
+
+    private bool _isBuyDone;
+
+    /// <summary>'매수 완료'로 표시했는지(저장은 MainViewModel.SetBuyDone).</summary>
+    public bool IsBuyDone
+    {
+        get => _isBuyDone;
+        set
+        {
+            if (Set(ref _isBuyDone, value))
+                OnPropertyChanged(nameof(BuyDoneMark));
+        }
+    }
+
+    /// <summary>목록의 '매수 완료' 칸.</summary>
+    public string BuyDoneMark => IsBuyDone ? "✓" : "";
+
     /// <summary>
     /// 현재 판정 단계의 매수금액 "₩1,000,000 ($747.12)", 기본 매수금액이면 뒤에 "· 기본".
     /// 매수 단계가 아니거나 금액이 없으면(0 포함) 빈 문자열.
@@ -166,6 +185,7 @@ public sealed class TargetRowViewModel(TargetPlan plan) : ObservableObject
         OnPropertyChanged(nameof(GapPct));
         OnPropertyChanged(nameof(BuyCondition));
         OnPropertyChanged(nameof(Status));
+        OnPropertyChanged(nameof(NeedsBuy));
         OnPropertyChanged(nameof(Verdict));
         OnPropertyChanged(nameof(BuyAmountText));
         OnPropertyChanged(nameof(BuySharesText));

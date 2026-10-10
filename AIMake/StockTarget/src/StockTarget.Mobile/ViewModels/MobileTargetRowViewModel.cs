@@ -99,6 +99,22 @@ public sealed class MobileTargetRowViewModel(TargetPlan plan) : ObservableObject
         }
     }
 
+    private bool _isBuyDone;
+
+    /// <summary>'매수 완료'로 표시했는지. 켜 두면 '매수 필요만' 필터에서 빠진다(저장은 메인 화면 뷰모델이 한다).</summary>
+    public bool IsBuyDone
+    {
+        get => _isBuyDone;
+        set => Set(ref _isBuyDone, value);
+    }
+
+    /// <summary>지금 매수 단계(1~3단계)인지.</summary>
+    public bool NeedsBuy => Status is BuyStatus.Buy or BuyStatus.MustBuy or BuyStatus.StrongBuy;
+
+    /// <summary>매수 완료 관리 화면의 둘째 줄: 티커 · 판정 · 단가 × 주식 수.</summary>
+    public string BuyDoneSubtitle => string.Join(" · ",
+        new[] { TickerText, Error is null ? L.Verdict(Status) : Verdict, BuySharesText }.Where(t => t.Length > 0));
+
     public BuyAmounts? Defaults
     {
         get => _defaults;
@@ -188,6 +204,7 @@ public sealed class MobileTargetRowViewModel(TargetPlan plan) : ObservableObject
         OnPropertyChanged(nameof(Title));
         OnPropertyChanged(nameof(Subtitle));
         OnPropertyChanged(nameof(TickerText));
+        OnPropertyChanged(nameof(BuyDoneSubtitle));
     }
 
     private void RaiseDerived()
@@ -199,8 +216,10 @@ public sealed class MobileTargetRowViewModel(TargetPlan plan) : ObservableObject
         OnPropertyChanged(nameof(GapText));
         OnPropertyChanged(nameof(Gauge));
         OnPropertyChanged(nameof(Status));
+        OnPropertyChanged(nameof(NeedsBuy));
         OnPropertyChanged(nameof(Verdict));
         OnPropertyChanged(nameof(BuyAmountText));
         OnPropertyChanged(nameof(BuySharesText));
+        OnPropertyChanged(nameof(BuyDoneSubtitle));
     }
 }

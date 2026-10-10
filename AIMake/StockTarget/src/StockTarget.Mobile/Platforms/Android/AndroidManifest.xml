@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-	<application android:allowBackup="true" android:icon="@mipmap/appicon" android:roundIcon="@mipmap/appicon_round" android:supportsRtl="true"></application>
+	<application android:label="@string/app_name" android:allowBackup="true" android:icon="@mipmap/appicon" android:roundIcon="@mipmap/appicon_round" android:supportsRtl="true">
+		<!-- AdMob 앱 ID: 지금은 Google 공식 테스트 앱 ID. 출시 전에 내 앱 ID로 바꾼다(광고 단위 ID는 AdIds.cs) -->
+		<meta-data android:name="com.google.android.gms.ads.APPLICATION_ID" android:value="ca-app-pub-3940256099942544~3347511713" />
+	</application>
 	<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 	<uses-permission android:name="android.permission.INTERNET" />
+	<!-- 매수 알림(안드로이드 13부터는 사용자가 허용해야 뜬다) -->
+	<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 </manifest>

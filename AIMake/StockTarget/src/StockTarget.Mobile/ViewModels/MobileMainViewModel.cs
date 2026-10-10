@@ -38,24 +38,38 @@ public sealed class MobileMainViewModel : ObservableObject
         }
     }
 
-    public string OnlyBuyText => L.Format("Main_OnlyBuy", Targets.Count(r => NeedsBuy(r.Status)));
+    public string OnlyBuyText => L.Format("Main_OnlyBuy", Targets.Count(ShowsAsToBuy));
+
+    /// <summary>툴바 '매수 완료 (n)' 버튼 문구. n = 매수 완료로 표시한 종목 수.</summary>
+    public string BuyDoneText => L.Format("Main_BuyDone", Targets.Count(r => r.IsBuyDone));
 
     /// <summary>목록이 비었을 때 문구. 필터 때문에 비었으면 그렇게 알린다.</summary>
     public string EmptyText => OnlyBuy && Targets.Count > 0 ? L.Get("Main_EmptyFiltered") : L.Get("Main_Empty");
 
     public bool ShowAddFirst => Targets.Count == 0;
 
-    private static bool NeedsBuy(BuyStatus s) => s is BuyStatus.Buy or BuyStatus.MustBuy or BuyStatus.StrongBuy;
+    /// <summary>'매수 필요만'에 보일 종목: 매수 단계이고 아직 매수 완료로 표시하지 않은 것.</summary>
+    private static bool ShowsAsToBuy(MobileTargetRowViewModel r) => r.NeedsBuy && !r.IsBuyDone;
 
     public void ApplyFilter()
     {
         VisibleTargets.Clear();
         foreach (var row in Targets)
-            if (!OnlyBuy || NeedsBuy(row.Status))
+            if (!OnlyBuy || ShowsAsToBuy(row))
                 VisibleTargets.Add(row);
         OnPropertyChanged(nameof(OnlyBuyText));
+        OnPropertyChanged(nameof(BuyDoneText));
         OnPropertyChanged(nameof(EmptyText));
         OnPropertyChanged(nameof(ShowAddFirst));
+    }
+
+    /// <summary>종목을 '매수 완료'로 표시하거나 해제해 저장한다. 목록 필터는 메인 화면으로 돌아올 때 다시 적용된다.</summary>
+    public void SetBuyDone(MobileTargetRowViewModel row, bool done)
+    {
+        if (row.IsBuyDone == done)
+            return;
+        _db.SetBuyDone(row.Symbol, done);
+        row.IsBuyDone = done;
     }
 
     public bool IsBusy
@@ -110,6 +124,8 @@ public sealed class MobileMainViewModel : ObservableObject
     public AsyncCommand<MobileTargetRowViewModel> SelectTargetCommand { get; }
     public AsyncCommand<MobileTargetRowViewModel> DeleteTargetCommand { get; }
     public AsyncCommand ImportJsonCommand { get; }
+    public AsyncCommand ManageBuyDoneCommand { get; }
+    public AsyncCommand AlertSettingsCommand { get; }
 
     public MobileMainViewModel(StockDatabase db, StockService stockService, StockNameService names)
     {
@@ -122,6 +138,8 @@ public sealed class MobileMainViewModel : ObservableObject
         SelectTargetCommand = new AsyncCommand<MobileTargetRowViewModel>(NavigateToDetailAsync);
         DeleteTargetCommand = new AsyncCommand<MobileTargetRowViewModel>(DeleteAsync);
         ImportJsonCommand = new AsyncCommand(ImportJsonAsync);
+        ManageBuyDoneCommand = new AsyncCommand(() => Shell.Current.GoToAsync(nameof(BuyDonePage)));
+        AlertSettingsCommand = new AsyncCommand(() => Shell.Current.GoToAsync(nameof(AlertSettingsPage)));
 
         _ = LoadInitialDataAsync();
     }
@@ -139,6 +157,8 @@ public sealed class MobileMainViewModel : ObservableObject
             _defaults = _db.GetDefaultAmounts();
             var plans = _db.GetTargets();
             var names = _names.CachedNames(); // 캐시한 한글명을 먼저 보여주고, 시세 갱신 때 7일 지난 것만 다시 받는다
+            _db.ClearStaleBuyDone(); // 지난 분기의 매수 완료는 풀린다(다음 분기엔 다시 살 차례)
+            var buyDone = _db.GetBuyDone();
             Targets.Clear();
             foreach (var plan in plans)
             {
@@ -147,6 +167,7 @@ public sealed class MobileMainViewModel : ObservableObject
                     Defaults = _defaults,
                     UsdKrw = UsdKrw,
                     KoreanName = names.GetValueOrDefault(plan.Symbol),
+                    IsBuyDone = buyDone.Contains(plan.Symbol),
                     SelectCommand = SelectTargetCommand
                 });
             }
@@ -272,15 +293,17 @@ public sealed class MobileMainViewModel : ObservableObject
         }
     }
 
-    private async Task DeleteAsync(MobileTargetRowViewModel? row)
+    /// <summary>확인을 받고 목표를 지운다. 지웠으면 true(상세 화면은 이걸 보고 목록으로 돌아간다).</summary>
+    public async Task<bool> DeleteAsync(MobileTargetRowViewModel? row)
     {
-        if (row is null) return;
+        if (row is null) return false;
         bool confirm = await Shell.Current.DisplayAlert(L.Get("Main_DeleteTitle"), L.Format("Main_DeleteMessage", row.Title), L.Get("Main_DeleteOk"), L.Get("Main_DeleteCancel"));
-        if (!confirm) return;
+        if (!confirm) return false;
 
         _db.DeleteTarget(row.Symbol);
         Targets.Remove(row);
         ApplyFilter();
         Flash(L.Format("Main_Deleted", row.Title));
+        return true;
     }
 }

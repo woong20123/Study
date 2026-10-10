@@ -5,6 +5,7 @@
   <resheader name="version"><value>2.0</value></resheader>
   <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="App_Name" xml:space="preserve"><value>StockTarget</value></data>
   <data name="Tab_Targets" xml:space="preserve"><value>Targets</value></data>
   <data name="Tab_Reservation" xml:space="preserve"><value>LOC Orders</value></data>
   <data name="Common_Refresh" xml:space="preserve"><value>Refresh</value></data>
@@ -20,7 +21,7 @@
   <data name="Main_EmptyFiltered" xml:space="preserve"><value>No stocks need buying right now.</value></data>
   <data name="Main_OnlyBuy" xml:space="preserve"><value>To buy only ({0})</value></data>
   <data name="Main_AddFirst" xml:space="preserve"><value>Add a stock</value></data>
-  <data name="Main_Language" xml:space="preserve"><value>한국어</value></data>
+  <data name="Main_Language" xml:space="preserve"><value>Language</value></data>
   <data name="Main_ImportJson" xml:space="preserve"><value>Import JSON backup</value></data>
   <data name="Main_ImportTitle" xml:space="preserve"><value>Import backup</value></data>
   <data name="Main_ImportMessage" xml:space="preserve"><value>Replace current data with {0}?
@@ -133,4 +134,30 @@ Current data is backed up inside the app first.</value></data>
   <data name="Res_BuyDoneReason" xml:space="preserve"><value>Bought — excluded until you undo</value></data>
   <data name="Res_MarkedDone" xml:space="preserve"><value>{0} bought — excluded until you undo</value></data>
   <data name="Res_Unmarked" xml:space="preserve"><value>{0} back in the order plan</value></data>
+  <data name="Main_BuyDone" xml:space="preserve"><value>Bought ({0})</value></data>
+  <data name="Row_BuyDone" xml:space="preserve"><value>✓ Bought</value></data>
+  <data name="BuyDone_Title" xml:space="preserve"><value>Bought stocks</value></data>
+  <data name="BuyDone_Help" xml:space="preserve"><value>Switch on stocks you have bought to hide them from 'To buy only'. They switch off automatically next quarter.</value></data>
+  <data name="BuyDone_Summary" xml:space="preserve"><value>Bought {0} / {1}</value></data>
+  <data name="BuyDone_Empty" xml:space="preserve"><value>No stocks need buying right now.</value></data>
+  <data name="Detail_Edit" xml:space="preserve"><value>Edit</value></data>
+  <data name="Detail_Delete" xml:space="preserve"><value>Delete</value></data>
+  <data name="Detail_BuyDone" xml:space="preserve"><value>Bought</value></data>
+  <data name="Detail_BuyDoneHint" xml:space="preserve"><value>Hidden from 'To buy only' until next quarter</value></data>
+  <data name="Alert_Settings" xml:space="preserve"><value>Notifications</value></data>
+  <data name="Alert_WeeklyTitle" xml:space="preserve"><value>Weekly order reminder</value></data>
+  <data name="Alert_WeeklyDesc" xml:space="preserve"><value>Sundays at 8 PM — the stocks to buy with next week's LOC orders.</value></data>
+  <data name="Alert_DailyTitle" xml:space="preserve"><value>Buy stage alerts</value></data>
+  <data name="Alert_DailyDesc" xml:space="preserve"><value>Every morning at 7 AM (after the US close) — stocks that newly reached or went deeper into a buy stage. Bought stocks are skipped.</value></data>
+  <data name="Alert_Note" xml:space="preserve"><value>Battery saving may delay notifications by a few minutes or more.</value></data>
+  <data name="Alert_Test" xml:space="preserve"><value>Send test notification</value></data>
+  <data name="Alert_TestSent" xml:space="preserve"><value>Test notification sent.</value></data>
+  <data name="Alert_PermissionDenied" xml:space="preserve"><value>Notifications are blocked. Allow them in Settings → Apps → StockTarget.</value></data>
+  <data name="Notif_ChannelName" xml:space="preserve"><value>Buy alerts</value></data>
+  <data name="Notif_StageOneTitle" xml:space="preserve"><value>{0} reached {1}</value></data>
+  <data name="Notif_StageOneBody" xml:space="preserve"><value>Price ${0:N2} · Buy basis ${1:N2} ({2})</value></data>
+  <data name="Notif_StageManyTitle" xml:space="preserve"><value>{0} stocks reached a buy stage</value></data>
+  <data name="Notif_WeeklyTitle" xml:space="preserve"><value>Check next week's LOC orders</value></data>
+  <data name="Notif_WeeklyBody" xml:space="preserve"><value>{0} to buy: {1}</value></data>
+  <data name="Notif_WeeklyNoData" xml:space="preserve"><value>Could not get prices. Check the stocks to buy in the app.</value></data>
 </root>

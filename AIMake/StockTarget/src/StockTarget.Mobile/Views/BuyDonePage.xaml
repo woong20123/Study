@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:StockTarget.Mobile.ViewModels"
+             xmlns:loc="clr-namespace:StockTarget.Mobile.Localization"
+             x:Class="StockTarget.Mobile.Views.BuyDonePage"
+             x:DataType="vm:MobileBuyDoneViewModel"
+             Title="{loc:Tr BuyDone_Title}">
+
+    <Grid RowDefinitions="Auto, *">
+        <!-- 설명 · 요약 -->
+        <Border Grid.Row="0" Margin="12,8,12,4" Padding="12,8" BackgroundColor="#F1F5F9" StrokeThickness="0" StrokeShape="RoundRectangle 10">
+            <VerticalStackLayout Spacing="2">
+                <Label Text="{loc:Tr BuyDone_Help}" FontSize="12" TextColor="#475569" />
+                <Label Text="{Binding Summary}" FontSize="13" FontAttributes="Bold" TextColor="#0F172A" />
+            </VerticalStackLayout>
+        </Border>
+
+        <CollectionView Grid.Row="1" ItemsSource="{Binding Items}" SelectionMode="None">
+            <CollectionView.EmptyView>
+                <Label Text="{loc:Tr BuyDone_Empty}" HorizontalOptions="Center" Margin="0,50" FontSize="15" TextColor="#64748B" />
+            </CollectionView.EmptyView>
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="vm:BuyDoneItem">
+                    <Border Margin="12,3" Padding="12,8" StrokeShape="RoundRectangle 10">
+                        <Grid ColumnDefinitions="*, Auto" ColumnSpacing="8">
+                            <VerticalStackLayout Grid.Column="0" VerticalOptions="Center">
+                                <Label Text="{Binding Title}" FontSize="15" FontAttributes="Bold" TextColor="#0F172A" LineBreakMode="TailTruncation" />
+                                <Label Text="{Binding Subtitle}" FontSize="11" TextColor="#64748B" LineBreakMode="TailTruncation" />
+                            </VerticalStackLayout>
+                            <Switch Grid.Column="1" IsToggled="{Binding IsDone}" VerticalOptions="Center" />
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+    </Grid>
+
+</ContentPage>

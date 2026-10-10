@@ -19,7 +19,7 @@ public class TargetCalculatorTests
     public void QuartersStartAtInputQuarter()
     {
         var q = TargetCalculator.Quarters(Ko.InputDate, Ko.TargetDate);
-        Assert.Equal(("2026Q4", new DateOnly(2026, 10, 8)), q[0]); // 첫 분기 기준일은 입력일
+        Assert.Equal(("2026Q4", new DateOnly(2026, 10, 1)), q[0]); // 첫 분기도 입력일이 아니라 분기 첫날
         Assert.Equal(("2027Q1", new DateOnly(2027, 1, 1)), q[1]);
         Assert.Equal(("2030Q4", new DateOnly(2030, 10, 1)), q[^1]);
         Assert.Equal(17, q.Count);

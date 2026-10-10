@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 홈 화면 앱 이름(기본 = 영어). 한국어 기기는 values-ko -->
+<resources>
+	<string name="app_name">StockTarget</string>
+</resources>

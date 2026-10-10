@@ -19,7 +19,10 @@ public static class TargetCalculator
 
     public static string QuarterLabel(DateOnly d) => $"{d.Year}Q{QuarterOf(d)}";
 
-    /// <summary>입력일이 속한 분기부터 목표일이 속한 분기까지. 첫 분기 기준일은 입력일, 이후는 분기 첫날.</summary>
+    /// <summary>
+    /// 입력일이 속한 분기부터 목표일이 속한 분기까지. 기준일은 모두 분기 첫날(첫 분기도 입력일이 아니라 그 분기 첫날)이라,
+    /// 같은 목표를 언제 입력 · 수정해도 분기별 매입 목표가가 같다.
+    /// </summary>
     public static IReadOnlyList<(string Quarter, DateOnly BaseDate)> Quarters(DateOnly inputDate, DateOnly targetDate)
     {
         var rows = new List<(string, DateOnly)>();
@@ -29,7 +32,7 @@ public static class TargetCalculator
             var start = new DateOnly(y, 3 * (q - 1) + 1, 1);
             if (start > targetDate)
                 break;
-            rows.Add(($"{y}Q{q}", start < inputDate ? inputDate : start));
+            rows.Add(($"{y}Q{q}", start));
             (y, q) = q == 4 ? (y + 1, 1) : (y, q + 1);
         }
         return rows;
